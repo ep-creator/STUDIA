@@ -1,0 +1,33 @@
+# Credenciais e chaves de API (NUNCA versionar!)
+.env
+.env.local
+**/.env
+**/.env.local
+.config.json
+**/.config.json
+
+# Arquivos de backup temporários
+*.bak*
+**/*.bak*
+
+# Cache do Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Pilha temporária de Undo da interface
+.historico_undo.json
+**/.historico_undo.json
+
+# Arquivos temporários de lock/journal do SQLite
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Arquivos de sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

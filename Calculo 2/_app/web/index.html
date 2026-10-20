@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caderno de Estudos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <svg class="contours" viewBox="0 0 1040 190" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="none" stroke="var(--hair)" stroke-width="1">
+      <path d="M-20,180 C160,120 280,168 420,124 C560,80 700,140 880,92 C960,70 1020,78 1060,64"/>
+      <path d="M-20,196 C160,140 300,186 440,146 C580,106 720,160 900,116 C980,96 1030,102 1060,90"/>
+      <path d="M-20,164 C150,100 270,150 400,102 C540,52 690,120 870,68 C950,44 1020,54 1060,38"/>
+      <path d="M-20,148 C140,82 260,132 380,80 C520,22 680,100 860,44 C945,18 1020,30 1060,12"/>
+    </g>
+    <g fill="none" stroke="var(--accent)" stroke-width="1.4" opacity=".55">
+      <path d="M-20,132 C130,64 250,114 360,58 C500,-12 670,80 850,20"/>
+    </g>
+  </svg>
+  <div id="headerHost"></div>
+</header>
+
+<nav aria-label="Navegação Principal">
+  <div class="discsel" role="group" aria-label="Disciplina">
+    <select id="selDisciplina" title="Trocar de disciplina"></select>
+    <button type="button" class="actbtn" id="btnNovaDisciplina" title="Criar nova disciplina (zero tokens)">+ Cadeira</button>
+  </div>
+
+  <div class="unisel" role="group" aria-label="Unidade">
+    <span class="eyebrow">Unid.</span>
+    <div class="opts">
+      <button type="button" data-u="1" aria-pressed="false">1ª</button>
+      <button type="button" data-u="2" aria-pressed="false">2ª</button>
+      <button type="button" data-u="3" aria-pressed="false">3ª</button>
+    </div>
+  </div>
+
+  <ul>
+    <li><a href="#status">Onde estamos</a></li>
+    <li><a href="#cronograma">Cronograma</a></li>
+    <li><a href="#exercicios">Exercícios</a></li>
+    <li><a href="#resumos">Resumos</a></li>
+    <li><a href="#documentos">Documentos</a></li>
+    <li><a href="#formulario">Formulário</a></li>
+  </ul>
+
+  <div class="navactions">
+    <button type="button" class="actbtn undo" id="btnUndo" hidden title="Desfazer última escrita nos arquivos">↩ Desfazer</button>
+    <button type="button" class="actbtn primary" id="btnAbrirAgente" title="Abrir Agente com RAG Estruturado e Skills">🤖 Agente &amp; RAG</button>
+  </div>
+</nav>
+
+<div class="progress">
+  <div class="stat"><b id="pFeitos">0/0</b><span id="pSplit">feitos</span>
+    <div class="bar"><i class="a" id="bOk" style="width:0%"></i><i class="b" id="bErr" style="width:0%"></i><i class="c" id="bDub" style="width:0%"></i></div></div>
+  <div class="stat"><b id="pAcerto">—</b><span>taxa de acerto</span></div>
+  <div class="stat"><b id="pErr">0</b><span>errados ou em dúvida — a revisar</span></div>
+  <div class="stat"><b id="pSol">0</b><span>resoluções escritas aqui</span></div>
+</div>
+
+<section id="status">
+  <div class="shead">
+    <h2>Onde estamos</h2>
+    <p id="statusSubtitulo"></p>
+    <div class="shead-actions">
+      <button type="button" class="actbtn" id="btnAddTopico">+ Adicionar Tópico</button>
+    </div>
+  </div>
+  <div class="ladder" id="ladderHost"></div>
+</section>
+
+<section id="cronograma">
+  <div class="shead">
+    <h2 id="cronoTitulo">Cronograma</h2>
+    <p id="cronoSubtitulo"></p>
+    <span class="tag contagem" id="cronoContagem">—</span>
+    <div class="shead-actions">
+      <button type="button" class="actbtn" id="btnAddSessaoCrono">+ Sessão no Cronograma</button>
+      <button type="button" class="actbtn" id="btnRevisarErrosIA" title="Acionar Skill estrategista-revisao sobre seus erros">⚡ Diagnosticar Erros (IA)</button>
+    </div>
+  </div>
+  <div id="cronoHost"></div>
+</section>
+
+<section id="exercicios">
+  <div class="shead">
+    <h2>Exercícios &amp; resoluções</h2>
+    <p>✓ acertei · ✗ errei · ? dúvida · Clique em 🔓 para destravar seção ou em N1–N4 para ajuda do Agente</p>
+    <div class="shead-actions">
+      <span class="syncbadge local" id="syncbadge">lendo pasta…</span>
+      <button type="button" class="relerbtn" id="btnRelerPasta" title="Relê os arquivos da pasta sem recarregar a página">reler a pasta</button>
+      <button type="button" class="actbtn primary" id="btnNovaLista">+ Nova Lista / Seção (1..N ou PDF)</button>
+    </div>
+  </div>
+  <div id="exhost"></div>
+  <p class="note">Nas questões pares do Stewart (sem gabarito no livro), o botão <b>N1–N4</b> aciona o Agente buscando automaticamente as questões ímpares vizinhas + gabarito no apêndice e confere a conta numericamente via Python (<span class="mono">scipy/numpy</span>).</p>
+</section>
+
+<section id="resumos">
+  <div class="shead">
+    <h2>Resumos</h2>
+    <p id="resumosSubtitulo"></p>
+    <div class="shead-actions">
+      <button type="button" class="actbtn" id="btnColarResumo">+ Novo / Colar Resumo (.md)</button>
+      <button type="button" class="actbtn primary" id="btnGerarResumoIA">🤖 Gerar Resumo da Seção (RAG)</button>
+    </div>
+  </div>
+  <div class="tabs" id="tabsResumos" role="tablist"></div>
+  <div class="mdpane">
+    <div class="mdsrc-bar">
+      <span class="mdsrc" id="srcResumos"></span>
+      <button type="button" class="actbtn small" id="btnEditarResumoAtual">✎ Editar este Markdown</button>
+    </div>
+    <div class="md" id="paneResumos"></div>
+  </div>
+</section>
+
+<section id="documentos">
+  <div class="shead">
+    <h2>Documentos &amp; PDFs da Pasta</h2>
+    <p>Plano, calendário, listas oficiais e PDFs servidos localmente</p>
+    <div class="shead-actions" id="pdfsQuickBar"></div>
+  </div>
+  <div class="tabs" id="tabsDocs" role="tablist"></div>
+  <div class="mdpane"><div class="mdsrc" id="srcDocs"></div><div class="md" id="paneDocs"></div></div>
+</section>
+
+<section id="formulario">
+  <div class="shead">
+    <h2 id="formTitulo">Formulário essencial</h2>
+    <p id="formSubtitulo"></p>
+    <div class="shead-actions">
+      <button type="button" class="actbtn primary" id="btnNovaFormula">+ Adicionar Fórmula</button>
+    </div>
+  </div>
+  <div class="forms" id="formHost"></div>
+</section>
+
+<section id="ajuda">
+  <div class="shead"><h2>Como funciona o Tutor Progressivo (N1 a N4)</h2><p>Acione direto nos botões de cada exercício ou pelo painel do Agente</p></div>
+  <div class="levels">
+    <div class="lvl"><span class="eyebrow">N1</span><strong>Dica</strong><p>Qual conceito ou teorema está em jogo, sem nenhuma conta.</p></div>
+    <div class="lvl"><span class="eyebrow">N2</span><strong>Caminho</strong><p>A estratégia da resolução passo a passo, ainda sem contas.</p></div>
+    <div class="lvl"><span class="eyebrow">N3</span><strong>Esboço</strong><p>Os passos com as contas-chave montadas, deixando lacunas para você fechar.</p></div>
+    <div class="lvl"><span class="eyebrow">N4</span><strong>Resolução completa</strong><p>No padrão de prova do professor, validada via <span class="mono">scipy</span> e salva em <span class="mono">resolucoes/</span>.</p></div>
+  </div>
+</section>
+
+<footer>
+  <span>Plataforma de Estudos Desktop · <span class="mono" id="footerDiscNome"></span></span>
+  <span class="mono" id="footerAtualizado"></span>
+</footer>
+</div>
+
+<!-- Drawer Lateral: Agente, RAG Estruturado em 2 Níveis & Skills -->
+<aside class="drawer-backdrop" id="drawerBackdrop" hidden>
+  <div class="drawer" role="dialog" aria-label="Painel do Agente, RAG e Skills">
+    <header class="drawer-head">
+      <div>
+        <span class="eyebrow">Motor Inteligente Local</span>
+        <h3>🤖 Agente, RAG em 2 Níveis &amp; Skills</h3>
+      </div>
+      <button type="button" class="closebtn" id="btnFecharAgente" aria-label="Fechar">✕</button>
+    </header>
+
+    <div class="drawer-tabs">
+      <button type="button" data-dtab="agente" aria-selected="true">⚡ Executar Skill</button>
+      <button type="button" data-dtab="rag" aria-selected="false">🔍 Explorar RAG (SQLite)</button>
+      <button type="button" data-dtab="skills" aria-selected="false">⚙ Skills (.md) &amp; API</button>
+    </div>
+
+    <!-- Aba 1: Executar Agente / Skill -->
+    <div class="drawer-body" id="dtab-agente">
+      <div class="form-grid">
+        <label>
+          <span class="eyebrow">Skill Ativa</span>
+          <select id="agSkill"></select>
+        </label>
+        <label>
+          <span class="eyebrow">Modo de Execução / Modelo</span>
+          <select id="agModoModelo">
+            <option value="api:gemini-3.8-flash">⚡ Agente API — Gemini 3.8 Flash (Rápido · Multi-Busca)</option>
+            <option value="api:gemini-4-argon">🧠 Agente API — Gemini 4 Argon (Raciocínio Profundo)</option>
+            <option value="pacote_rag:offline">📦 Empacotar RAG + Skill p/ Copiar (Offline · 0 Tokens API)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-grid three">
+        <label>
+          <span class="eyebrow">Seção / Lista (ex: 15.4, L5)</span>
+          <input type="text" id="agSecao" placeholder="15.4">
+        </label>
+        <label>
+          <span class="eyebrow">Nº Exercício (se Tutor)</span>
+          <input type="text" id="agNumero" placeholder="22">
+        </label>
+        <label>
+          <span class="eyebrow">Nível (Tutor)</span>
+          <select id="agNivel">
+            <option value="N1">N1 — Dica</option>
+            <option value="N2">N2 — Caminho</option>
+            <option value="N3">N3 — Esboço</option>
+            <option value="N4" selected>N4 — Resolução Completa (Salva em resolucoes/)</option>
+          </select>
+        </label>
+      </div>
+
+      <details class="anexo-box">
+        <summary>📄 Anexar Páginas de PDF da Pasta ou Fotos de Slides (Opcional)</summary>
+        <div class="anexo-inner">
+          <div class="form-grid three">
+            <label>
+              <span class="eyebrow">PDF da Pasta</span>
+              <select id="agPdfSelect"><option value="">— Nenhum —</option></select>
+            </label>
+            <label>
+              <span class="eyebrow">Pág. Início → Fim</span>
+              <div class="inline-inputs">
+                <input type="number" id="agPdfIni" value="1" min="1">
+                <input type="number" id="agPdfFim" value="3" min="1">
+              </div>
+            </label>
+            <label>
+              <span class="eyebrow">Extração Local (0 Tokens)</span>
+              <button type="button" class="actbtn" id="btnExtrairPdfAgente">Extrair Texto do PDF</button>
+            </label>
+          </div>
+          <label style="margin-top:8px">
+            <span class="eyebrow">Ou enviar imagens de slides/quadro (.png, .jpg)</span>
+            <input type="file" id="agImgsInput" accept="image/*" multiple>
+          </label>
+          <textarea id="agTextoAnexo" rows="3" placeholder="Texto extraído do PDF ou anotações da aula aparecerão aqui…"></textarea>
+        </div>
+      </details>
+
+      <label>
+        <span class="eyebrow">Instrução Adicional / Pergunta ao Agente (Opcional)</span>
+        <textarea id="agMensagem" rows="2" placeholder="Ex: Foque na descrição geométrica dos limites em polares…"></textarea>
+      </label>
+
+      <div class="drawer-actions">
+        <button type="button" class="actbtn primary big" id="btnRodarAgente">▶ Executar Agente com Multi-Busca no RAG</button>
+      </div>
+
+      <!-- Telemetria de Tools e Tokens + Resultado -->
+      <div id="agResultadoWrap" hidden>
+        <div class="telemetry-bar" id="agTelemetria"></div>
+        <div class="tool-calls-list" id="agToolsList"></div>
+        <div id="agCronoProposta" hidden></div>
+        <div class="ag-actions-bar" id="agCopyBar" hidden>
+          <button type="button" class="actbtn primary" id="btnCopiarPromptRag">📋 Copiar Prompt RAG Completo</button>
+          <button type="button" class="actbtn" id="btnAbrirColarMd">💾 Colar &amp; Salvar Markdown Gerado</button>
+        </div>
+        <div class="mdpane ag-output md" id="agOutputMd"></div>
+      </div>
+    </div>
+
+    <!-- Aba 2: Explorador do RAG Estruturado (2 Níveis) -->
+    <div class="drawer-body" id="dtab-rag" hidden>
+      <div class="rag-stats-bar" id="ragStatsBar">Carregando índice SQLite FTS5…</div>
+      <div class="form-grid three">
+        <label>
+          <span class="eyebrow">Modo de Inspeção no RAG</span>
+          <select id="ragModo">
+            <option value="fts">Nível 2 — Busca Cruzada BM25 (FTS5)</option>
+            <option value="secao_livro">Nível 1 — Ler Seção Teórica Completa do Livro</option>
+            <option value="exercicio">Contexto de Exercício (Pares + Vizinhos Ímpares + Gabarito)</option>
+          </select>
+        </label>
+        <label>
+          <span class="eyebrow">Consulta / Seção (ex: 15.4)</span>
+          <input type="text" id="ragQuery" placeholder="coordenadas polares jacobiano">
+        </label>
+        <label>
+          <span class="eyebrow">Filtro Seção / Nº Exercício</span>
+          <input type="text" id="ragSecaoOuNum" placeholder="15.4 ou 22">
+        </label>
+      </div>
+      <div class="drawer-actions">
+        <button type="button" class="actbtn primary" id="btnBuscarRag">🔍 Consultar Banco RAG Local</button>
+        <button type="button" class="actbtn" id="btnReindexarRag">🔄 Reindexar Pasta Completa</button>
+      </div>
+      <pre class="rag-preview mono" id="ragResultadoPre">Faça uma busca acima para inspecionar exatamente o que o RAG entrega ao Agente.</pre>
+    </div>
+
+    <!-- Aba 3: Editor de Skills (.md) e Configuração de API -->
+    <div class="drawer-body" id="dtab-skills" hidden>
+      <div class="config-card">
+        <span class="eyebrow">Configuração da Gemini API (Salva localmente em _app/dados/.config.json)</span>
+        <div class="form-grid">
+          <label>
+            <span class="eyebrow">Gemini API Key (Google AI Studio)</span>
+            <input type="password" id="cfgApiKey" placeholder="Cole sua chave AIza... (deixe em branco p/ manter)">
+          </label>
+          <div style="display:flex;align-items:flex-end;gap:8px">
+            <button type="button" class="actbtn primary" id="btnSalvarApiKey">Salvar API Key</button>
+            <span class="mono" id="cfgKeyStatus" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <div class="form-grid">
+          <label>
+            <span class="eyebrow">Selecionar Skill (.md) para Editar ou Criar</span>
+            <select id="selSkillEdit"></select>
+          </label>
+          <div style="display:flex;align-items:flex-end;gap:8px">
+            <button type="button" class="actbtn" id="btnNovaSkill">+ Criar Nova Skill</button>
+            <button type="button" class="actbtn primary" id="btnSalvarSkill">💾 Salvar Skill (.md)</button>
+          </div>
+        </div>
+        <textarea class="mono skill-editor" id="txtSkillConteudo" rows="16"></textarea>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Modal Genérico para Criação/Edição Rápida (Zero Tokens) -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-labelledby="modalTitulo">
+    <header class="drawer-head">
+      <h3 id="modalTitulo">Editar</h3>
+      <button type="button" class="closebtn" id="btnFecharModal">✕</button>
+    </header>
+    <div class="modal-body" id="modalCorpo"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
