@@ -97,7 +97,8 @@ def remover_repetidos(paginas: list[str]) -> list[str]:
 
 def abrir_pdf(caminho: Path, limite_paginas: int | None = None) -> DocumentoPdf:
     try:
-        doc = pymupdf.open(str(caminho))
+        # Abre a partir dos bytes: no Windows, um PDF que falha ao abrir ficaria preso pelo PyMuPDF
+        doc = pymupdf.open(stream=caminho.read_bytes(), filetype="pdf")
     except Exception as e:  # PyMuPDF levanta tipos variados para arquivo inválido
         raise PdfInvalido(f"Não foi possível abrir {caminho.name} como PDF: {e}") from None
     with doc:

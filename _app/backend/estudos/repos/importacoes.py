@@ -4,7 +4,7 @@ import datetime
 import json
 import sqlite3
 
-from estudos.erros import DadoInvalido, NaoEncontrado
+from estudos.erros import Conflito, NaoEncontrado
 from estudos.modelos import ESTADOS_IMPORTACAO, Importacao, exigir_opcao
 
 
@@ -50,7 +50,7 @@ def listar(con: sqlite3.Connection, estado: str | None = None) -> list[Importaca
 def atualizar_proposta(con: sqlite3.Connection, importacao_id: int, proposta: dict, tipo: str | None = None) -> None:
     atual = obter(con, importacao_id)
     if atual.estado != "proposta":
-        raise DadoInvalido(f"A importação {importacao_id} já está '{atual.estado}' e não pode mais ser editada.")
+        raise Conflito(f"A importação {importacao_id} já está '{atual.estado}' e não pode mais ser editada.")
     con.execute(
         "UPDATE importacao SET proposta_json = ?, tipo = ? WHERE id = ?",
         (json.dumps(proposta, ensure_ascii=False), tipo or atual.tipo, importacao_id),

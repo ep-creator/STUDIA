@@ -10,7 +10,7 @@ import sqlite3
 from pathlib import Path, PurePath
 
 from estudos.config import Settings
-from estudos.erros import DadoInvalido
+from estudos.erros import Conflito, DadoInvalido
 from estudos.historico import Operacao, operacao
 from estudos.importacao.classificador import TIPOS, Classificacao, classificar
 from estudos.importacao.idioma import normalizar
@@ -256,7 +256,7 @@ def reprocessar(con, raiz: Path, importacao_id: int, tipo: str, settings: Settin
         raise DadoInvalido(f"Tipo desconhecido: {tipo}")
     imp = importacoes.obter(con, importacao_id)
     if imp.estado != "proposta":
-        raise DadoInvalido(f"A importação {importacao_id} já está '{imp.estado}'.")
+        raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     fonte = _base.obter(con, "fonte", {"id": imp.fonte_id})
     doc = abrir_pdf(caminho_seguro(raiz, fonte["caminho"]))
     proposta = propor(con, doc, tipo, Path(fonte["caminho"]).name, settings, None)
@@ -269,7 +269,7 @@ def reprocessar(con, raiz: Path, importacao_id: int, tipo: str, settings: Settin
 def descartar(con, importacao_id: int) -> None:
     imp = importacoes.obter(con, importacao_id)
     if imp.estado != "proposta":
-        raise DadoInvalido(f"A importação {importacao_id} já está '{imp.estado}'.")
+        raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     importacoes.marcar(con, importacao_id, "descartada")
 
 
@@ -433,7 +433,7 @@ def _aplicar_lista(op: Operacao, proposta: dict, fonte_id: int, resumo: dict) ->
 def confirmar(con, raiz: Path, importacao_id: int) -> dict:
     imp = importacoes.obter(con, importacao_id)
     if imp.estado != "proposta":
-        raise DadoInvalido(f"A importação {importacao_id} já está '{imp.estado}'.")
+        raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     fonte = _base.obter(con, "fonte", {"id": imp.fonte_id})
     resumo = dict.fromkeys(("unidades", "topicos", "eventos", "secoes", "listas", "questoes", "vinculos", "criterios"), 0)
     with operacao(con, f"Importar {Path(fonte['caminho']).name}", raiz) as op:
