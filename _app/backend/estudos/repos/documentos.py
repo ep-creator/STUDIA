@@ -69,14 +69,24 @@ def salvar(
 
 
 def listar(con: sqlite3.Connection, tipo: str | None = None, unidade_id: int | None = None) -> list[Documento]:
-    sql, params = "SELECT * FROM documento WHERE 1 = 1", []
+    """Com `unidade_id`: documentos da unidade, os que a têm como unidade extra e os globais (sem unidade)."""
+    sql, params = "SELECT * FROM documento d WHERE 1 = 1", []
     if tipo is not None:
-        sql += " AND tipo = ?"
+        sql += " AND d.tipo = ?"
         params.append(tipo)
     if unidade_id is not None:
-        sql += " AND unidade_id = ?"
-        params.append(unidade_id)
-    return [Documento(**dict(l)) for l in con.execute(sql + " ORDER BY caminho", params)]
+        sql += (
+            " AND (d.unidade_id = ? OR d.unidade_id IS NULL OR EXISTS ("
+            "SELECT 1 FROM documento_unidade_extra e WHERE e.documento_id = d.id AND e.unidade_id = ?))"
+        )
+        params += [unidade_id, unidade_id]
+    return [Documento(**dict(l)) for l in con.execute(sql + " ORDER BY d.caminho", params)]
+
+
+def adicionar_unidade_extra(op: Operacao, documento_id: int, unidade_id: int) -> None:
+    chave = {"documento_id": documento_id, "unidade_id": unidade_id}
+    if _base.obter(op.con, "documento_unidade_extra", chave) is None:
+        _base.inserir(op, "documento_unidade_extra", chave)
 
 
 def obter(con: sqlite3.Connection, documento_id: int) -> Documento:

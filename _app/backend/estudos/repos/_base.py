@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 TABELAS_PERMITIDAS = frozenset({
     "materia", "unidade", "evento", "horario_aula", "topico", "fonte", "livro", "secao_livro", "topico_secao",
     "lista", "lista_secao", "lista_topico", "questao", "marcacao", "sessao_estudo", "sessao_questao", "formula",
-    "documento", "nota_avaliacao", "criterio_correcao",
+    "documento", "nota_avaliacao", "criterio_correcao", "documento_unidade_extra", "secao_equivalente",
 })
 
 

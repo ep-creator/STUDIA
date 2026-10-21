@@ -61,6 +61,7 @@ class Topico:
     titulo: str
     status: str
     origem: str
+    detalhe_md: str
 
 
 @dataclass(frozen=True)

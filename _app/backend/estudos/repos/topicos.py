@@ -12,6 +12,7 @@ def criar(
     pai_id: int | None = None,
     ordem: int | None = None,
     origem: str = "manual",
+    detalhe_md: str = "",
 ) -> int:
     exigir_opcao(origem, ORIGENS, "origem")
     if ordem is None:
@@ -20,7 +21,7 @@ def criar(
             (unidade_id, pai_id),
         ).fetchone()[0]
     return _base.inserir(op, "topico", {
-        "unidade_id": unidade_id, "pai_id": pai_id, "ordem": ordem, "titulo": titulo, "origem": origem,
+        "unidade_id": unidade_id, "pai_id": pai_id, "ordem": ordem, "titulo": titulo, "origem": origem, "detalhe_md": detalhe_md,
     })
 
 
