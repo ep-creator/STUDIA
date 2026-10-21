@@ -136,6 +136,11 @@ Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, p
   `http://127.0.0.1:8790` e abre a documentação interativa da API em `/docs`.
 - **Rodar os testes:** dentro de `_app/backend`, `.venv/Scripts/python -m pytest`.
 - **Configuração:** `_app/config.toml` (porta, limiares de confiança da importação, tamanho do histórico de desfazer).
+- **Importar materiais (sem IA):** `POST /api/materias/{uid}/importacoes` com o PDF (programa, calendário, informações
+  da turma, livro, lista de exercícios, slides, prova). A plataforma classifica o arquivo, extrai unidades, datas de
+  prova, tópicos, sumário do livro, questões e critérios por regras, liga tópicos ↔ seções ↔ listas por similaridade e
+  devolve uma **proposta** para revisar (itens com pouca confiança vêm marcados com `"revisar": true`). Nada é gravado
+  até `POST …/importacoes/{id}/confirmar`; reimportar uma lista só acrescenta questões (modo `mesclar`), sem apagar marcações.
 - **Migrar de novo antes do corte:** enquanto o app atual for o de uso diário, as marcações e edições feitas nele
   podem ser trazidas para o motor novo com `python -m estudos.migracao "../../Calculo 2"` (dentro de `_app/backend`, com o
   ambiente ativo). A matéria nova é reconstruída a partir do legado, mantendo o mesmo identificador; o resultado sai em

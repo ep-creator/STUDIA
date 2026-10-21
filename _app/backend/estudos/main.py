@@ -6,14 +6,17 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from estudos.api import cronograma, documentos, formulas, historico, listas, marcacoes, materias, painel, topicos, unidades
+from estudos.api import (
+    cronograma, documentos, formulas, historico, importacoes, listas, marcacoes, materias, painel, topicos, unidades,
+)
 from estudos.config import Settings
-from estudos.erros import DadoInvalido, NaoEncontrado
+from estudos.erros import ArquivoGrande, Conflito, DadoInvalido, NaoEncontrado
+from estudos.importacao.pdf import PdfInvalido
 from estudos.seguranca import CaminhoInvalido, OrigemLocalMiddleware
 
 ROUTERS = (
     materias.router, painel.router, marcacoes.router, historico.router, unidades.router, topicos.router,
-    listas.router, cronograma.router, formulas.router, documentos.router,
+    listas.router, cronograma.router, formulas.router, documentos.router, importacoes.router,
 )
 
 
@@ -33,7 +36,10 @@ def create_app(settings: Settings) -> FastAPI:
     app.state.settings = settings
     app.add_middleware(OrigemLocalMiddleware, porta=settings.porta)
     app.add_exception_handler(NaoEncontrado, _erro(404))
+    app.add_exception_handler(Conflito, _erro(409))
     app.add_exception_handler(DadoInvalido, _erro(422))
+    app.add_exception_handler(PdfInvalido, _erro(422))
+    app.add_exception_handler(ArquivoGrande, _erro(413))
     app.add_exception_handler(CaminhoInvalido, _erro(422))
     app.add_exception_handler(sqlite3.IntegrityError, _erro(409))
     app.add_exception_handler(RequestValidationError, _erro_validacao)

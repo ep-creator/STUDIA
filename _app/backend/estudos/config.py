@@ -7,7 +7,8 @@ from pathlib import Path
 # Seção do config.toml -> {chave no arquivo: campo de Settings}
 _MAPA_TOML = {
     "servidor": {"host": "host", "porta": "porta"},
-    "importacao": {"limiar_confianca": "limiar_confianca", "limiar_vinculo": "limiar_vinculo"},
+    "importacao": {"limiar_confianca": "limiar_confianca", "limiar_vinculo": "limiar_vinculo",
+                   "limite_upload_mb": "limite_upload_mb"},
     "historico": {"max_grupos": "historico_max_grupos"},
 }
 
@@ -21,6 +22,7 @@ class Settings:
     limiar_confianca: float = 0.75
     limiar_vinculo: float = 0.35
     historico_max_grupos: int = 500
+    limite_upload_mb: int = 200
 
 
 def carregar_settings(app_dir: Path, workspace: Path | None = None) -> Settings:

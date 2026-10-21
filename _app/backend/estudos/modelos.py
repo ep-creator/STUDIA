@@ -189,3 +189,33 @@ class SecaoLivro:
     pagina_pdf_fim: int
     origem: str
     confianca: float | None
+
+
+ESTADOS_IMPORTACAO = ("proposta", "confirmada", "descartada")
+
+
+@dataclass(frozen=True)
+class Importacao:
+    id: int
+    fonte_id: int
+    tipo: str
+    estado: str
+    proposta: dict
+    criada_em: str
+    confirmada_em: str | None
+
+
+@dataclass(frozen=True)
+class HorarioAula:
+    id: int
+    dia_semana: int
+    hora_inicio: str
+    hora_fim: str
+
+
+@dataclass(frozen=True)
+class Criterio:
+    id: int
+    ordem: int
+    texto: str
+    origem: str
