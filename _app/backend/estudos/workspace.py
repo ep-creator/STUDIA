@@ -2,6 +2,7 @@
 
 import datetime
 import re
+import sqlite3
 import uuid
 from contextlib import closing
 from dataclasses import dataclass
@@ -70,8 +71,8 @@ def descobrir_materias(workspace: Path) -> list[MateriaRef]:
         if pasta.is_dir() and pasta.name[0] not in "_." and (pasta / ARQUIVO_DB).is_file():
             try:
                 refs.append(_ler_ref(pasta))
-            except NaoEncontrado:
-                continue
+            except (NaoEncontrado, sqlite3.DatabaseError):
+                continue  # banco vazio, corrompido ou de outro programa: não derruba as outras matérias
     return sorted(refs, key=lambda r: r.nome.casefold())
 
 

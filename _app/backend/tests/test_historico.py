@@ -107,3 +107,27 @@ def test_podar(con):
             _unidade(op, n)
     assert podar(con, 2) == 3
     assert [g.descricao for g in listar(con)] == ["u5", "u4"]
+
+
+def test_desfazer_remocao_unidade_com_arvore_de_topicos(con):
+    from estudos.repos import topicos
+
+    with operacao(con, "base") as op:
+        u = _unidade(op)
+        a = topicos.criar(op, u, "A")
+        b = topicos.criar(op, u, "B", pai_id=a)
+        topicos.criar(op, u, "C", pai_id=b)
+    antes = [tuple(r) for r in con.execute("SELECT * FROM topico ORDER BY id")]
+    with operacao(con, "remover unidade") as op:
+        remover(op, "unidade", {"id": u})
+    desfazer_ultimo(con)
+    assert [tuple(r) for r in con.execute("SELECT * FROM topico ORDER BY id")] == antes
+
+
+def test_poda_nao_transforma_desfazer_em_acao_comum(con):
+    with operacao(con, "A") as op:
+        uid = _unidade(op, 7)
+    desfazer_ultimo(con)
+    podar(con, 1)
+    assert desfazer_ultimo(con) is None
+    assert obter(con, "unidade", {"id": uid}) is None

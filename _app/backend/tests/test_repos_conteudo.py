@@ -110,3 +110,24 @@ def test_podar_remove_versoes_de_arquivo(con, materia, u):
     assert len(versoes) == 2
     podar(con, 1, materia.pasta)
     assert len([p for p in (materia.pasta / ".versoes").rglob("*.md") if p.is_file()]) == 1
+
+
+def test_falha_no_banco_desfaz_escrita_do_arquivo(con, materia, u):
+    import sqlite3
+
+    with operacao(con, "v1", materia.pasta) as op:
+        documentos.salvar(op, "resumo", "a", "A", "ORIGINAL")
+    with pytest.raises(sqlite3.IntegrityError):
+        with operacao(con, "v2", materia.pasta) as op:
+            documentos.salvar(op, "resumo", "a", "A", "NOVO", unidade_id=999)
+    assert documentos.ler_corpo(materia.pasta, documentos.listar(con)[0]) == "ORIGINAL"
+    assert [p for p in (materia.pasta / ".versoes").rglob("*.md") if p.is_file()] == []
+
+
+def test_falha_desfaz_criacao_de_arquivo_novo(con, materia, u):
+    import sqlite3
+
+    with pytest.raises(sqlite3.IntegrityError):
+        with operacao(con, "novo", materia.pasta) as op:
+            documentos.salvar(op, "resumo", "b", "B", "x", unidade_id=999)
+    assert not (materia.pasta / "conteudo/resumos/b.md").exists()

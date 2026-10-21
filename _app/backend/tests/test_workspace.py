@@ -46,3 +46,11 @@ def test_abrir_por_uid(tmp_path):
 def test_abrir_por_uid_inexistente(tmp_path):
     with pytest.raises(NaoEncontrado):
         abrir_materia(tmp_path, "naoexiste")
+
+
+def test_banco_corrompido_e_ignorado(tmp_path):
+    criar_materia(tmp_path, "Boa")
+    ruim = tmp_path / "Ruim"
+    ruim.mkdir()
+    (ruim / "materia.db").write_bytes(b"isto nao e um banco sqlite" * 100)
+    assert [m.nome for m in descobrir_materias(tmp_path)] == ["Boa"]

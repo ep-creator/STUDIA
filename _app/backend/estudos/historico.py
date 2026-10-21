@@ -34,6 +34,7 @@ class Operacao:
         self.grupo_id = grupo_id
         self.raiz = raiz
         self._ordem = 0
+        self._arquivos: list[tuple[str, str | None]] = []
 
     @property
     def total_mudancas(self) -> int:
@@ -58,16 +59,36 @@ class Operacao:
 
     def registrar_arquivo(self, caminho_rel: str, versao_rel: str | None) -> None:
         self._inserir(arquivo=caminho_rel, versao_arquivo=versao_rel)
+        self._arquivos.append((caminho_rel, versao_rel))
+
+    def compensar_arquivos(self) -> None:
+        """Rollback dos arquivos: devolve cada um ao estado de antes da operação e apaga as versões criadas nela."""
+        for caminho_rel, versao_rel in reversed(self._arquivos):
+            try:
+                alvo = caminho_seguro(self.raiz, caminho_rel)
+                if versao_rel is None:
+                    alvo.unlink(missing_ok=True)
+                    continue
+                versao = caminho_seguro(self.raiz, versao_rel)
+                shutil.copy2(versao, alvo)
+                versao.unlink()
+            except OSError:
+                continue  # a exceção original da operação é a que importa
 
 
 @contextmanager
 def operacao(con: sqlite3.Connection, descricao: str, raiz: Path | None = None) -> Iterator[Operacao]:
+    """Uma ação: transação + grupo de histórico. Se falhar, banco e arquivos voltam juntos ao estado anterior."""
     with transacao(con):
         cursor = con.execute(
             "INSERT INTO historico_grupo (momento, descricao) VALUES (?, ?)", (_agora(), descricao)
         )
         op = Operacao(con, cursor.lastrowid, raiz)
-        yield op
+        try:
+            yield op
+        except BaseException:
+            op.compensar_arquivos()
+            raise
         if op.total_mudancas == 0:
             con.execute("DELETE FROM historico_grupo WHERE id = ?", (op.grupo_id,))
 
@@ -115,7 +136,7 @@ def _desfazer_mudanca(op: Operacao, mudanca: sqlite3.Row) -> None:
 def desfazer_ultimo(con: sqlite3.Connection, raiz: Path | None = None) -> GrupoHistorico | None:
     with transacao(con):
         original = con.execute(
-            "SELECT * FROM historico_grupo WHERE desfeito_em IS NULL AND desfaz_grupo IS NULL ORDER BY id DESC LIMIT 1"
+            "SELECT * FROM historico_grupo WHERE desfeito_em IS NULL AND eh_desfazer = 0 ORDER BY id DESC LIMIT 1"
         ).fetchone()
         if original is None:
             return None
@@ -123,7 +144,9 @@ def desfazer_ultimo(con: sqlite3.Connection, raiz: Path | None = None) -> GrupoH
             "SELECT * FROM historico_mudanca WHERE grupo_id = ? ORDER BY ordem DESC", (original["id"],)
         ).fetchall()
         with operacao(con, f"Desfazer: {original['descricao']}", raiz) as op:
-            con.execute("UPDATE historico_grupo SET desfaz_grupo = ? WHERE id = ?", (original["id"], op.grupo_id))
+            con.execute(
+                "UPDATE historico_grupo SET desfaz_grupo = ?, eh_desfazer = 1 WHERE id = ?", (original["id"], op.grupo_id)
+            )
             for mudanca in mudancas:
                 _desfazer_mudanca(op, mudanca)
         con.execute("UPDATE historico_grupo SET desfeito_em = ? WHERE id = ?", (_agora(), original["id"]))

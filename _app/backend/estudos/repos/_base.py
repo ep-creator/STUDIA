@@ -63,12 +63,16 @@ def _atualizar_linha(con: sqlite3.Connection, tabela: str, chave: dict, valores:
     con.execute(f"UPDATE {tabela} SET {atribuicoes} WHERE {filtro}", [*valores.values(), *params])
 
 
-def _registrar_dependentes(op: Operacao, tabela: str, linha: dict) -> None:
+def _registrar_dependentes(op: Operacao, tabela: str, linha: dict, visitados: set | None = None) -> None:
     """Registra as linhas que o banco vai apagar (CASCADE) ou anular (SET NULL) junto com `linha`.
 
     Filhos são registrados antes do pai, para que o desfazer (ordem inversa) reinsira o pai primeiro.
+    Uma linha alcançável por dois caminhos (ex.: tópico via unidade_id e via pai_id) é registrada uma única vez,
+    na primeira visita em pós-ordem — senão o desfazer reinseriria um filho antes do pai.
     """
     con = op.con
+    if visitados is None:
+        visitados = set()
     for filha in sorted(TABELAS_PERMITIDAS):
         for fk in con.execute(f"PRAGMA foreign_key_list({filha})").fetchall():
             if fk["table"] != tabela or fk["on_delete"] not in ("CASCADE", "SET NULL"):
@@ -76,8 +80,12 @@ def _registrar_dependentes(op: Operacao, tabela: str, linha: dict) -> None:
             filhos = con.execute(f"SELECT * FROM {filha} WHERE {fk['from']} = ?", (linha[fk["to"]],)).fetchall()
             for filho in map(dict, filhos):
                 chave = _chave_da_linha(con, filha, filho)
+                marca = (filha, tuple(sorted(chave.items())))
+                if marca in visitados:
+                    continue
+                visitados.add(marca)
                 if fk["on_delete"] == "CASCADE":
-                    _registrar_dependentes(op, filha, filho)
+                    _registrar_dependentes(op, filha, filho, visitados)
                     op.registrar(filha, chave, filho, None)
                 else:
                     op.registrar(filha, chave, filho, {**filho, fk["from"]: None})
