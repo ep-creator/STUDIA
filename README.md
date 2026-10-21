@@ -136,3 +136,7 @@ Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, p
   `http://127.0.0.1:8790` e abre a documentação interativa da API em `/docs`.
 - **Rodar os testes:** dentro de `_app/backend`, `.venv/Scripts/python -m pytest`.
 - **Configuração:** `_app/config.toml` (porta, limiares de confiança da importação, tamanho do histórico de desfazer).
+- **Migrar de novo antes do corte:** enquanto o app atual for o de uso diário, as marcações e edições feitas nele
+  podem ser trazidas para o motor novo com `python -m estudos.migracao "../../Calculo 2"` (dentro de `_app/backend`, com o
+  ambiente ativo). A matéria nova é reconstruída a partir do legado, mantendo o mesmo identificador; o resultado sai em
+  `Calculo 2/.migracao/relatorio.md`. Se já houver ações feitas no app novo, a migração recusa (use `--forcar` para descartá-las).
