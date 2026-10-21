@@ -11,6 +11,8 @@ LIBERACOES = ("auto", "aberta", "travada")
 ESTADOS_MARCACAO = ("ok", "err", "dub")
 LINHAS = (1, 2)
 TIPOS_DOCUMENTO = ("resumo", "resolucao", "plano", "anotacao", "contexto")
+TIPOS_FONTE = ("programa", "calendario", "turma", "livro", "lista", "slides", "prova", "anotacao", "outro")
+PAPEIS_LIVRO = ("principal", "complementar")
 
 
 def exigir_opcao(valor: str, opcoes: tuple[str, ...], campo: str) -> str:
@@ -61,6 +63,7 @@ class Topico:
     titulo: str
     status: str
     origem: str
+    detalhe_md: str
 
 
 @dataclass(frozen=True)
@@ -149,3 +152,40 @@ class Formula:
     notas_md: str
     ordem: int
     origem: str
+
+
+@dataclass(frozen=True)
+class Fonte:
+    id: int
+    tipo: str
+    caminho: str
+    sha256: str
+    titulo: str
+    paginas: int | None
+    importada_em: str
+    origem: str
+
+
+@dataclass(frozen=True)
+class Livro:
+    fonte_id: int
+    papel: str
+    autor: str
+    titulo_obra: str
+    edicao: str
+    offset_pagina: int
+    gabarito_pdf_ini: int | None
+    gabarito_pdf_fim: int | None
+
+
+@dataclass(frozen=True)
+class SecaoLivro:
+    id: int
+    livro_id: int
+    codigo: str
+    titulo: str
+    nivel: int
+    pagina_pdf_ini: int
+    pagina_pdf_fim: int
+    origem: str
+    confianca: float | None

@@ -23,6 +23,7 @@ Refatoração Site Estudos/
 ├── README.md                           # Este guia geral da estrutura e funcionamento
 ├── docs/                               # Documentação técnica para manutenção a longo prazo
 │   ├── ARQUITETURA_E_FUNCIONAMENTO.md  # Funcionamento interno (Servidor, JSONs, RAG 2 níveis e Agente)
+│   ├── ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md # Raio-X de API calls, tokens, custos (US$/R$) e delays
 │   └── FLUXO_GIT_E_MANUTENCAO.md       # Árvore de branches (main/dev), convenções e comandos Git
 │
 └── Calculo 2/                          # Pasta da Disciplina (novas cadeiras seguem este mesmo molde)
@@ -120,7 +121,8 @@ flowchart LR
 Para detalhes técnicos de manutenção e fluxo de versionamento, consulte a pasta [`docs/`](./docs/):
 
 1. **[`docs/ARQUITETURA_E_FUNCIONAMENTO.md`](./docs/ARQUITETURA_E_FUNCIONAMENTO.md)** — Como funcionam os schemas JSON, as rotas da API, o RAG em 2 níveis (incluindo a resolução de exercícios pares do Stewart sem gabarito) e o loop de *Function Calling* do Agente.
-2. **[`docs/FLUXO_GIT_E_MANUTENCAO.md`](./docs/FLUXO_GIT_E_MANUTENCAO.md)** — Árvore do Git (`main` + `dev`), convenção de commits e guia passo a passo para evoluir o código sem misturar com o progresso diário de estudos.
+2. **[`docs/ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md`](./docs/ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md)** — Análise computacional completa dos fluxos, efeito cumulativo de tokens por turno, tabelas de preços de API (US\$ e R\$) e origem de cada milissegundo de latência (disco/SQLite/SciPy vs. rede/inferência).
+3. **[`docs/FLUXO_GIT_E_MANUTENCAO.md`](./docs/FLUXO_GIT_E_MANUTENCAO.md)** — Árvore do Git (`main` + `dev`), convenção de commits e guia passo a passo para evoluir o código sem misturar com o progresso diário de estudos.
 
 ---
 
@@ -134,3 +136,7 @@ Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, p
   `http://127.0.0.1:8790` e abre a documentação interativa da API em `/docs`.
 - **Rodar os testes:** dentro de `_app/backend`, `.venv/Scripts/python -m pytest`.
 - **Configuração:** `_app/config.toml` (porta, limiares de confiança da importação, tamanho do histórico de desfazer).
+- **Migrar de novo antes do corte:** enquanto o app atual for o de uso diário, as marcações e edições feitas nele
+  podem ser trazidas para o motor novo com `python -m estudos.migracao "../../Calculo 2"` (dentro de `_app/backend`, com o
+  ambiente ativo). A matéria nova é reconstruída a partir do legado, mantendo o mesmo identificador; o resultado sai em
+  `Calculo 2/.migracao/relatorio.md`. Se já houver ações feitas no app novo, a migração recusa (use `--forcar` para descartá-las).

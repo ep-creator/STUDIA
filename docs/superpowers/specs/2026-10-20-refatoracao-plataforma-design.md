@@ -74,6 +74,12 @@ Refatoração Site Estudos/
     └── .versoes/                  # versões anteriores de arquivos .md (para desfazer)
 ```
 
+**Convivência até o corte (Fase 5):** a matéria nova e as pastas do app legado ficam na mesma pasta (ex.: `Calculo 2/` tem
+`resumos/`, `_app/` etc. do legado **e** `materia.db`, `fontes/`, `conteudo/` do motor novo). PDFs e figuras entram por
+**hardlink** (mesmo arquivo, sem espaço extra); o legado continua lendo os seus caminhos. A pasta `legado/` só é criada no corte.
+A migração (`python -m estudos.migracao`) reconstrói a matéria nova a partir do legado quantas vezes for preciso e grava
+`.migracao/relatorio.md`.
+
 Uma pasta do workspace é matéria **se e somente se** contém `materia.db`. Nome da pasta = nome de exibição inicial;
 o identificador estável é `materia.id` dentro do banco, nunca o nome da pasta.
 
@@ -125,10 +131,11 @@ Convenções: PK `id INTEGER`; datas ISO-8601 (`TEXT`); `origem TEXT CHECK (orig
 | `unidade` | `id, numero, titulo, origem, confianca` | `numero` único; quantidade livre |
 | `evento` | `id, tipo, data, hora_inicio, hora_fim, unidade_id?, descricao, origem` | `tipo ∈ aula, prova, segunda_chamada, exame_final, extra, feriado`; data da prova = evento `prova` da unidade |
 | `horario_aula` | `id, dia_semana, hora_inicio, hora_fim` | vindo do info da turma |
-| `topico` | `id, unidade_id, pai_id?, ordem, titulo, status, origem` | `status ∈ pendente, proxima, visto`; hierarquia ○/• do programa; substitui "Onde estamos" |
+| `topico` | `id, unidade_id, pai_id?, ordem, titulo, status, origem, detalhe_md` | `status ∈ pendente, proxima, visto`; hierarquia ○/• do programa; substitui "Onde estamos" |
 | `fonte` | `id, tipo, caminho, sha256, titulo, paginas, importada_em, origem` | `tipo ∈ programa, calendario, turma, livro, lista, slides, prova, anotacao, outro`; `sha256` único (evita duplicata) |
 | `livro` | `fonte_id, papel, autor, titulo_obra, edicao, offset_pagina, gabarito_pdf_ini?, gabarito_pdf_fim?` | `papel ∈ principal, complementar` (da bibliografia) |
 | `secao_livro` | `id, livro_id, codigo, titulo, nivel, pagina_pdf_ini, pagina_pdf_fim, origem, confianca` | `codigo` "15.8", "8" etc.; `UNIQUE(livro_id, codigo)` |
+| `secao_equivalente` | `secao_id, equivalente_id` | seções equivalentes entre livros (Guidorizzi cap. 8 ↔ Stewart 14.1), gravadas nos dois sentidos |
 | `topico_secao` | `topico_id, secao_id, confianca, confirmado` | vínculo programa ↔ livro |
 | `lista` | `id, codigo, titulo, unidade_id, fonte_id?, liberacao, ordem, origem` | `liberacao ∈ auto, aberta, travada` |
 | `lista_secao` | `lista_id, secao_id` | seções que a lista cobre |
@@ -138,7 +145,8 @@ Convenções: PK `id INTEGER`; datas ISO-8601 (`TEXT`); `origem TEXT CHECK (orig
 | `sessao_estudo` | `id, unidade_id, codigo, data, foco_md, feito, ordem, origem` | cronograma |
 | `sessao_questao` | `sessao_id, questao_id` | exercícios da sessão (substitui colunas "x" livres) |
 | `formula` | `id, unidade_id, secao_id?, titulo, corpo_tex, notas_md, ordem, origem` | |
-| `documento` | `id, tipo, caminho, titulo, unidade_id?, secao_id?, questao_id?, origem, atualizado_em` | `tipo ∈ resumo, resolucao, plano, anotacao, contexto`; espelha o frontmatter do .md |
+| `documento` | `id, tipo, caminho, titulo, unidade_id?, secao_id?, questao_id?, origem, atualizado_em` | `tipo ∈ resumo, resolucao, plano, anotacao, contexto`; espelha o frontmatter do .md; `unidade_id` NULL = vale para todas |
+| `documento_unidade_extra` | `documento_id, unidade_id` | unidades adicionais em que o documento aparece |
 | `nota_avaliacao` | `unidade_id PK, nota, registrada_em` | nota como dado, não como tag |
 | `criterio_correcao` | `id, ordem, texto, origem` | do info da turma; alimenta o agente |
 | `historico_grupo` | `id, momento, descricao, desfaz_grupo?, desfeito_em?` | uma ação do usuário; ver §7 |
@@ -257,7 +265,7 @@ revisão com destaques de confiança); histórico; agente (porta do painel atual
 | Fase | Entrega | Critério de pronto |
 |---|---|---|
 | 1. Fundação do backend | `_app/backend` com config, segurança, workspace, SQLite+migrações, repos, histórico, API CRUD básica, testes | `pytest` verde; servidor sobe em porta própria ao lado do legado |
-| 2. Migração de Cálculo 2 | script idempotente legado → `materia.db` + reorganização de pastas + frontmatter | contagens batem (marcações, questões, resumos, resoluções, sessões, fórmulas); legado congelado em `legado/` |
+| 2. Migração de Cálculo 2 | `estudos.migracao`: legado → `materia.db` + `fontes/` (hardlink) + `conteudo/` com frontmatter, por regras explícitas | `relatorio.bate()` e teste com os dados reais verdes; legado intacto (o congelamento em `legado/` passa para a Fase 5) |
 | 3. Importação por regras | `pdf.py`, classificador, parsers, vínculo, pipeline, rotas de revisão | os PDFs reais de Cálculo 2 viram propostas corretas (testes com fixtures reais) |
 | 4. RAG novo | indexador incremental com remoção, livros por seção, busca filtrada | buscas de referência retornam as seções esperadas; reindexação idempotente |
 | 5. Frontend novo | Svelte com todas as telas e KaTeX | paridade de uso diário com o legado; criar matéria nova só com cliques |

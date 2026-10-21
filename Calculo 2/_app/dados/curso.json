@@ -185,10 +185,24 @@
         },
         "16": {
           "titulo": "Máximos e mínimos e Multiplicadores de Lagrange",
-          "pgLivro": 310,
-          "pgPdf": 325,
-          "pgFimPdf": 360,
+          "pgLivro": 307,
+          "pgPdf": 322,
+          "pgFimPdf": 355,
+          "corresp": "14.7, 14.8"
+        },
+        "15": {
+          "titulo": "Teorema do valor médio e Fórmula de Taylor com resto de Lagrange",
+          "pgLivro": 288,
+          "pgPdf": 303,
+          "pgFimPdf": 321,
           "corresp": "14.7"
+        },
+        "16.5": {
+          "titulo": "Máximos e mínimos condicionados — Multiplicadores de Lagrange",
+          "pgLivro": 323,
+          "pgPdf": 338,
+          "pgFimPdf": 355,
+          "corresp": "14.8"
         }
       }
     }
@@ -939,7 +953,9 @@
           "titulo": "Mais da metade é integral tripla",
           "tag": "33 exercícios de linha 1",
           "colunas": [
+            "#",
             "Bloco",
+            "Assunto",
             "Seções",
             "Linha 1"
           ],
@@ -1247,9 +1263,9 @@
       "formulario": [
         {
           "titulo": "Integral dupla em coordenadas polares (15.4)",
-          "fml": "x = r cos θ,   y = r sen θ,   r² = x² + y²\ndA = r dr dθ   ← NUNCA esqueça o fator r\n\n∬_R f(x,y) dA = ∫_α^β ∫_{h₁(θ)}^{h₂(θ)} f(r cos θ, r sen θ) r dr dθ",
+          "fml": "x = r cos θ,  y = r sen θ,  x² + y² = r²,  dA = r dr dθ\n∬_D f(x,y) dA = ∫_α^β ∫_{h₁(θ)}^{h₂(θ)} f(r cos θ, r sen θ) r dr dθ",
           "notas": [
-            "Círculo deslocado <span class=\"mono\">(x−a)² + y² = a²</span> vira <span class=\"mono\">r = 2a cos θ</span> com <span class=\"mono\">θ ∈ [−π/2, π/2]</span>."
+            "Citar Teorema da Mudança de Variáveis (f contínua em D compacto). NUNCA esqueça o Jacobiano r no elemento de área dA = r dr dθ!"
           ]
         },
         {
@@ -1271,6 +1287,83 @@
           "fml": "∂(x,y)/∂(u,v) = x_u y_v − x_v y_u\n\n∬_R f(x,y) dA = ∬_S f(x(u,v), y(u,v)) · |∂(x,y)/∂(u,v)| du dv",
           "notas": [
             "Se for mais fácil escrever <span class=\"mono\">u(x,y), v(x,y)</span>, use <span class=\"mono\">∂(x,y)/∂(u,v) = 1 / [∂(u,v)/∂(x,y)]</span>."
+          ]
+        },
+        {
+          "titulo": "Integral Dupla em Coordenadas Polares (Geral)",
+          "fml": "\\iint_D f(x,y)\\,dA = \\int_{\\alpha}^{\\beta} \\int_{h_1(\\theta)}^{h_2(\\theta)} f(r\\cos\\theta, r\\sin\\theta)\\,r\\,dr\\,d\\theta",
+          "notas": [
+            "NUNCA esqueça o fator Jacobiano r no diferencial: dA = r dr dθ. Verifique a continuidade de f e use o método da semirreta radial (desenho primeiro, limites depois)."
+          ]
+        },
+        {
+          "titulo": "Círculos Deslocados em Coordenadas Polares",
+          "fml": "(x-a)^2 + y^2 = a^2 \\iff r = 2a\\cos\\theta \\quad (-\\pi/2 \\le \\theta \\le \\pi/2)\nx^2 + (y-a)^2 = a^2 \\iff r = 2a\\sin\\theta \\quad (0 \\le \\theta \\le \\pi)",
+          "notas": [
+            "ARMADILHA CLÁSSICA: Esses círculos fecham a circunferência completa em um intervalo de comprimento π, e NÃO 2π. Integrar em [0, 2π] duplica a área ou volume."
+          ]
+        },
+        {
+          "titulo": "Área Polar e Redução Trigonométrica Obrigatória",
+          "fml": "A(D) = \\iint_D r\\,dr\\,d\\theta = \\frac{1}{2}\\int_{\\alpha}^{\\beta} [h_2(\\theta)^2 - h_1(\\theta)^2]\\,d\\theta\n\\cos^2\\theta = \\frac{1+\\cos(2\\theta)}{2}, \\quad \\sin^2\\theta = \\frac{1-\\cos(2\\theta)}{2}",
+          "notas": [
+            "Na prova do Prof. Henrique, NUNCA omita a redução de potência trigonométrica: desenvolva explicitamente todos os passos da integração angular."
+          ]
+        },
+        {
+          "titulo": "Massa e Centro de Massa de uma Lâmina (15.5)",
+          "fml": "m = ∬_D ρ(x,y) dA  |  x̄ = M_y / m = (1/m) ∬_D x ρ(x,y) dA  |  ȳ = M_x / m = (1/m) ∬_D y ρ(x,y) dA",
+          "notas": [
+            "Cuidado com os índices invertidos: M_x usa a distância ao eixo x (que é y) e fornece ȳ; M_y usa x e fornece x̄. Se a lâmina for homogênea (centroide), tome ρ = 1 e m = Área(D). Em polares, x dA = r² cosθ dr dθ."
+          ]
+        },
+        {
+          "titulo": "Momentos de Inércia e Raio de Giração (15.5)",
+          "fml": "I_x = ∬_D y² ρ(x,y) dA  |  I_y = ∬_D x² ρ(x,y) dA  |  I_0 = I_x + I_y = ∬_D (x² + y²) ρ(x,y) dA  |  R = √(I / m)",
+          "notas": [
+            "I_x usa y² e I_y usa x². Em discos centrados na origem com densidade radial ρ(r), calcule I_0 primeiro em polares (integrando r³ ρ(r) dr dθ) e use simetria: I_x = I_y = I_0 / 2. O raio de giração satisfaz m R² = I."
+          ]
+        },
+        {
+          "titulo": "Densidade Conjunta de Probabilidade e Valores Esperados (15.5)",
+          "fml": "P((X,Y) ∈ D) = ∬_D f(x,y) dA, com f(x,y) ≥ 0 e ∬_ℝ² f dA = 1  |  μ₁ = E(X) = ∬_ℝ² x f(x,y) dA,  μ₂ = E(Y) = ∬_ℝ² y f(x,y) dA",
+          "notas": [
+            "Se X e Y forem variáveis aleatórias independentes, a densidade conjunta fatora como f(x,y) = f₁(x) f₂(y). Sempre desenhe a região do evento D no plano xy (ex.: x + y ≤ c com x,y ≥ 0 forma um triângulo, não um retângulo!)."
+          ]
+        },
+        {
+          "titulo": "Integrais Triplas — Sólidos Tipo I, II e III",
+          "fml": "Tipo I (proj. xy):  ∭_E f dV = ∬_{D_xy} [ ∫_{u₁(x,y)}^{u₂(x,y)} f(x,y,z) dz ] dA\nTipo II (proj. yz): ∭_E f dV = ∬_{D_yz} [ ∫_{u₁(y,z)}^{u₂(y,z)} f(x,y,z) dx ] dA\nTipo III (proj. xz):∭_E f dV = ∬_{D_xz} [ ∫_{u₁(x,z)}^{u₂(x,z)} f(x,y,z) dy ] dA",
+          "notas": [
+            "15.7 · Desenhe SEMPRE o sólido 3D e a projeção 2D D. Limites de dentro: superfícies (≤ 2 vars); do meio: curvas (≤ 1 var); de fora: constantes. Uma variável já integrada NUNCA aparece nos limites externos!"
+          ]
+        },
+        {
+          "titulo": "Volume, Massa e Centro de Massa (3D)",
+          "fml": "V(E) = ∭_E 1 dV       |   f_méd = (1 / V(E)) ∭_E f(x,y,z) dV\nm = ∭_E ρ(x,y,z) dV   |   x̄ = M_yz / m ,  ȳ = M_xz / m ,  z̄ = M_xy / m\nM_yz = ∭_E x ρ dV     |   M_xz = ∭_E y ρ dV   |   M_xy = ∭_E z ρ dV",
+          "notas": [
+            "15.7 · Mnemônico dos momentos estáticos em 3D: integra-se a variável que FALTA no subscrito do plano (M_yz leva x, M_xz leva y, M_xy leva z). Se ρ é constante, o centro de massa é o centroide. Use simetria para zerar momentos!"
+          ]
+        },
+        {
+          "titulo": "Momentos de Inércia em 3D (I_x, I_y, I_z)",
+          "fml": "I_x = ∭_E (y² + z²) ρ(x,y,z) dV\nI_y = ∭_E (x² + z²) ρ(x,y,z) dV\nI_z = ∭_E (x² + y²) ρ(x,y,z) dV",
+          "notas": [
+            "15.7 · O quadrado da distância de (x,y,z) a um eixo coordenado em ℝ³ é a soma dos quadrados das OUTRAS duas coordenadas."
+          ]
+        },
+        {
+          "titulo": "Curvas Polares Clássicas: Círculos Deslocados e Rosáceas (15.4)",
+          "fml": "(x - a)² + y² = a²  ⇔  r = 2a cos θ   (θ ∈ [-π/2, π/2])\nx² + (y - a)² = a²  ⇔  r = 2a sen θ   (θ ∈ [0, π])\nRosácea r = a cos(nθ): 1 pétala central em θ ∈ [-π/(2n), π/(2n)]",
+          "notas": [
+            "Armadilha clássica: círculos tangentes aos eixos na origem percorrem 1 volta completa em intervalo de tamanho π (não 2π!). No 1º quadrante, ambos têm θ ∈ [0, π/2]."
+          ]
+        },
+        {
+          "titulo": "Área em Coordenadas Polares e Redução de Potência (15.4)",
+          "fml": "Área(D) = ∬_D 1 dA = ∫_α^β ∫_{h₁(θ)}^{h₂(θ)} r dr dθ = ½ ∫_α^β ([h₂(θ)]² - [h₁(θ)]²) dθ\ncos²θ = (1 + cos 2θ)/2,   sen²θ = (1 - cos 2θ)/2",
+          "notas": [
+            "Obrigatório explicitar a identidade de arco duplo (cos²θ ou sen²θ) na prova do Prof. Henrique Araújo antes de integrar em θ."
           ]
         }
       ]

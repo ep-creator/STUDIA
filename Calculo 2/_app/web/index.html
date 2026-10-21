@@ -251,6 +251,10 @@
       <!-- Telemetria de Tools e Tokens + Resultado -->
       <div id="agResultadoWrap" hidden>
         <div class="telemetry-bar" id="agTelemetria"></div>
+        <details class="telemetry-xray" id="agRaioXWrap" open>
+          <summary>🔬 Raio-X Computacional: Latência (Rede vs Local), API Calls Turno a Turno &amp; Custos</summary>
+          <div class="xray-inner" id="agRaioXBody"></div>
+        </details>
         <div class="tool-calls-list" id="agToolsList"></div>
         <div id="agCronoProposta" hidden></div>
         <div class="ag-actions-bar" id="agCopyBar" hidden>
@@ -259,6 +263,9 @@
         </div>
         <div class="mdpane ag-output md" id="agOutputMd"></div>
       </div>
+
+      <!-- Resumo Histórico Acumulado de Custos e Chamadas -->
+      <div class="telemetry-history-card" id="agAcumuladoBar"></div>
     </div>
 
     <!-- Aba 2: Explorador do RAG Estruturado (2 Níveis) -->

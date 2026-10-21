@@ -8,8 +8,8 @@ description: Diretrizes de correção, livros-base, perfil do estudante e padrõ
 
 - **Professor:** Henrique Araújo
 - **Livros-base:**
-  1. **Stewart, *Cálculo* Vol. 2 (7ª ed.)** — livro principal da lista oficial (`offset PDF = página_livro - 489`).
-  2. **Guidorizzi, *Um Curso de Cálculo* Vol. 2** — referência de rigor teórico e fonte adicional de exercícios com gabarito completo no apêndice (`offset PDF = página_livro + 15`, gabarito na p. 437 do PDF).
+  1. **Stewart, *Cálculo* Vol. 2 (7ª ed.)** — livro principal da lista oficial (`offset PDF = página_livro - 489`). Cobre todas as 3 unidades (`10.3–10.4`, `14.1–14.8` e `15.2–15.10`).
+  2. **Guidorizzi, *Um Curso de Cálculo* Vol. 2** — referência de rigor teórico e fonte adicional de exercícios com gabarito completo no apêndice (`offset PDF = página_livro + 15`, gabarito na p. 437 do PDF). **Atenção:** o Vol. 2 do Guidorizzi cobre apenas Derivadas Parciais, Diferenciabilidade e Otimização (Cap. 8 a 16 = Stewart `14.1` a `14.8`); Integrais Duplas e Triplas (`15.2` a `15.10`) não estão no Vol. 2.
   3. **Listas 1 a 6 de 2026.1 (Departamento de Matemática - UFPE)** — questões em estilo de prova (enunciados em palavras, itens encadeados, exigência de justificativa e esboço).
 
 ## Regras Estritas de Correção do Professor (Obrigatórias em Resumos e Resoluções N4)
