@@ -121,3 +121,16 @@ Para detalhes técnicos de manutenção e fluxo de versionamento, consulte a pas
 
 1. **[`docs/ARQUITETURA_E_FUNCIONAMENTO.md`](./docs/ARQUITETURA_E_FUNCIONAMENTO.md)** — Como funcionam os schemas JSON, as rotas da API, o RAG em 2 níveis (incluindo a resolução de exercícios pares do Stewart sem gabarito) e o loop de *Function Calling* do Agente.
 2. **[`docs/FLUXO_GIT_E_MANUTENCAO.md`](./docs/FLUXO_GIT_E_MANUTENCAO.md)** — Árvore do Git (`main` + `dev`), convenção de commits e guia passo a passo para evoluir o código sem misturar com o progresso diário de estudos.
+
+---
+
+## 🧱 Novo motor (em construção — refatoração v3)
+
+O motor novo (`_app/backend`, FastAPI + SQLite por matéria) está sendo construído **ao lado** do app atual, seguindo
+[`docs/superpowers/specs/2026-10-20-refatoracao-plataforma-design.md`](./docs/superpowers/specs/2026-10-20-refatoracao-plataforma-design.md).
+Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, porta 8780) continua sendo o de uso diário.
+
+- **Iniciar o motor novo:** dois cliques em `_app/abrir-novo.bat` (cria o ambiente Python na primeira vez). Sobe em
+  `http://127.0.0.1:8790` e abre a documentação interativa da API em `/docs`.
+- **Rodar os testes:** dentro de `_app/backend`, `.venv/Scripts/python -m pytest`.
+- **Configuração:** `_app/config.toml` (porta, limiares de confiança da importação, tamanho do histórico de desfazer).

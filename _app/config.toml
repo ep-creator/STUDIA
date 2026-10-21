@@ -1,0 +1,16 @@
+# Configuração do motor da Plataforma de Estudos.
+# Valores ausentes usam os defaults de _app/backend/estudos/config.py.
+
+[servidor]
+host = "127.0.0.1"
+porta = 8790
+
+[importacao]
+# Itens extraídos com confiança abaixo deste valor exigem confirmação na revisão.
+limiar_confianca = 0.75
+# Similaridade mínima para propor o vínculo tópico do programa -> seção do livro.
+limiar_vinculo = 0.35
+
+[historico]
+# Quantidade de ações guardadas para desfazer.
+max_grupos = 500
