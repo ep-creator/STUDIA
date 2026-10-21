@@ -3,8 +3,10 @@
 import datetime
 import re
 
-_SUBSCRITO = re.compile(r"(\w+)<sub>([^<]*)</sub>")
+# Base do subscrito: uma palavra (f<sub>xy</sub>) ou um único símbolo (∭<sub>E</sub>).
+_SUBSCRITO = re.compile(r"(\w+|[^\s\w<>])<sub>([^<]*)</sub>")
 _TROCAS = (
+    (re.compile(r'<span\s+class="mono">([^<]*)</span>', re.I), r"`\1`"),
     (re.compile(r"</?(?:b|strong)>", re.I), "**"),
     (re.compile(r"</?(?:i|em)>", re.I), "*"),
     (re.compile(r"<br\s*/?>", re.I), "\n"),

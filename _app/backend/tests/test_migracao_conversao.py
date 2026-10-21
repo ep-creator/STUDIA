@@ -75,3 +75,13 @@ def test_periodo_e_instituicao():
 def test_tabela_markdown_escapa_barra():
     tabela = tabela_markdown(["A", "B"], [["1", "x | y"]])
     assert tabela == "| A | B |\n|---|---|\n| 1 | x \\| y |"
+
+
+def test_html_subscrito_apos_simbolo():
+    md, avisos = html_para_md("Expresse ∭<sub>E</sub> f(x, y, z) dV")
+    assert md == "Expresse $∭_{E}$ f(x, y, z) dV" and avisos == []
+
+
+def test_html_span_mono_vira_codigo():
+    md, avisos = html_para_md('retas <span class="mono">y = mx</span> → parábolas <span class="mono">y = mx²</span>')
+    assert md == "retas `y = mx` → parábolas `y = mx²`" and avisos == []
