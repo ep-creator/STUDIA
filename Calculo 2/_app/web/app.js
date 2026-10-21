@@ -373,8 +373,11 @@ function renderCurso() {
       const ths = cols.map(c => `<th>${esc(c)}</th>`).join("") + `<th>Ações</th>`;
 
       let trs = "";
+      const numXEsperado = Math.max(1, cols.length - 3);
       (fase.linhas || []).forEach((ln, lIdx) => {
-        const xCols = (ln.x || []).map(xVal => `<td class="x">${xVal}</td>`).join("");
+        const arrX = Array.isArray(ln.x) ? [...ln.x] : [ln.x || "—"];
+        while (arrX.length < numXEsperado) arrX.push("—");
+        const xCols = arrX.slice(0, numXEsperado).map(xVal => `<td class="x">${xVal}</td>`).join("");
         trs += `
           <tr class="${ln.feito ? "sessao-feita" : ""}">
             <td class="s">
@@ -491,11 +494,25 @@ function renderPdfsQuickBar() {
 
 /* ---------- Exercícios & Resoluções + Botões N1..N4 + Destravar Seção ---------- */
 const UN_POR_SEC = {
-  "14.1":1,"14.2":1,"14.3":1,"14.4":1,"14.5":1,
-  "14.6":2,"14.7":2,"14.8":2,"15.2":2,"15.3":2,"L3":2,"L4":2,
-  "15.4":3,"15.5":3,"15.7":3,"15.8":3,"15.9":3,"15.10":3,"L5":3,"L6":3
+  "10.3":1,"10.4":1,"14.1":1,"14.2":1,"14.3":1,"14.4":1,"14.5":1,"L1":1,"L2":1,
+  "14.6":2,"14.7":2,"14.8":2,"15.1":2,"15.2":2,"15.3":2,"L3":2,"L4":2,
+  "15.4":3,"15.5":3,"15.6":3,"15.7":3,"15.8":3,"15.9":3,"15.10":3,"L5":3,"L6":3,"L7":3
 };
-const unDaSecao = s => Number(s.un || UN_POR_SEC[s.sec] || 1);
+function inferirUnidadeDeSecao(secCod) {
+  const sec = String(secCod || "").trim();
+  if (!sec) return null;
+  const ex = (DADOS?.exercicios || []).find(s => String(s.sec) === sec);
+  if (ex && ex.un) return Number(ex.un);
+  const uns = CURSO?.unidades || {};
+  for (const [uKey, uObj] of Object.entries(uns)) {
+    for (const item of (uObj?.ondeEstamos || [])) {
+      if ((item.secoes || []).includes(sec)) return Number(uKey);
+    }
+  }
+  if (UN_POR_SEC[sec]) return UN_POR_SEC[sec];
+  return null;
+}
+const unDaSecao = s => Number(s.un || inferirUnidadeDeSecao(s.sec) || 1);
 const secoesDaUnidade = () => (DADOS?.exercicios || []).filter(s => unDaSecao(s) === UN);
 
 function renderExercicios() {
@@ -719,9 +736,15 @@ function tally() {
   document.getElementById("bOk").style.width = (g.ok / den * 100) + "%";
   document.getElementById("bErr").style.width = (g.err / den * 100) + "%";
   document.getElementById("bDub").style.width = (g.dub / den * 100) + "%";
-  const daUnidade = new Set(g.ids);
-  document.getElementById("pSol").textContent =
-    String(Object.keys(DADOS.resolucoes).filter(k => daUnidade.has(k)).length);
+  // Contabiliza todas as resoluções da unidade atual (mesmo de seções ainda travadas ou questões extras)
+  const todasIdsUnidade = new Set(idsDe(secoesDaUnidade(), ["l1", "l2"]));
+  const secsDaUnidade = new Set(secoesDaUnidade().map(s => String(s.sec)));
+  const totalSolUnidade = Object.keys(DADOS.resolucoes || {}).filter(k => {
+    if (todasIdsUnidade.has(k)) return true;
+    const secPref = k.split("-")[0];
+    return secsDaUnidade.has(secPref) || inferirUnidadeDeSecao(secPref) === UN;
+  }).length;
+  document.getElementById("pSol").textContent = String(totalSolUnidade);
 
   secoesDaUnidade().forEach(s => {
     const cab = document.querySelector(`[data-sec="${CSS.escape(s.sec)}"]`);
@@ -747,8 +770,22 @@ function tally() {
 /* ---------- Abas de Resumos e Documentos ---------- */
 function unDoResumo(r) {
   if (r.un) return Number(r.un);
+  const cab = String(r.md || "").slice(0, 400);
+  const mUn = cab.match(/unidade\s*:\s*([123])\b/i) || cab.match(/\b([123])\s*[ªa°º]\s*unidade\b/i);
+  if (mUn) return Number(mUn[1]);
+  const l1 = String(r.title || cab.split("\n")[0] || "");
+  const mSecH1 = l1.match(/\b(\d{1,2}\.\d{1,2}|L\d+)\b/);
+  if (mSecH1) {
+    const uSec = inferirUnidadeDeSecao(mSecH1[1]);
+    if (uSec) return uSec;
+  }
+  const mSecCab = cab.slice(0, 300).match(/\b(\d{1,2}\.\d{1,2})\b/);
+  if (mSecCab) {
+    const uSec = inferirUnidadeDeSecao(mSecCab[1]);
+    if (uSec) return uSec;
+  }
   const n = parseInt(r.key, 10);
-  return Number.isNaN(n) ? UN : n <= 5 ? 1 : n <= 11 ? 2 : 3;
+  return Number.isNaN(n) ? UN : n <= 5 ? 1 : n <= 8 ? 2 : 3;
 }
 function resumoNaUnidade(r) {
   const extra = (CURSO?.resumosExtraUnidade || {})[r.key] || [];
@@ -982,12 +1019,15 @@ function abrirModalSessaoCrono(fIdx = 0, lIdx = null) {
     </div>
   `, el => {
     el.querySelector("#mBtnSalvarCr").addEventListener("click", () => {
+      const numX = Math.max(1, (fase.colunas || []).length - 3);
+      const xParts = el.querySelector("#mCrX").value.split("|").map(s => s.trim());
+      while (xParts.length < numX) xParts.push("—");
       const novaLinha = {
         feito: Boolean(ln.feito),
         s: el.querySelector("#mCrS").value.trim(),
         d: el.querySelector("#mCrD").value.trim(),
         t: el.querySelector("#mCrT").value.trim(),
-        x: el.querySelector("#mCrX").value.split("|").map(s => s.trim()),
+        x: xParts,
       };
       if (lIdx !== null) fase.linhas[lIdx] = novaLinha; else fase.linhas.push(novaLinha);
       fecharModal();
@@ -1131,12 +1171,22 @@ document.getElementById("btnNovaLista")?.addEventListener("click", () => {
   });
 });
 
+function proximoPrefixoResumo() {
+  const nums = (DADOS?.resumos || [])
+    .filter(r => r.grupo === "resumo")
+    .map(r => parseInt(r.key, 10))
+    .filter(n => !Number.isNaN(n));
+  const maior = nums.length ? Math.max(...nums) : -1;
+  const baseMin = UN === 3 ? 9 : UN === 2 ? 6 : 0;
+  return String(Math.max(maior + 1, baseMin)).padStart(2, "0");
+}
+
 // 7. Criar / Editar Resumo ou Resolução em Markdown
 function abrirModalMarkdown(tipo, nomeInicial = "", conteudoInicial = "") {
   const ehRes = tipo === "resumo";
   abrirModal(ehRes ? "Salvar / Editar Resumo (.md em resumos/)" : `Salvar / Editar Resolução (${nomeInicial})`, `
-    <label><span class="eyebrow">${ehRes ? "Nome do Arquivo em resumos/ (ex: 08-integrais-polares.md)" : "ID do Exercício (ex: 15.4-22 ou L5-5)"}</span>
-      <input type="text" id="mMdNome" value="${esc(nomeInicial)}" placeholder="${ehRes ? "08-integrais-polares.md" : "15.4-22"}">
+    <label><span class="eyebrow">${ehRes ? "Nome do Arquivo em resumos/ (ex: 12-integrais-cilindricas.md)" : "ID do Exercício (ex: 15.4-22 ou L5-5)"}</span>
+      <input type="text" id="mMdNome" value="${esc(nomeInicial)}" placeholder="${ehRes ? "12-integrais-cilindricas.md" : "15.4-22"}">
     </label>
     <label><span class="eyebrow">Conteúdo Markdown</span>
       <textarea id="mMdTexto" class="mono skill-editor" rows="14">${esc(conteudoInicial)}</textarea>
@@ -1152,19 +1202,22 @@ function abrirModalMarkdown(tipo, nomeInicial = "", conteudoInicial = "") {
       const r = await fetch("/api/markdown", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ disciplina: DISC, tipo, nomeArquivo, conteudo }),
+        body: JSON.stringify({ disciplina: DISC, tipo, nomeArquivo, conteudo, unidade: UN }),
       });
       const d = await r.json();
       if (!d.ok) return alert(d.erro || "Erro ao salvar arquivo.");
       fecharModal();
+      if (d.unidade && Number(d.unidade) !== UN) {
+        UN = Number(d.unidade);
+        aplicarUnidadeUI(true);
+      }
       await carregar();
     });
   });
 }
 
 document.getElementById("btnColarResumo")?.addEventListener("click", () => {
-  const qtd = (DADOS?.resumos || []).filter(r => r.grupo === "resumo").length;
-  const prefixo = String(qtd).padStart(2, "0") + "-novo-resumo.md";
+  const prefixo = proximoPrefixoResumo() + "-novo-resumo.md";
   abrirModalMarkdown("resumo", prefixo, `# Novo Resumo\n\n> Referência · ${ORDINAL[UN]} unidade\n\n## 1. Definição\n\n`);
 });
 
@@ -1261,6 +1314,52 @@ function popularDrawerAgente() {
       ? `✓ Chave configurada (${DADOS.configAgente.apiKeyMascarada})`
       : "Sem chave configurada (usando modo Pacote RAG Offline por padrão)";
   }
+
+  renderizarHistoricoTelemetria(DADOS.historicoTelemetria);
+}
+
+function fmtUsd(v) {
+  return "US$ " + Number(v || 0).toFixed(5);
+}
+function fmtBrl(v) {
+  return "R$ " + Number(v || 0).toFixed(4).replace(".", ",");
+}
+
+function renderizarHistoricoTelemetria(hist) {
+  const el = document.getElementById("agAcumuladoBar");
+  if (!el) return;
+  const ac = hist?.acumulado || { totalExecucoes: 0, totalChamadasApi: 0, totalTokensApi: 0, totalUsd: 0, totalBrl: 0, totalUsdBruto: 0, totalBrlBruto: 0 };
+  const recentes = (hist?.recentes || []).slice(0, 4);
+  const linhasRec = recentes.map(r => {
+    const temBruto = r.custoBrlBruto && Number(r.custoBrlBruto) > Number(r.custoBrl || 0) * 1.05;
+    return `
+    <tr>
+      <td>${esc((r.data || "").replace("T", " ").slice(5, 16))}</td>
+      <td><b>${esc(r.skill)}</b> (${esc(r.modo === "pacote_rag" ? "Offline" : r.modelo)})</td>
+      <td>${r.numChamadasApi || 0} HTTP · ${r.numToolsLocais || 0} tools</td>
+      <td>${r.tempoTotalMs || 0} ms <span style="color:var(--muted)">(${r.tempoRedeApiMs || 0}ms API / ${r.tempoLocalMs || 0}ms local)</span></td>
+      <td>${r.totalTokens || 0} tok</td>
+      <td><b>${fmtBrl(r.custoBrl)}</b> <span style="color:var(--muted)">(${fmtUsd(r.custoUsd)})</span>${temBruto ? `<br><span style="color:var(--muted);font-size:10px">Bruto s/ cache: ${fmtBrl(r.custoBrlBruto)} (${fmtUsd(r.custoUsdBruto)})</span>` : ""}</td>
+    </tr>
+  `;
+  }).join("");
+
+  const temBrutoTot = ac.totalBrlBruto && Number(ac.totalBrlBruto) > Number(ac.totalBrl || 0) * 1.05;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span><b>📊 Acumulado da Disciplina (${ac.totalExecucoes} execuções):</b> ${ac.totalChamadasApi} chamadas HTTP API · ${ac.totalTokensApi} tokens cobrados</span>
+      <span><b>Gasto c/ Cache:</b> ${fmtBrl(ac.totalBrl)} (${fmtUsd(ac.totalUsd)})${temBrutoTot ? ` · <b>Bruto s/ Cache (AI Studio):</b> ${fmtBrl(ac.totalBrlBruto)} (${fmtUsd(ac.totalUsdBruto)})` : ""}</span>
+    </div>
+    ${recentes.length ? `
+      <details style="margin-top:8px">
+        <summary style="cursor:pointer;color:var(--accent-ink);font-weight:600">Histórico recente de execuções (${recentes.length})</summary>
+        <table class="turn-table" style="margin-top:6px">
+          <thead><tr><th>Data/Hora</th><th>Skill / Modo</th><th>Chamadas</th><th>Latência</th><th>Tokens</th><th>Custo</th></tr></thead>
+          <tbody>${linhasRec}</tbody>
+        </table>
+      </details>
+    ` : ""}
+  `;
 }
 
 function atualizarEditorSkill() {
@@ -1284,7 +1383,10 @@ function abrirAgenteParaExercicio(sec, num, nivel) {
 document.getElementById("btnGerarResumoIA")?.addEventListener("click", () => {
   abrirDrawer("agente");
   document.getElementById("agSkill").value = "resumidor-aula";
-  const primSec = secoesDaUnidade()[0]?.sec || "15.4";
+  const secsUn = secoesDaUnidade().map(s => String(s.sec)).filter(sec => /^\d+\.\d+$/.test(sec));
+  const resumosUn = (DADOS?.resumos || []).filter(r => r.grupo === "resumo" && unDoResumo(r) === UN);
+  const secSemResumo = secsUn.find(sec => !resumosUn.some(r => String(r.title || "").includes(sec)));
+  const primSec = secSemResumo || secsUn[0] || secoesDaUnidade()[0]?.sec || "15.4";
   document.getElementById("agSecao").value = primSec;
   document.getElementById("agNumero").value = "";
 });
@@ -1379,18 +1481,99 @@ document.getElementById("btnRodarAgente")?.addEventListener("click", async () =>
 
     const tel = d.telemetria || {};
     const tools = tel.toolsExecutadas || [];
+    const turnos = tel.turnosApi || [];
+    const dec = tel.decomposicaoBase || {};
+    const tTotal = Math.max(1, Number(tel.tempoTotalMs || 0));
+    const tApi = Number(tel.tempoRedeApiMs || 0);
+    const tLoc = Number(tel.tempoLocalMs || 0);
+    const pctApi = Math.min(100, Math.round((tApi / tTotal) * 100));
+    const pctLoc = Math.max(0, 100 - pctApi);
+
+    const temBrutoDif = Number(tel.custoBrlBruto || 0) > Number(tel.custoBrl || 0) * 1.05;
     telBar.innerHTML = `
       <span><b>Modelo:</b> ${esc(tel.modelo || modo)}</span>
-      <span><b>Multi-Buscas / Tools:</b> ${tools.length} chamada(s)</span>
-      <span><b>Tokens:</b> ${tel.totalTokens || 0} total (${tel.inputTokens || 0} in / ${tel.outputTokens || 0} out)</span>
+      <span><b>API Calls:</b> ${tel.numChamadasApi || 0} HTTP · ${tools.length} tool(s)</span>
+      <span><b>Tempo:</b> ${tel.tempoTotalMs || 0} ms (${tApi}ms API / ${tLoc}ms Local)</span>
+      <span><b>Tokens:</b> ${tel.totalTokens || 0} (${tel.inputTokens || 0} in / ${tel.outputTokens || 0} out${tel.thinkingTokens ? ` / ${tel.thinkingTokens} think` : ""})</span>
+      <span><b>Custo c/ Cache:</b> ${fmtBrl(tel.custoBrl)} (${fmtUsd(tel.custoUsd)})${temBrutoDif ? ` · <b>Bruto s/ Cache (AI Studio):</b> ${fmtBrl(tel.custoBrlBruto)} (${fmtUsd(tel.custoUsdBruto)})` : ""}</span>
     `;
+
+    const raioXBody = document.getElementById("agRaioXBody");
+    if (raioXBody) {
+      const rowsTurnos = turnos.length
+        ? turnos.map(tr => {
+            const cacheQualifica = Number(tr.cachedTokens || 0) >= 4096;
+            const badgeCache = tr.cachedTokens
+              ? `<span style="color:${cacheQualifica ? "var(--ok)" : "var(--muted)"}" title="${cacheQualifica ? "Acima do piso de 4.096 tokens para cache implícito" : "Abaixo do piso mínimo de 4.096 tokens para desconto de cache"}">(${tr.cachedTokens} cache${cacheQualifica ? "" : " <4k"})</span>`
+              : "";
+            const strBruto = (tr.custoBrlBruto && Number(tr.custoBrlBruto) > Number(tr.custoBrl) * 1.05)
+              ? `<br><span style="color:var(--muted);font-size:10px">s/ cache: ${fmtBrl(tr.custoBrlBruto)} (${fmtUsd(tr.custoUsdBruto)})</span>`
+              : "";
+            return `
+            <tr>
+              <td><b>Turno #${tr.turno}</b></td>
+              <td>${tr.inputTokens} in ${badgeCache}</td>
+              <td>${tr.outputTokens} out ${tr.thinkingTokens ? `+ ${tr.thinkingTokens} think` : ""}</td>
+              <td><b>${tr.tempoApiMs} ms</b></td>
+              <td>${tr.toolsDisparadas?.length ? tr.toolsDisparadas.map(x => `<code>${esc(x)}</code>`).join(", ") : "<i>Resposta final</i>"}</td>
+              <td><b>${fmtBrl(tr.custoBrl)}</b> <span style="color:var(--muted)">(${fmtUsd(tr.custoUsd)})</span>${strBruto}</td>
+            </tr>
+          `;
+          }).join("")
+        : `<tr><td colspan="6" style="color:var(--ok)"><b>0 chamadas HTTP à Gemini API</b> — pacote montado 100% na CPU local via SQLite FTS5 (Custo US$ 0.00 / R$ 0,00).</td></tr>`;
+
+      raioXBody.innerHTML = `
+        <div class="latency-split-wrap">
+          <div class="latency-legend">
+            <span><b>🌐 Rede + Inferência Gemini API:</b> ${tApi} ms (${pctApi}%)</span>
+            <span><b>💻 CPU + SQLite RAG + SciPy Local:</b> ${tLoc} ms (${pctLoc}%)</span>
+          </div>
+          <div class="latency-split-bar">
+            <div class="latency-seg-api" style="width:${pctApi}%"></div>
+            <div class="latency-seg-local" style="width:${pctLoc}%"></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="margin-bottom:4px;color:var(--muted);font-weight:600">DECOMPOSIÇÃO DO CONTEXTO BASE (TOKENS):</div>
+          <div class="ctx-chips">
+            <span class="ctx-chip"><b>System + Skill + Regras:</b> ~${dec.systemPromptTokens || 0} tok/turno</span>
+            <span class="ctx-chip"><b>Declarações Tools (9):</b> ~${dec.toolsDeclTokens || 0} tok/turno</span>
+            <span class="ctx-chip"><b>Pedido Usuário:</b> ~${dec.userPromptTokens || 0} tok</span>
+            <span class="ctx-chip"><b>Dados Injetados pelo RAG:</b> ~${dec.ragContextTokens || 0} tok</span>
+          </div>
+        </div>
+
+        <div>
+          <div style="margin-bottom:4px;color:var(--muted);font-weight:600">CHAMADAS HTTP À GEMINI API TURNO A TURNO (EFEITO ACUMULATIVO):</div>
+          <table class="turn-table">
+            <thead>
+              <tr>
+                <th>Turno HTTP</th>
+                <th>Input Tokens</th>
+                <th>Output (+Think)</th>
+                <th>Delay API</th>
+                <th>Ação / Tools</th>
+                <th>Custo do Turno</th>
+              </tr>
+            </thead>
+            <tbody>${rowsTurnos}</tbody>
+          </table>
+        </div>
+      `;
+    }
 
     toolsList.innerHTML = tools.map((t, idx) => `
       <div class="tool-pill">
-        <span><b>#${idx + 1} ${esc(t.tool)}</b>(${esc(JSON.stringify(t.args || {}))})</span>
-        <span>${t.tempoMs} ms · ${t.charsRetorno} chars</span>
+        <span><b>Tool Local #${idx + 1} ${t.turno ? `[após Turno #${t.turno}]` : "[RAG Offline]"} ${esc(t.tool)}</b>(${esc(JSON.stringify(t.args || {}))})</span>
+        <span>⏱️ <b>${t.tempoMs} ms</b> · ${t.charsRetorno} chars (~${t.tokensEstimadosRetorno || Math.round((t.charsRetorno || 0) / 4)} tok injetados)</span>
       </div>
     `).join("");
+
+    if (d.historicoTelemetria) {
+      if (DADOS) DADOS.historicoTelemetria = d.historicoTelemetria;
+      renderizarHistoricoTelemetria(d.historicoTelemetria);
+    }
 
     if (d.promptEmpacotado) {
       ULTIMO_PROMPT_RAG = d.promptEmpacotado;
@@ -1410,7 +1593,12 @@ document.getElementById("btnRodarAgente")?.addEventListener("click", async () =>
         const uAlvo = CURSO.unidades[String(prop.unidade)];
         if (uAlvo && uAlvo.fases && uAlvo.fases.length) {
           const fPlano = uAlvo.fases.find(f => (f.linhas || []).length > 3) || uAlvo.fases[0];
-          (prop.sessoes || []).forEach(s => fPlano.linhas.push({ feito: false, s: s.s, d: s.d, t: s.t, x: s.x || ["—"] }));
+          const numX = Math.max(1, (fPlano.colunas || []).length - 3);
+          (prop.sessoes || []).forEach(s => {
+            const arrX = Array.isArray(s.x) ? [...s.x] : [s.x || "—"];
+            while (arrX.length < numX) arrX.push("—");
+            fPlano.linhas.push({ feito: false, s: s.s, d: s.d, t: s.t, x: arrX });
+          });
           cronoProp.hidden = true;
           salvarCurso("Aplicar ajuste de cronograma sugerido pelo Agente");
         }
@@ -1444,7 +1632,7 @@ document.getElementById("btnAbrirColarMd")?.addEventListener("click", () => {
   const sec = document.getElementById("agSecao").value.trim() || "15.4";
   const num = document.getElementById("agNumero").value.trim() || "22";
   if (sk === "resumidor-aula") {
-    abrirModalMarkdown("resumo", `08-resumo-${sec.replace(".", "-")}.md`, "");
+    abrirModalMarkdown("resumo", `${proximoPrefixoResumo()}-resumo-${sec.replace(".", "-")}.md`, "");
   } else {
     abrirModalMarkdown("resolucao", `${sec}-${num}`, "");
   }

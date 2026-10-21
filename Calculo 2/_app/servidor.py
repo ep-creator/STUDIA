@@ -12,6 +12,7 @@ Recursos:
 
 import argparse
 import datetime
+import importlib
 import json
 import mimetypes
 import pathlib
@@ -25,6 +26,26 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import agente
 import rag
+
+_MTIMES_MODULOS = {}
+
+
+def recarregar_modulos_se_mudaram():
+    """Recarrega rag.py e agente.py automaticamente se tiverem sido editados no disco."""
+    global rag, agente
+    try:
+        for nome, mod in (("rag.py", rag), ("agente.py", agente)):
+            p = AQUI / nome
+            if p.exists():
+                mt = p.stat().st_mtime
+                if _MTIMES_MODULOS.get(nome) not in (None, mt):
+                    if nome == "rag.py":
+                        rag = importlib.reload(rag)
+                    else:
+                        agente = importlib.reload(agente)
+                _MTIMES_MODULOS[nome] = mt
+    except Exception as e:
+        sys.stderr.write(f"Aviso ao recarregar módulos: {e}\n")
 
 
 class Servidor(ThreadingHTTPServer):
@@ -222,6 +243,71 @@ def escrever_espelho(raiz_disc: pathlib.Path, marcacoes: dict, agora: str):
     espelho.write_text("\n".join(linhas), encoding="utf-8")
 
 
+MAPA_SECAO_UNIDADE_PADRAO = {
+    "10.3": 1, "10.4": 1,
+    "14.1": 1, "14.2": 1, "14.3": 1, "14.4": 1, "14.5": 1, "L1": 1, "L2": 1,
+    "14.6": 2, "14.7": 2, "14.8": 2, "15.1": 2, "15.2": 2, "15.3": 2, "L3": 2, "L4": 2,
+    "15.4": 3, "15.5": 3, "15.6": 3, "15.7": 3, "15.8": 3, "15.9": 3, "15.10": 3, "L5": 3, "L6": 3, "L7": 3,
+}
+
+
+def construir_mapa_secao_unidade(curso: dict, exercicios: list) -> dict:
+    mapa = dict(MAPA_SECAO_UNIDADE_PADRAO)
+    for u_str, u_obj in (curso.get("unidades") or {}).items():
+        try:
+            u_num = int(u_str)
+        except ValueError:
+            continue
+        for item in (u_obj.get("ondeEstamos") or []):
+            for sec in (item.get("secoes") or []):
+                mapa[str(sec).strip()] = u_num
+            where = str(item.get("where", ""))
+            for m_sec in re.findall(r"\b(\d{1,2}\.\d{1,2})\b", where):
+                if m_sec.startswith(("10.", "14.", "15.")) and m_sec not in mapa:
+                    mapa[m_sec] = u_num
+    for s in (exercicios or []):
+        sec = str(s.get("sec", "")).strip()
+        if sec and s.get("un"):
+            mapa[sec] = int(s["un"])
+    return mapa
+
+
+def inferir_unidade_resumo(stem: str, texto: str, mapa_sec_un: dict) -> int:
+    cabecalho = texto[:400]
+    # 1. Metadado explícito: "unidade: 3" ou "3ª unidade" / "3° unidade" no cabeçalho
+    m_un = re.search(r"unidade\s*:\s*([123])\b", cabecalho, re.IGNORECASE)
+    if m_un:
+        return int(m_un.group(1))
+    m_ord = re.search(r"\b([123])\s*[ªa°º]\s*unidade\b", cabecalho, re.IGNORECASE)
+    if m_ord:
+        return int(m_ord.group(1))
+
+    # 2. Seção no título H1 ("# 15.4 ...")
+    primeira_linha = texto.lstrip().split("\n", 1)[0]
+    for m_sec in re.findall(r"\b(\d{1,2}\.\d{1,2}|L\d+)\b", primeira_linha):
+        if m_sec in mapa_sec_un:
+            return mapa_sec_un[m_sec]
+
+    # 3. Seção no nome do arquivo (ex: "09-resumo-15-4")
+    m_arq = re.search(r"(?:^|-)(\d{1,2})-(\d{1,2})(?:-|$)", stem)
+    if m_arq:
+        sec_cand = f"{m_arq.group(1)}.{m_arq.group(2)}"
+        if sec_cand in mapa_sec_un:
+            return mapa_sec_un[sec_cand]
+
+    # 4. Seção citada logo no subtítulo/blockquote (primeiros 300 caracteres, ex: "Stewart 14.1")
+    for m_sec in re.findall(r"\b(\d{1,2}\.\d{1,2})\b", cabecalho[:300]):
+        if m_sec in mapa_sec_un:
+            return mapa_sec_un[m_sec]
+
+    # 5. Fallback pelo prefixo numérico do arquivo (00..05 -> 1, 06..08 -> 2, >=09 -> 3)
+    m_num = re.match(r"^(\d+)", stem)
+    if m_num:
+        n = int(m_num.group(1))
+        return 1 if n <= 5 else (2 if n <= 8 else 3)
+    return 3
+
+
 def montar_dados(raiz_disc: pathlib.Path) -> dict:
     p_curso = raiz_disc / "_app" / "dados" / "curso.json"
     curso = {}
@@ -231,22 +317,27 @@ def montar_dados(raiz_disc: pathlib.Path) -> dict:
         except Exception as e:
             print("ERRO lendo curso.json:", e)
 
+    p_ex = raiz_disc / "_app" / "dados" / "exercicios.json"
+    try:
+        exercicios = json.loads(p_ex.read_text(encoding="utf-8")) if p_ex.exists() else []
+    except Exception as e:
+        exercicios = []
+        print("ERRO lendo exercicios.json:", e)
+
+    mapa_sec_un = construir_mapa_secao_unidade(curso, exercicios)
+
     resumos = []
     pasta_resumos = raiz_disc / "resumos"
     if pasta_resumos.exists():
         for p in sorted(pasta_resumos.glob("*.md")):
             texto = p.read_text(encoding="utf-8")
-            # Permite definir unidade no frontmatter ou pelo número inicial
-            un_explicita = None
-            m_un = re.search(r"unidade:\s*(\d+)", texto[:250], re.IGNORECASE)
-            if m_un:
-                un_explicita = int(m_un.group(1))
+            un_inferida = inferir_unidade_resumo(p.stem, texto, mapa_sec_un)
             resumos.append({
                 "key": p.stem,
                 "title": titulo_de(texto, p.stem),
                 "src": "resumos/" + p.name,
                 "grupo": "resumo",
-                "un": un_explicita,
+                "un": un_inferida,
                 "md": texto,
             })
 
@@ -269,18 +360,12 @@ def montar_dados(raiz_disc: pathlib.Path) -> dict:
     pasta_sol = raiz_disc / "resolucoes"
     if pasta_sol.exists():
         for p in sorted(pasta_sol.glob("*.md")):
+            txt_sol = p.read_text(encoding="utf-8")
             m = re.match(r"^(\d+)-(\d+)-(.+)$", p.stem)
             if m:
-                resolucoes[f"{m.group(1)}.{m.group(2)}-{m.group(3)}"] = p.read_text(encoding="utf-8")
+                resolucoes[f"{m.group(1)}.{m.group(2)}-{m.group(3)}"] = txt_sol
             else:
-                resolucoes[p.stem] = p.read_text(encoding="utf-8")
-
-    p_ex = raiz_disc / "_app" / "dados" / "exercicios.json"
-    try:
-        exercicios = json.loads(p_ex.read_text(encoding="utf-8")) if p_ex.exists() else []
-    except Exception as e:
-        exercicios = []
-        print("ERRO lendo exercicios.json:", e)
+                resolucoes[p.stem] = txt_sol
 
     pasta_img = raiz_disc / "_app" / "img"
     figuras = sorted(p.stem for p in pasta_img.glob("*.png")) if pasta_img.exists() else []
@@ -311,6 +396,7 @@ def montar_dados(raiz_disc: pathlib.Path) -> dict:
         "arquivosPdf": pdfs,
         "status": ler_status(raiz_disc),
         "historicoUndo": agente.listar_historico_undo(raiz_disc),
+        "historicoTelemetria": agente.listar_historico_telemetria(raiz_disc),
         "configAgente": cfg_agente,
         "skills": agente.listar_skills(AQUI, raiz_disc),
         "lidoEm": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -382,6 +468,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------------- Rotas GET ----------------
     def do_GET(self):
+        recarregar_modulos_se_mudaram()
         parsed = urllib.parse.urlparse(self.path)
         rota = parsed.path
         qs = self._query_params()
@@ -404,6 +491,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._envia(json.dumps({"marcacoes": ler_status(raiz_disc)}, ensure_ascii=False))
         if rota == "/api/skills":
             return self._envia(json.dumps({"skills": agente.listar_skills(AQUI, raiz_disc)}, ensure_ascii=False))
+        if rota == "/api/telemetria":
+            return self._envia(json.dumps(agente.listar_historico_telemetria(raiz_disc), ensure_ascii=False))
         if rota == "/api/rag/status":
             info = rag.sincronizar_indice(raiz_disc, forcar=False)
             return self._envia(json.dumps(info, ensure_ascii=False))
@@ -434,6 +523,7 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------------- Rotas POST ----------------
     def do_POST(self):
+        recarregar_modulos_se_mudaram()
         parsed = urllib.parse.urlparse(self.path)
         rota = parsed.path
         qs = self._query_params()
@@ -537,7 +627,10 @@ class Handler(BaseHTTPRequestHandler):
                 if tipo_md == "resolucao":
                     res = agente._tool_salvar_resolucao(raiz_disc, nome_arq, conteudo)
                 else:
-                    res = agente._tool_salvar_resumo(raiz_disc, nome_arq, conteudo)
+                    un_req = corpo.get("unidade")
+                    res = agente._tool_salvar_resumo(
+                        raiz_disc, nome_arq, conteudo, unidade=int(un_req) if un_req else None
+                    )
                 return self._envia(json.dumps(res, ensure_ascii=False))
 
             if rota == "/api/extrair-pdf":

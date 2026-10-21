@@ -116,15 +116,29 @@ def carregar_curso_json(raiz_disciplina: pathlib.Path) -> dict:
 
 # ---------------- Indexação de Markdowns e PDFs da Disciplina ----------------
 def _extrair_secao_de_nome_ou_texto(nome: str, texto: str) -> str:
-    m = re.search(r"(\d{1,2}\.\d{1,2})", texto[:400])
-    if m:
-        return m.group(1)
-    m2 = re.match(r"^(\d+)-(\d+)-", nome)
-    if m2:
-        return f"{m2.group(1)}.{m2.group(2)}"
+    # 1. Prioriza o nome do arquivo em resoluções (ex: "15-4-22" -> "15.4", "L5-6(a)" -> "L5")
+    m_res_num = re.match(r"^(\d{1,2})-(\d{1,2})-.+$", nome)
+    if m_res_num:
+        return f"{m_res_num.group(1)}.{m_res_num.group(2)}"
+    m_res_lista = re.match(r"^(L\d+)-", nome, re.IGNORECASE)
+    if m_res_lista:
+        return m_res_lista.group(1).upper()
+
+    # 2. Primeira linha (título H1 do resumo/documento, ex: "# 15.4 Integrais Duplas...")
+    primeira_linha = (texto or "").lstrip().split("\n", 1)[0]
+    m_h1 = re.search(r"\b(\d{1,2}\.\d{1,2}|L\d+)\b", primeira_linha)
+    if m_h1:
+        return m_h1.group(1)
+
+    # 3. Nome de arquivo de lista em PDF (ex: "Lista 5 ...")
     m3 = re.search(r"Lista\s*(\d+)", nome, re.IGNORECASE)
     if m3:
         return f"L{m3.group(1)}"
+
+    # 4. Cabeçalho (primeiros 400 chars)
+    m = re.search(r"\b(\d{1,2}\.\d{1,2})\b", (texto or "")[:400])
+    if m:
+        return m.group(1)
     return ""
 
 
@@ -344,14 +358,25 @@ def ler_secao_livro(raiz_disciplina: pathlib.Path, livro: str = "stewart", secao
     livro_id = info_livro["id"]
     secoes_map = info_livro.get("secoes", {})
     sec_info = secoes_map.get(secao)
-    # Se pediu no Guidorizzi usando código do Stewart (ex: "14.1" -> procura corresp == "14.1")
+    # Se pediu no Guidorizzi usando código do Stewart (ex: "14.1" ou "14.8" -> procura em corresp)
     if not sec_info:
         for k, v in secoes_map.items():
-            if v.get("corresp") == secao:
+            cor = str(v.get("corresp", ""))
+            if secao == cor or secao in [x.strip() for x in cor.split(",")]:
                 secao = k
                 sec_info = v
                 break
     if not sec_info:
+        if livro_id == "guidorizzi" and str(secao).startswith("15."):
+            return {
+                "nota": (
+                    f"O livro '{info_livro['nome']}' disponível na pasta cobre apenas Derivadas Parciais e Otimização "
+                    "(Capítulos 8 a 16 = Stewart 14.1 a 14.8). No Guidorizzi, Integrais Duplas e Triplas (equivalentes ao "
+                    "Capítulo 15 do Stewart) ficam no Volume 3. Para a seção "
+                    f"{secao}, utilize ler_secao_livro(livro='stewart', secao='{secao}') e buscar_rag nas Listas 4, 5 e 6 da UFPE."
+                ),
+                "secoesDisponiveisGuidorizzi": list(secoes_map.keys()),
+            }
         return {
             "erro": f"Seção '{secao}' não mapeada em {info_livro['nome']}. Seções disponíveis: {list(secoes_map.keys())}"
         }

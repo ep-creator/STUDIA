@@ -19,11 +19,11 @@ Você é um especialista em criar resumos teóricos densos, claros e focados no 
 1. **Busca 1 — Seção Completa no Livro Principal:**
    - Chame `ler_secao_livro` para ler integralmente a teoria e todos os exemplos resolvidos da seção alvo (ex.: Stewart `15.4`).
 2. **Busca 2 — Rigor Complementar e Resumos Anteriores:**
-   - Chame `buscar_rag` procurando o mesmo tema no livro secundário (ex.: Guidorizzi), nas listas de exercícios (`tipo="lista"`) e nos resumos já existentes (`tipo="resumo"`) para manter 100% de consistência de notação.
+   - Para seções do Cap. 14 (`14.1` a `14.8`), consulte também o Guidorizzi Vol. 2. Para seções do Cap. 15 (`15.2` a `15.10`), o Guidorizzi Vol. 2 não possui Integrais Múltiplas (que ficam no Vol. 3); portanto, faça `buscar_rag` nas listas de exercícios da UFPE (`L4`, `L5`, `L6`) e nos resumos anteriores (`tipo="resumo"`) sem chamar `ler_secao_livro` no Guidorizzi.
 3. **Redação do Resumo (`resumos/NN-slug.md`):**
    - Estruture o resumo com:
      - `# <Seção> <Título do Assunto>`
-     - `> <Subtítulo curto com referências das seções nos livros>`
+     - `> Referência · <N>ª unidade · <Seções nos livros>`
      - **Definições e Teoremas formais** (destacando as hipóteses que precisam ser citadas na prova).
      - **Receita passo a passo** (algoritmo prático para resolver questões daquele assunto).
      - **Tabelas de reconhecimento / casos clássicos** (quando aplicável).

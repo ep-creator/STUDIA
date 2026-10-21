@@ -23,6 +23,7 @@ Refatoração Site Estudos/
 ├── README.md                           # Este guia geral da estrutura e funcionamento
 ├── docs/                               # Documentação técnica para manutenção a longo prazo
 │   ├── ARQUITETURA_E_FUNCIONAMENTO.md  # Funcionamento interno (Servidor, JSONs, RAG 2 níveis e Agente)
+│   ├── ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md # Raio-X de API calls, tokens, custos (US$/R$) e delays
 │   └── FLUXO_GIT_E_MANUTENCAO.md       # Árvore de branches (main/dev), convenções e comandos Git
 │
 └── Calculo 2/                          # Pasta da Disciplina (novas cadeiras seguem este mesmo molde)
@@ -120,7 +121,8 @@ flowchart LR
 Para detalhes técnicos de manutenção e fluxo de versionamento, consulte a pasta [`docs/`](./docs/):
 
 1. **[`docs/ARQUITETURA_E_FUNCIONAMENTO.md`](./docs/ARQUITETURA_E_FUNCIONAMENTO.md)** — Como funcionam os schemas JSON, as rotas da API, o RAG em 2 níveis (incluindo a resolução de exercícios pares do Stewart sem gabarito) e o loop de *Function Calling* do Agente.
-2. **[`docs/FLUXO_GIT_E_MANUTENCAO.md`](./docs/FLUXO_GIT_E_MANUTENCAO.md)** — Árvore do Git (`main` + `dev`), convenção de commits e guia passo a passo para evoluir o código sem misturar com o progresso diário de estudos.
+2. **[`docs/ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md`](./docs/ANALISE_COMPUTACIONAL_CUSTOS_E_LATENCIA.md)** — Análise computacional completa dos fluxos, efeito cumulativo de tokens por turno, tabelas de preços de API (US\$ e R\$) e origem de cada milissegundo de latência (disco/SQLite/SciPy vs. rede/inferência).
+3. **[`docs/FLUXO_GIT_E_MANUTENCAO.md`](./docs/FLUXO_GIT_E_MANUTENCAO.md)** — Árvore do Git (`main` + `dev`), convenção de commits e guia passo a passo para evoluir o código sem misturar com o progresso diário de estudos.
 
 ---
 

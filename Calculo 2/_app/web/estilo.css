@@ -357,9 +357,23 @@ tr.sessao-feita td.s{color:var(--ok)}
 
 .telemetry-bar{font-family:"IBM Plex Mono",monospace;font-size:11.5px;background:var(--lv1-soft);
   border:1px solid var(--accent);color:var(--ink);padding:8px 12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.telemetry-xray{border:1px solid var(--hair);background:var(--card-2);margin:8px 0;padding:8px 12px}
+.telemetry-xray summary{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--accent-ink)}
+.xray-inner{margin-top:10px;display:flex;flex-direction:column;gap:10px;font-family:"IBM Plex Mono",monospace;font-size:11px}
+.latency-split-wrap{display:flex;flex-direction:column;gap:4px}
+.latency-split-bar{display:flex;height:8px;border-radius:2px;overflow:hidden;background:var(--ground);border:1px solid var(--hair)}
+.latency-seg-api{background:var(--accent);height:100%}
+.latency-seg-local{background:var(--ok);height:100%}
+.latency-legend{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);flex-wrap:wrap;gap:6px}
+.ctx-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ctx-chip{background:var(--card);border:1px solid var(--hair);padding:3px 7px;border-radius:2px;font-size:10.5px;color:var(--body)}
+.turn-table{width:100%;border-collapse:collapse;font-size:10.5px;background:var(--card)}
+.turn-table th,.turn-table td{border:1px solid var(--hair);padding:4px 7px;text-align:left}
+.turn-table th{background:var(--ground);color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.telemetry-history-card{border:1px solid var(--hair);background:var(--card-2);padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--body)}
 .tool-calls-list{display:flex;flex-direction:column;gap:4px;margin:8px 0}
 .tool-pill{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--card-2);
-  border-left:3px solid var(--accent);padding:5px 10px;color:var(--body);display:flex;justify-content:space-between;gap:8px}
+  border-left:3px solid var(--accent);padding:5px 10px;color:var(--body);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .ag-actions-bar{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
 .ag-output{margin-top:8px;max-height:420px;overflow-y:auto}
 .rag-stats-bar{font-family:"IBM Plex Mono",monospace;font-size:12px;padding:8px 12px;background:var(--card-2);border:1px solid var(--hair)}
