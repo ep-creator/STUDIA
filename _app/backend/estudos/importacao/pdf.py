@@ -47,6 +47,7 @@ class DocumentoPdf:
     paginas: tuple[PaginaPdf, ...]
     sumario: tuple[EntradaSumario, ...]
     metadados: dict[str, str]
+    total_paginas: int  # do arquivo inteiro, mesmo quando só parte das páginas foi lida
 
     @property
     def sem_texto(self) -> bool:
@@ -113,4 +114,5 @@ def abrir_pdf(caminho: Path, limite_paginas: int | None = None) -> DocumentoPdf:
         )
         sumario = tuple(EntradaSumario(nivel=n, titulo=limpar_texto(t), pagina=pg) for n, t, pg, *_ in doc.get_toc())
         metadados = {k: v for k, v in (doc.metadata or {}).items() if v}
-    return DocumentoPdf(paginas=paginas, sumario=sumario, metadados=metadados)
+        total_paginas = doc.page_count
+    return DocumentoPdf(paginas=paginas, sumario=sumario, metadados=metadados, total_paginas=total_paginas)
