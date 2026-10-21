@@ -10,6 +10,8 @@ porta = 8790
 limiar_confianca = 0.75
 # Similaridade mínima para propor o vínculo tópico do programa -> seção do livro.
 limiar_vinculo = 0.35
+# Tamanho máximo de um arquivo enviado (MB).
+limite_upload_mb = 200
 
 [historico]
 # Quantidade de ações guardadas para desfazer.
