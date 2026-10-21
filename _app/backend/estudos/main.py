@@ -6,12 +6,15 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from estudos.api import historico, marcacoes, materias, painel
+from estudos.api import cronograma, documentos, formulas, historico, listas, marcacoes, materias, painel, topicos, unidades
 from estudos.config import Settings
 from estudos.erros import DadoInvalido, NaoEncontrado
 from estudos.seguranca import CaminhoInvalido, OrigemLocalMiddleware
 
-ROUTERS = (materias.router, painel.router, marcacoes.router, historico.router)
+ROUTERS = (
+    materias.router, painel.router, marcacoes.router, historico.router, unidades.router, topicos.router,
+    listas.router, cronograma.router, formulas.router, documentos.router,
+)
 
 
 def _erro(status: int):
