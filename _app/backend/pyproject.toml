@@ -11,6 +11,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.32",
     "pydantic>=2.9",
+    "pymupdf>=1.24",
+    "python-multipart>=0.0.12",
 ]
 
 [project.optional-dependencies]
@@ -24,3 +26,4 @@ estudos = ["db/migracoes/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
