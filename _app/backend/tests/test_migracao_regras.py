@@ -100,3 +100,15 @@ def test_tipo_documento_config():
     assert tipo_documento_config("plano-estudos-unidade3.md") == "plano"
     assert tipo_documento_config("exercicios/stewart-un3.md") == "anotacao"
     assert tipo_documento_config("00-INDICE.md") == "anotacao"
+
+
+def test_secoes_citadas_por_livro():
+    from estudos.migracao.regras import secoes_citadas
+
+    livros_ = ["stewart", "guidorizzi"]
+    assert secoes_citadas("Stewart 14.3 · Guidorizzi 10, 14.1", livros_) == [
+        ("stewart", "14.3"), ("guidorizzi", "10"), ("guidorizzi", "14.1")]
+    assert secoes_citadas("Stewart 10.3–10.4", livros_) == [("stewart", "10.3"), ("stewart", "10.4")]
+    assert secoes_citadas("Guidorizzi cap. 8", livros_) == [("guidorizzi", "8")]
+    assert secoes_citadas("encerrado", livros_) == []
+    assert secoes_citadas("15.4 e Lista 5 (2026.1)", livros_) == [(None, "15.4")]

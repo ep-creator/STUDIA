@@ -1,6 +1,7 @@
 """Regras explícitas que decidem cada mapeamento ambíguo do legado. Cada decisão cita a regra aplicada."""
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
@@ -9,6 +10,8 @@ from estudos.migracao.legado import ItemLegado, Legado, SecaoLegado
 
 _MARCADOR_UNIDADE = re.compile(r"\b([1-9])\s*[ªaº°]\s*unidade\b|\bunidade\s*:\s*([1-9])\b", re.I)
 _CODIGO_SECAO = re.compile(r"\b(\d{1,2}\.\d{1,2}|L\d+)\b")
+_CODIGO_SECAO_LIVRO = re.compile(r"\b(\d{1,2}\.\d{1,2})\b")
+_CODIGO_CAPITULO_OU_SECAO = re.compile(r"\b(\d{1,2}(?:\.\d{1,2})?)\b")
 _STATUS_TOPICO = {"seen": "visto", "next": "proxima", "later": "pendente"}
 _LIMIAR_CRONOGRAMA = 0.5
 
@@ -71,6 +74,25 @@ def unificar_itens(secao: SecaoLegado) -> tuple[list[ItemLegado], list[str]]:
             continue
         vistos[item.numero] = item
     return list(vistos.values()), avisos
+
+
+def _normalizar(texto: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", texto.lower()) if not unicodedata.combining(c))
+
+
+def secoes_citadas(where: str, livros: list[str]) -> list[tuple[str | None, str]]:
+    """Cada trecho separado por '·' cita um livro pelo nome no início ('Stewart 14.3', 'Guidorizzi cap. 8').
+
+    Os códigos de um trecho pertencem ao livro citado nele; trecho sem livro conhecido devolve (None, código),
+    para virar aviso — nunca é atribuído ao livro principal por suposição.
+    """
+    citacoes = []
+    for trecho in where.split("·"):
+        palavras = _normalizar(trecho).split()
+        livro = next((l for l in livros if palavras and palavras[0] == _normalizar(l)), None)
+        padrao = _CODIGO_CAPITULO_OU_SECAO if livro else _CODIGO_SECAO_LIVRO
+        citacoes += [(livro, codigo) for codigo in padrao.findall(trecho)]
+    return citacoes
 
 
 def tipo_documento_config(src: str) -> str:

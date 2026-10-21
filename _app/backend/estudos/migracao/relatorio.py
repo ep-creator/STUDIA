@@ -7,6 +7,11 @@ _ROTULOS = {
     "listas": "Listas / seções de exercício", "questoes": "Questões", "marcacoes": "Marcações ✓ ✗ ?",
     "sessoes": "Sessões do cronograma", "formulas": "Fórmulas", "resumos": "Resumos", "resolucoes": "Resoluções",
     "documentos": "Outros documentos", "figuras": "Figuras", "fontes": "PDFs (fontes)",
+    "eventos_prova": "Provas no calendário", "notas": "Notas de prova", "lista_secao": "Lista ↔ seção do livro",
+    "lista_topico": "Lista ↔ tópico", "topico_secao": "Tópico ↔ seção do livro",
+    "secao_equivalente": "Equivalências entre livros", "sessao_questao": "Sessão ↔ questão",
+    "extras_documento": "Documentos em unidades extras", "figuras_referenciadas": "Figuras ligadas a questões",
+    "itens_brutos": "Itens de exercício (incl. repetidos)",
 }
 
 

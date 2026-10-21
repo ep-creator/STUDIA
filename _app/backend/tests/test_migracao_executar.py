@@ -108,9 +108,15 @@ def test_topicos_e_vinculos(migrada):
     u3 = _unidade(con, 3)
     [t] = topicos.listar(con, u3.id)
     assert (t.titulo, t.status) == ("Integrais duplas em polares", "proxima")
-    assert t.detalhe_md == "Previsto: Sex 30/10\n\ndA = r dr dθ"
+    assert t.detalhe_md == "Previsto: Sex 30/10\nOnde: Stewart 15.4, 10.3 · Guidorizzi 8, 14.1\n\ndA = r dr dθ"
     assert len(topicos.listar(con, _unidade(con, 1).id)) == 1
     assert any("10.3" in a for a in relatorio.avisos)
+    vinculos = sorted(tuple(v) for v in con.execute(
+        "SELECT f.titulo, s.codigo FROM topico_secao ts JOIN secao_livro s ON s.id = ts.secao_id"
+        " JOIN fonte f ON f.id = s.livro_id WHERE ts.topico_id = ?", (t.id,)
+    ).fetchall())
+    assert [tuple(v) for v in vinculos] == [("Guidorizzi", "8"), ("Stewart", "15.4")]
+    assert any("Guidorizzi" in a and "14.1" in a for a in relatorio.avisos)
 
 
 def test_sessoes_com_questoes(migrada):
@@ -198,4 +204,40 @@ def test_migrar_para_outra_pasta(pasta, tmp_path):
     destino = tmp_path / "ws" / "Calculo Teste"
     relatorio = migrar(pasta, destino)
     assert relatorio.bate() and (destino / "materia.db").exists()
+    assert not (pasta / "materia.db").exists()
+
+
+def test_notas_das_fases_preservadas(migrada):
+    pasta, _, con = migrada
+    nota = documentos.ler_corpo(pasta, next(d for d in documentos.listar(con) if d.caminho.endswith("legado-unidade-1.md")))
+    assert "O que ficou em aberto: **14.2 #18**" in nota and "concluída" in nota and "Sessões até a prova" in nota
+    assert "- **Subtítulo:** Funções de várias variáveis." in nota
+    tabela = documentos.ler_corpo(pasta, next(d for d in documentos.listar(con) if d.caminho.endswith("legado-unidade-3.md")))
+    assert "Se o tempo apertar" in tabela
+
+
+def test_bate_detecta_vinculo_faltando(pasta, monkeypatch):
+    monkeypatch.setattr(livros, "vincular_topico", lambda *a, **k: None)
+    relatorio = migrar(pasta, pasta)
+    assert not relatorio.bate()
+    assert relatorio.contagens["topico_secao"][0] > relatorio.contagens["topico_secao"][1]
+
+
+def test_contagens_de_relacoes(migrada):
+    _, relatorio, _ = migrada
+    c = relatorio.contagens
+    assert c["eventos_prova"] == (2, 2) and c["notas"] == (1, 1)
+    assert c["lista_secao"] == (2, 2) and c["lista_topico"] == (3, 3)
+    assert c["topico_secao"] == (3, 3) and c["secao_equivalente"] == (2, 2)
+    assert c["sessao_questao"] == (5, 5) and c["extras_documento"] == (1, 1)
+    assert c["figuras_referenciadas"] == (1, 1)
+    assert c["itens_brutos"] == (7, 7)
+
+
+def test_recusa_pasta_gerada_que_ja_existia(pasta):
+    (pasta / "figuras").mkdir()
+    (pasta / "figuras" / "minha.png").write_bytes(b"do legado")
+    with pytest.raises(MigracaoRecusada, match="figuras"):
+        migrar(pasta, pasta)
+    assert (pasta / "figuras" / "minha.png").read_bytes() == b"do legado"
     assert not (pasta / "materia.db").exists()

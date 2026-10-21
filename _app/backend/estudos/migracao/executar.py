@@ -29,8 +29,14 @@ from estudos.workspace import ARQUIVO_DB, inicializar_materia
 ORIGEM = "migrado"
 GERADOS = ("conteudo", "fontes", "figuras", ".versoes")
 _RESOLUCAO = re.compile(r"^(\d+)-(\d+)-(.+)$")
-_SECAO_LIVRO = re.compile(r"\b\d+\.\d+\b")
 _SEM_VALOR = {"", "—", "-"}
+CAMPOS_UNIDADE_LEGADO = (
+    ("eyebrow", "Sobrelinha"), ("subtitulo", "Subtítulo"), ("ondeEstamosSubtitulo", "Onde estamos"),
+    ("cronogramaTitulo", "Título do cronograma"), ("cronogramaSubtitulo", "Subtítulo do cronograma"),
+    ("resumosSubtitulo", "Subtítulo dos resumos"), ("formularioTitulo", "Título do formulário"),
+    ("formularioSubtitulo", "Subtítulo do formulário"), ("tags", "Tags"),
+)
+CAMPOS_FASE_LEGADO = (("eyebrow", "Sobrelinha"), ("tag", "Etiqueta"), ("nota", "Nota"))
 
 
 class MigracaoRecusada(RuntimeError):
@@ -42,6 +48,13 @@ def _preparar_destino(destino: Path, forcar: bool) -> str | None:
     """Apaga o que a migração anterior gerou (só os itens de GERADOS e o banco) e devolve o uid a preservar."""
     banco = destino / ARQUIVO_DB
     if not banco.exists():
+        # Primeira migração: as pastas que ela gera não podem existir, senão uma reexecução apagaria conteúdo alheio.
+        existentes = [p for p in GERADOS if (destino / p).exists()]
+        if existentes:
+            raise MigracaoRecusada(
+                f"{destino.name} já tem a(s) pasta(s) {', '.join(existentes)}, que a migração gera e apaga ao reexecutar. "
+                "Renomeie-as antes de migrar."
+            )
         return None
     with closing(conectar(banco)) as con:
         uid = con.execute("SELECT uid FROM materia").fetchone()[0]
@@ -69,6 +82,8 @@ class _Migracao:
         self.unidade_id: dict[int, int] = {}
         self.fonte_por_pdf: dict[str, int] = {}
         self.secao_principal: dict[str, int] = {}
+        self.secoes_por_livro: dict[str, dict[str, int]] = {}  # id do livro em curso.json → {código: secao_id}
+        self.nome_livro: dict[str, str] = {}
         self.lista_id: dict[str, int] = {}
         self.questao_por_chave: dict[str, int] = {}
         self.unidade_da_questao: dict[int, int] = {}
@@ -140,11 +155,7 @@ class _Migracao:
                     "unidade_id": uid, "nota": nota, "registrada_em": datetime.date.today().isoformat(),
                 })
                 self.r.decisoes.append(f"unidade {numero}: tag de nota virou nota_avaliacao = {nota}")
-            preservar = [f"**{rotulo}:** {u[c]}" for c, rotulo in (
-                ("eyebrow", "Sobrelinha"), ("subtitulo", "Subtítulo"), ("ondeEstamosSubtitulo", "Onde estamos"),
-            ) if u.get(c)]
-            preservar += [f"- {t}" for t in u.get("tags") or []]
-            self.notas_unidade[numero] = preservar
+            self.notas_unidade[numero] = _linhas_campos(u, CAMPOS_UNIDADE_LEGADO)
 
     def livros(self) -> None:
         for i, l in enumerate(self.curso.get("livros") or []):
@@ -170,6 +181,8 @@ class _Migracao:
                     fim = ini
                     self.r.decisoes.append(f"{l.get('nome')} §{codigo}: sem página final; fim = início ({fim})")
                 ids[codigo] = livros.criar_secao(self.op, fonte_id, codigo, s.get("titulo", codigo), ini, fim, origem=ORIGEM)
+            self.secoes_por_livro[l["id"]] = ids
+            self.nome_livro[l["id"]] = l.get("nome", l["id"])
             if i == 0:
                 self.secao_principal = ids
                 continue
@@ -242,23 +255,35 @@ class _Migracao:
                         f"unidade {numero}: item '{item.get('titulo')}' (status {item.get('status')}) é a prova → já é evento"
                     )
                     continue
-                detalhe = self._md(item.get("detalhe"), f"tópico {item.get('titulo')}")
-                lv = (item.get("lv") or "").strip()
-                if lv and lv != "Visto":
-                    detalhe = f"Previsto: {lv}\n\n{detalhe}" if detalhe else f"Previsto: {lv}"
+                where = (item.get("where") or "").strip()
                 tid = topicos.criar(self.op, self.unidade_id[numero], self._md(item.get("titulo"), "tópico"),
-                                    origem=ORIGEM, detalhe_md=detalhe)
+                                    origem=ORIGEM, detalhe_md=self._detalhe_topico(item))
                 topicos.definir_status(self.op, tid, status)
-                for codigo in _SECAO_LIVRO.findall(item.get("where") or ""):
-                    if codigo in self.secao_principal:
-                        livros.vincular_topico(self.op, tid, self.secao_principal[codigo], confianca=1.0, confirmado=True)
+                for livro_id, codigo in regras.secoes_citadas(where, list(self.secoes_por_livro)):
+                    secao_id = self.secoes_por_livro.get(livro_id, {}).get(codigo)
+                    if secao_id is not None:
+                        livros.vincular_topico(self.op, tid, secao_id, confianca=1.0, confirmado=True)
+                    elif livro_id is None:
+                        self.r.avisos.append(f"tópico '{item.get('titulo')}': {codigo} citado sem nome de livro → sem vínculo")
                     else:
-                        self.r.avisos.append(f"tópico '{item.get('titulo')}': seção {codigo} não existe no livro principal")
+                        nome = self.nome_livro.get(livro_id, livro_id)
+                        self.r.avisos.append(f"tópico '{item.get('titulo')}': {nome} não tem a seção {codigo} cadastrada")
                 for codigo in item.get("secoes") or []:
                     if codigo in self.lista_id:
                         listas.vincular_topico(self.op, self.lista_id[codigo], tid)
                     else:
                         self.r.avisos.append(f"tópico '{item.get('titulo')}': lista {codigo} não existe")
+
+    def _detalhe_topico(self, item: dict) -> str:
+        """Previsão de aula e referência viram cabeçalho do detalhe: nada do 'Onde estamos' se perde."""
+        cabecalho = []
+        lv = (item.get("lv") or "").strip()
+        if lv and lv != "Visto":
+            cabecalho.append(f"Previsto: {lv}")
+        if (item.get("where") or "").strip():
+            cabecalho.append(f"Onde: {item['where'].strip()}")
+        detalhe = self._md(item.get("detalhe"), f"tópico {item.get('titulo')}")
+        return "\n\n".join(p for p in ("\n".join(cabecalho), detalhe) if p)
 
     def liberacoes(self) -> None:
         for secao in self.legado.secoes:
@@ -277,6 +302,9 @@ class _Migracao:
                 if _eh_cronograma(fase, self.ano):
                     for linha in fase.get("linhas") or []:
                         self._sessao(numero, linha)
+                    if _fase_tem_textos(fase):
+                        self.notas_unidade[numero] += ["", f"## {fase.get('titulo') or 'Cronograma'}", "",
+                                                       *_linhas_campos(fase, CAMPOS_FASE_LEGADO)]
                 else:
                     self._tabela_preservada(numero, fase)
 
@@ -313,7 +341,9 @@ class _Migracao:
                 valores = valores[1:]  # 's' é só o identificador interno da linha
             linhas.append((valores + [""] * len(colunas))[: len(colunas)])
         titulo = fase.get("titulo") or "Tabela"
-        self.notas_unidade[numero] += ["", f"## {titulo}", "", tabela_markdown(colunas, linhas)]
+        textos = _linhas_campos(fase, CAMPOS_FASE_LEGADO)
+        self.notas_unidade[numero] += ["", f"## {titulo}", "", *textos, *([""] if textos else []),
+                                       tabela_markdown(colunas, linhas)]
         self.r.decisoes.append(f"unidade {numero}: tabela '{titulo}' não é cronograma → preservada em legado-unidade-{numero}.md")
 
     def formulas(self) -> None:
@@ -396,9 +426,79 @@ def _contar(con, sql: str) -> int:
     return con.execute(sql).fetchone()[0]
 
 
+def _linhas_campos(dados: dict, campos: tuple[tuple[str, str], ...]) -> list[str]:
+    """Campos de texto do legado sem lugar no modelo novo, como itens de lista Markdown."""
+    linhas = []
+    for chave, rotulo in campos:
+        valor = dados.get(chave)
+        if isinstance(valor, list):
+            valor = " · ".join(map(str, valor))
+        if valor:
+            linhas.append(f"- **{rotulo}:** {html_para_md(str(valor))[0]}")
+    return linhas
+
+
+def _fase_tem_textos(fase: dict) -> bool:
+    return bool(_linhas_campos(fase, CAMPOS_FASE_LEGADO))
+
+
 def _unidade_tem_dados_legados(u: dict, ano: int | None) -> bool:
-    campos = any(u.get(c) for c in ("eyebrow", "subtitulo", "ondeEstamosSubtitulo", "tags"))
-    return campos or any(not _eh_cronograma(f, ano) for f in u.get("fases") or [])
+    return bool(_linhas_campos(u, CAMPOS_UNIDADE_LEGADO)) or any(
+        not _eh_cronograma(f, ano) or _fase_tem_textos(f) for f in u.get("fases") or []
+    )
+
+
+def _contagens_relacoes_legado(legado: Legado, ano: int | None) -> dict[str, int]:
+    """Relações esperadas, calculadas só a partir dos arquivos legados (sem olhar o banco novo)."""
+    curso = legado.curso
+    unidades_legado = list(curso["unidades"].values())
+    livros_ok = [l for l in curso.get("livros") or [] if (legado.pasta / l["arquivo"]).is_file()]
+    codigos = {l["id"]: set(l.get("secoes") or {}) for l in livros_ok}
+    principal = codigos[livros_ok[0]["id"]] if livros_ok else set()
+    secoes_exercicio = {s.sec for s in legado.secoes}
+    topicos_legado = [
+        i for u in unidades_legado for i in u.get("ondeEstamos") or [] if regras.status_topico(i.get("status", ""))
+    ]
+    chaves = {f"{s.sec}-{i.numero}" for s in legado.secoes for i in s.itens}
+    sessao_questao = 0
+    for u in unidades_legado:
+        for fase in u.get("fases") or []:
+            if not _eh_cronograma(fase, ano):
+                continue
+            for linha in fase.get("linhas") or []:
+                refs = {
+                    f"{codigo}-{rotulo}"
+                    for x in linha.get("x") or [] if str(x).strip() not in _SEM_VALOR
+                    for codigo, rotulo in referencias_exercicios(str(x))
+                }
+                sessao_questao += len(refs & chaves)
+    todas = {int(n) for n in curso["unidades"]}
+    resumos = {p.stem for p in legado.resumos}
+    extras = sum(len(set(v)) for k, v in (curso.get("resumosExtraUnidade") or {}).items() if k in resumos)
+    for d in curso.get("documentos") or []:
+        unidades_doc = [int(u) for u in d.get("unidades") or []]
+        if (legado.pasta / d.get("src", "")).is_file() and unidades_doc and set(unidades_doc) != todas:
+            extras += len(set(unidades_doc[1:]))
+    figuras_legado = {p.stem for p in legado.figuras}
+    unificados = [i for s in legado.secoes for i in regras.unificar_itens(s)[0]]
+    return {
+        "eventos_prova": sum(1 for u in unidades_legado if u.get("dataProva")),
+        "notas": sum(1 for u in unidades_legado if nota_de_tags(u.get("tags") or []) is not None),
+        "lista_secao": sum(1 for s in legado.secoes if s.sec in principal),
+        "lista_topico": sum(len({c for c in i.get("secoes") or [] if c in secoes_exercicio}) for i in topicos_legado),
+        "topico_secao": sum(
+            len({(l, c) for l, c in regras.secoes_citadas(i.get("where") or "", list(codigos)) if c in codigos.get(l, ())})
+            for i in topicos_legado
+        ),
+        "secao_equivalente": 2 * sum(
+            1 for l in livros_ok[1:] for s in (l.get("secoes") or {}).values()
+            for c in str(s.get("corresp", "")).split(",") if c.strip() in principal
+        ),
+        "sessao_questao": sessao_questao,
+        "extras_documento": extras,
+        "figuras_referenciadas": sum(1 for i in unificados if i.figura in figuras_legado),
+        "itens_brutos": sum(len(s.itens) for s in legado.secoes),
+    }
 
 
 def _contagens_legado(legado: Legado, ano: int | None) -> dict[str, int]:
@@ -431,25 +531,39 @@ def _contagens_legado(legado: Legado, ano: int | None) -> dict[str, int]:
         "documentos": documentos_esperados,
         "figuras": len(legado.figuras),
         "fontes": len(legado.pdfs),
+        **_contagens_relacoes_legado(legado, ano),
     }
 
 
-def _contagens_novo(con, destino: Path) -> dict[str, int]:
+def _contagens_novo(con, destino: Path, duplicados: int) -> dict[str, int]:
+    figuras_novas = {p.stem for p in (destino / "figuras").glob("*.png")}
+    referenciadas = [r[0] for r in con.execute("SELECT figura FROM questao WHERE figura IS NOT NULL")]
+    questoes = _contar(con, "SELECT count(*) FROM questao")
     return {
         "unidades": _contar(con, "SELECT count(*) FROM unidade"),
         "topicos": _contar(con, "SELECT count(*) FROM topico"),
         "livros": _contar(con, "SELECT count(*) FROM livro"),
         "secoes_livro": _contar(con, "SELECT count(*) FROM secao_livro"),
         "listas": _contar(con, "SELECT count(*) FROM lista"),
-        "questoes": _contar(con, "SELECT count(*) FROM questao"),
+        "questoes": questoes,
         "marcacoes": _contar(con, "SELECT count(*) FROM marcacao"),
         "sessoes": _contar(con, "SELECT count(*) FROM sessao_estudo"),
         "formulas": _contar(con, "SELECT count(*) FROM formula"),
         "resumos": _contar(con, "SELECT count(*) FROM documento WHERE tipo = 'resumo'"),
         "resolucoes": _contar(con, "SELECT count(*) FROM documento WHERE tipo = 'resolucao'"),
         "documentos": _contar(con, "SELECT count(*) FROM documento WHERE tipo NOT IN ('resumo', 'resolucao')"),
-        "figuras": len(list((destino / "figuras").glob("*.png"))),
+        "figuras": len(figuras_novas),
         "fontes": _contar(con, "SELECT count(*) FROM fonte"),
+        "eventos_prova": _contar(con, "SELECT count(*) FROM evento WHERE tipo = 'prova'"),
+        "notas": _contar(con, "SELECT count(*) FROM nota_avaliacao"),
+        "lista_secao": _contar(con, "SELECT count(*) FROM lista_secao"),
+        "lista_topico": _contar(con, "SELECT count(*) FROM lista_topico"),
+        "topico_secao": _contar(con, "SELECT count(*) FROM topico_secao"),
+        "secao_equivalente": _contar(con, "SELECT count(*) FROM secao_equivalente"),
+        "sessao_questao": _contar(con, "SELECT count(*) FROM sessao_questao"),
+        "extras_documento": _contar(con, "SELECT count(*) FROM documento_unidade_extra"),
+        "figuras_referenciadas": sum(1 for f in referenciadas if f in figuras_novas),
+        "itens_brutos": questoes + duplicados,  # questões gravadas + repetições unificadas (listadas nas decisões)
     }
 
 
@@ -480,7 +594,8 @@ def migrar(origem: Path, destino: Path, forcar: bool = False) -> Relatorio:
             m.documentos_config()
             m.figuras()
         con.execute("DELETE FROM historico_grupo")
-        novo = _contagens_novo(con, destino)
+        duplicados = sum(len(regras.unificar_itens(s)[1]) for s in legado.secoes)
+        novo = _contagens_novo(con, destino, duplicados)
 
     esperado = _contagens_legado(legado, ano)
     relatorio.contagens = {chave: (esperado[chave], novo[chave]) for chave in esperado}

@@ -115,13 +115,13 @@
     }
    ],
    "cronogramaTitulo": "Cronograma",
-   "cronogramaSubtitulo": "",
+   "cronogramaSubtitulo": "Sessões até a prova",
    "fases": [
     {
      "estilo": "f1",
      "eyebrow": "Plano",
      "titulo": "Sessões",
-     "tag": "",
+     "tag": "concluída",
      "colunas": [
       "Sessão",
       "Data",
@@ -148,7 +148,7 @@
        ]
       }
      ],
-     "nota": ""
+     "nota": "O que ficou em aberto: **14.2 #18**"
     }
    ],
    "resumosSubtitulo": "",
@@ -182,7 +182,7 @@
      "lv": "Sex 30/10",
      "titulo": "Integrais duplas em polares",
      "detalhe": "dA = r dr dθ",
-     "where": "Stewart 15.4, 10.3",
+     "where": "Stewart 15.4, 10.3 · Guidorizzi 8, 14.1",
      "secoes": [
       "15.4",
       "L5"

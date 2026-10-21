@@ -1,6 +1,6 @@
 # Relatório da migração — Cálculo 2
 
-Gerado em 2026-10-21T09:32:45. Resultado: **contagens batem**.
+Gerado em 2026-10-21T09:44:56. Resultado: **contagens batem**.
 
 ## Contagens
 
@@ -20,6 +20,16 @@ Gerado em 2026-10-21T09:32:45. Resultado: **contagens batem**.
 | Outros documentos | 15 | 15 | ✓ |
 | Figuras | 11 | 11 | ✓ |
 | PDFs (fontes) | 16 | 16 | ✓ |
+| Provas no calendário | 3 | 3 | ✓ |
+| Notas de prova | 1 | 1 | ✓ |
+| Lista ↔ seção do livro | 16 | 16 | ✓ |
+| Lista ↔ tópico | 20 | 20 | ✓ |
+| Tópico ↔ seção do livro | 29 | 29 | ✓ |
+| Equivalências entre livros | 22 | 22 | ✓ |
+| Sessão ↔ questão | 135 | 135 | ✓ |
+| Documentos em unidades extras | 1 | 1 | ✓ |
+| Figuras ligadas a questões | 11 | 11 | ✓ |
+| Itens de exercício (incl. repetidos) | 263 | 263 | ✓ |
 
 ## Decisões tomadas por regra
 
@@ -56,13 +66,12 @@ _Nenhum._
 
 ## Avisos
 
-- tópico 'Diferenciabilidade · diferencial · aproximação linear · plano tangente': seção 11.1 não existe no livro principal
-- tópico 'Diferenciabilidade · diferencial · aproximação linear · plano tangente': seção 11.4 não existe no livro principal
-- tópico 'Derivada direcional e vetor gradiente': seção 11.5 não existe no livro principal
-- tópico 'Pontos críticos e ponto de sela': seção 16.1 não existe no livro principal
-- tópico 'Pontos críticos e ponto de sela': seção 16.3 não existe no livro principal
-- tópico 'Extremos absolutos em região fechada': seção 16.4 não existe no livro principal
-- tópico 'Multiplicadores de Lagrange': seção 16.5 não existe no livro principal
+- tópico 'Diferenciabilidade · diferencial · aproximação linear · plano tangente': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 11.1 cadastrada
+- tópico 'Diferenciabilidade · diferencial · aproximação linear · plano tangente': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 11.4 cadastrada
+- tópico 'Derivada direcional e vetor gradiente': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 11.5 cadastrada
+- tópico 'Pontos críticos e ponto de sela': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 16.1 cadastrada
+- tópico 'Pontos críticos e ponto de sela': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 16.3 cadastrada
+- tópico 'Extremos absolutos em região fechada': Guidorizzi — Um Curso de Cálculo Vol. 2 não tem a seção 16.4 cadastrada
 - sessão S5: L3 #8 não é uma questão cadastrada
 
 ## Arquivos
