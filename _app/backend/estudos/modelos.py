@@ -10,6 +10,7 @@ STATUS_TOPICO = ("pendente", "proxima", "visto")
 LIBERACOES = ("auto", "aberta", "travada")
 ESTADOS_MARCACAO = ("ok", "err", "dub")
 LINHAS = (1, 2)
+TIPOS_DOCUMENTO = ("resumo", "resolucao", "plano", "anotacao", "contexto")
 
 
 def exigir_opcao(valor: str, opcoes: tuple[str, ...], campo: str) -> str:
@@ -110,3 +111,41 @@ class Placar:
     feitos_linha2: int
     total_linha2: int
     taxa_acerto: float | None
+
+
+@dataclass(frozen=True)
+class Documento:
+    id: int
+    tipo: str
+    caminho: str
+    titulo: str
+    unidade_id: int | None
+    secao_id: int | None
+    questao_id: int | None
+    origem: str
+    atualizado_em: str
+
+
+@dataclass(frozen=True)
+class Sessao:
+    id: int
+    unidade_id: int
+    codigo: str
+    data: str | None
+    foco_md: str
+    feito: bool
+    ordem: int
+    origem: str
+    questao_ids: tuple[int, ...]
+
+
+@dataclass(frozen=True)
+class Formula:
+    id: int
+    unidade_id: int
+    secao_id: int | None
+    titulo: str
+    corpo_tex: str
+    notas_md: str
+    ordem: int
+    origem: str

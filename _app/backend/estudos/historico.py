@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import shutil
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -9,7 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from estudos.db.conexao import transacao
+from estudos.erros import DadoInvalido
 from estudos.repos._base import aplicar_estado
+from estudos.seguranca import caminho_seguro
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,30 @@ def listar(con: sqlite3.Connection, limite: int = 50) -> list[GrupoHistorico]:
     return [_grupo(linha) for linha in linhas]
 
 
+def versionar_arquivo(op: Operacao, caminho_rel: str) -> Path:
+    """Guarda a versão atual de `caminho_rel` em .versoes/ (se existir) e registra no grupo. Retorna o caminho absoluto."""
+    if op.raiz is None:
+        raise DadoInvalido("Operação com arquivo exige a pasta da matéria.")
+    alvo = caminho_seguro(op.raiz, caminho_rel)
+    versao_rel = None
+    if alvo.exists():
+        versao_rel = f".versoes/{caminho_rel}/{op.grupo_id}-{op.total_mudancas + 1}.md"
+        destino = op.raiz / versao_rel
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(alvo, destino)
+    op.registrar_arquivo(caminho_rel, versao_rel)
+    return alvo
+
+
 def _desfazer_mudanca(op: Operacao, mudanca: sqlite3.Row) -> None:
+    if mudanca["arquivo"]:
+        alvo = versionar_arquivo(op, mudanca["arquivo"])
+        if mudanca["versao_arquivo"]:
+            alvo.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(op.raiz / mudanca["versao_arquivo"], alvo)
+        else:
+            alvo.unlink(missing_ok=True)
+        return
     alvo = None if mudanca["antes_json"] is None else json.loads(mudanca["antes_json"])
     aplicar_estado(op, mudanca["tabela"], json.loads(mudanca["chave_json"]), alvo)
 
@@ -104,8 +130,17 @@ def desfazer_ultimo(con: sqlite3.Connection, raiz: Path | None = None) -> GrupoH
         return _grupo(con.execute("SELECT * FROM historico_grupo WHERE id = ?", (original["id"],)).fetchone())
 
 
-def podar(con: sqlite3.Connection, max_grupos: int) -> int:
+def podar(con: sqlite3.Connection, max_grupos: int, raiz: Path | None = None) -> int:
+    """Mantém só os `max_grupos` grupos mais recentes; com `raiz`, apaga as versões de arquivo que ficaram órfãs."""
     with transacao(con):
+        if raiz is not None:
+            versoes = con.execute(
+                "SELECT m.versao_arquivo FROM historico_mudanca m WHERE m.versao_arquivo IS NOT NULL AND m.grupo_id NOT IN"
+                " (SELECT id FROM historico_grupo ORDER BY id DESC LIMIT ?)",
+                (max_grupos,),
+            ).fetchall()
+            for (versao,) in versoes:
+                caminho_seguro(raiz, versao).unlink(missing_ok=True)
         cursor = con.execute(
             "DELETE FROM historico_grupo WHERE id NOT IN (SELECT id FROM historico_grupo ORDER BY id DESC LIMIT ?)",
             (max_grupos,),
