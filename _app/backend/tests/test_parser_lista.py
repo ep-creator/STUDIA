@@ -67,3 +67,16 @@ def test_numeracao_fora_de_sequencia_e_ignorada(tmp_path):
     a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "x.pdf", [texto])), "x.pdf")
     q = a.listas[0].questoes
     assert [x.rotulo for x in q] == ["1", "2", "3"] and "5. pulo" in q[1].enunciado_md
+
+
+@pytest.mark.parametrize("n", [3, 6])
+def test_conteudos_que_quebram_linha(n):
+    a = _arquivo(f"listas-2026-1/Lista{n}_2026-1.pdf")
+    assert len(a.conteudos) >= 2 and not any(c.split()[-1] in ("e", "em", "de") for c in a.conteudos)
+
+
+def test_questao_n_e_parenteses_e_reinicio(tmp_path):
+    texto = "Lista de exercícios\nQuestão 1. Calcule.\nQuestão 2) Derive.\n3) Integre.\nParte B\n1. Outra"
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "q.pdf", [texto])), "q.pdf")
+    assert [q.rotulo for q in a.listas[0].questoes] == ["1", "2", "3"]
+    assert any("reinicia" in aviso for aviso in a.avisos)

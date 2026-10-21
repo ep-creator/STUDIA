@@ -46,3 +46,13 @@ def test_texto_sem_nada():
 def test_horario_com_minutos_e_hifen():
     t = extrair_turma("Horário\nSegunda-feira: 8h30–10h10\nTerças-feiras: 10h-12h")
     assert t.horarios == [(0, "08:30", "10:10"), (1, "10:00", "12:00")]
+
+
+@pytest.mark.parametrize("linha,professor", [
+    ("E-mail: prof@x.com", None),
+    ("Coordenação: coord@x.com", None),
+    ("Prof. Fulano de Tal – fulano@ufpe.br", "Prof. Fulano de Tal"),
+    ("Professor: Ana Lima - ana@x.br", "Ana Lima"),
+])
+def test_professor_com_rotulos(linha, professor):
+    assert extrair_turma(linha).professor == professor

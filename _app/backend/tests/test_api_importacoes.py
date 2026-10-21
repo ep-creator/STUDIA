@@ -87,3 +87,11 @@ def test_upload_acima_do_limite(tmp_path):
     uid = cliente.post("/api/materias", json={"nome": "X"}).json()["uid"]
     r = _enviar(cliente, f"/api/materias/{uid}/importacoes", "Programa.pdf")
     assert r.status_code == 413
+
+
+def test_upload_nao_bloqueia_o_servidor():
+    import inspect
+
+    from estudos.api import importacoes as rotas
+
+    assert not inspect.iscoroutinefunction(rotas.enviar)

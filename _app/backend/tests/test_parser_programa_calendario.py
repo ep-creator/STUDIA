@@ -59,3 +59,24 @@ def test_calendario_sem_ano_usa_padrao_e_vira_o_ano():
 def test_calendario_sem_ano_nenhum():
     cal = extrair_calendario("Unidade 1\n10/11")
     assert cal.ano is None and cal.unidades[0].aulas == []
+
+
+def test_programa_so_com_um_tipo_de_marcador_e_texto_final():
+    texto = ("Programa\nUnidade 1 - Limites\n• Limites laterais\n• Continuidade\nUnidade 2: Derivadas\n• Regras\nde derivação\n"
+             "Bibliografia\nSTEWART, J. Cálculo.\nAvaliação\nTrês provas escritas.")
+    unidades = extrair_programa(texto)
+    assert [(u.numero, u.titulo) for u in unidades] == [(1, "Unidade 1 - Limites"), (2, "Unidade 2: Derivadas")]
+    assert [t.titulo for t in unidades[0].topicos] == ["Limites laterais", "Continuidade"]
+    assert [(t.titulo, t.filhos) for t in unidades[1].topicos] == [("Regras de derivação", [])]
+
+
+def test_calendario_anotacoes_nao_viram_extra():
+    texto = ("2026\nPrimeira Unidade\n10/03\n12/03 Feriado - não haverá aula\n17/03 Prova 1\n20/03 (sábado, 8h-10h)\n"
+             "24/03 revisão\nUnidade 2\nProva 2: 10/04, 14h-16h")
+    cal = extrair_calendario(texto)
+    u1 = cal.unidades[0]
+    assert [(a.tipo, a.data) for a in u1.aulas] == [
+        ("aula", "2026-03-10"), ("feriado", "2026-03-12"), ("extra", "2026-03-20"), ("aula", "2026-03-24")]
+    assert u1.aulas[-1].revisar is True and u1.aulas[0].revisar is False
+    assert u1.prova.data == "2026-03-17"
+    assert (cal.unidades[1].prova.data, cal.unidades[1].prova.hora_inicio) == ("2026-04-10", "14:00")

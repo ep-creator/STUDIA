@@ -1,11 +1,14 @@
-"""Programa da disciplina → unidades e tópicos (○ tópico, • subtópico)."""
+"""Programa da disciplina → unidades e tópicos.
+
+O nível do item vem da ordem em que os marcadores aparecem: o primeiro tipo de marcador visto é o nível 1 (tópico),
+o segundo é o nível 2 (subtópico). Assim um programa só com "•" fica todo no nível 1.
+"""
 
 from dataclasses import dataclass, field
 
 from estudos.importacao.idioma import numero_de_unidade
 
-_NIVEL_1 = "○◦▪"
-_NIVEL_2 = "•‣–-"
+_MARCADORES = "○◦▪•‣–-"
 
 
 @dataclass
@@ -21,18 +24,15 @@ class UnidadeExtraida:
     topicos: list[TopicoExtraido] = field(default_factory=list)
 
 
-def _marcador(linha: str) -> tuple[int | None, str]:
-    """(nível, resto da linha). Nível None quando a linha não começa com marcador."""
-    if linha[:1] in _NIVEL_1:
-        return 1, linha[1:].strip()
-    if linha[:1] in _NIVEL_2:
-        return 2, linha[1:].strip()
-    return None, linha
+def _continua(anterior: str, linha: str) -> bool:
+    """Linha sem marcador só continua o item anterior se claramente for o resto da frase."""
+    return linha[0].islower() or anterior.endswith((",", "-", " e", " de", " em", " da", " do"))
 
 
 def extrair_programa(texto: str) -> list[UnidadeExtraida]:
     unidades: list[UnidadeExtraida] = []
-    nivel_pendente: int | None = None   # marcador sozinho na linha: o item é a próxima linha
+    ordem_marcadores: list[str] = []
+    marcador_pendente: str | None = None   # marcador sozinho na linha: o item é a próxima linha
     ultimo: TopicoExtraido | None = None
     for bruta in texto.split("\n"):
         linha = bruta.strip()
@@ -41,20 +41,26 @@ def extrair_programa(texto: str) -> list[UnidadeExtraida]:
         numero = numero_de_unidade(linha)
         if numero is not None:
             unidades.append(UnidadeExtraida(numero, linha))
-            nivel_pendente, ultimo = None, None
+            marcador_pendente, ultimo = None, None
             continue
         if not unidades:
             continue  # cabeçalho do documento
-        nivel, resto = _marcador(linha)
-        if nivel is not None and not resto:
-            nivel_pendente = nivel
+        marcador = linha[0] if linha[0] in _MARCADORES else None
+        resto = linha[1:].strip() if marcador else linha
+        if marcador and not resto:
+            marcador_pendente = marcador
             continue
-        if nivel is None and nivel_pendente is not None:
-            nivel, nivel_pendente = nivel_pendente, None
-        if nivel is None:
-            if ultimo is not None:
+        if marcador is None and marcador_pendente is not None:
+            marcador, marcador_pendente = marcador_pendente, None
+        if marcador is None:
+            if ultimo is not None and _continua(ultimo.titulo, linha):
                 ultimo.titulo = f"{ultimo.titulo} {linha}"
+            else:
+                ultimo = None  # texto fora da lista de tópicos (bibliografia, avaliação…): não gruda em nada
             continue
+        if marcador not in ordem_marcadores:
+            ordem_marcadores.append(marcador)
+        nivel = min(ordem_marcadores.index(marcador) + 1, 2)
         unidade = unidades[-1]
         ultimo = TopicoExtraido(resto)
         if nivel == 2 and unidade.topicos:

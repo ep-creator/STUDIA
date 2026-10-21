@@ -63,7 +63,10 @@ def tokens_relevantes(texto: str) -> list[str]:
     return [singular(t) for t in normalizar(texto).split() if t not in STOPWORDS and not t.isdigit()]
 
 
-_CABECALHO_UNIDADE = re.compile(r"^(?:(?P<ord>\S+)\s+unidade|unidade\s+(?P<num>\S+))\s*:?$", re.I)
+# "Primeira Unidade", "Unidade II", "Unidade 1 - Limites", "Unidade 2: Derivadas"
+_CABECALHO_UNIDADE = re.compile(
+    r"^(?:(?P<ord>\S+)\s+unidade|unidade\s+(?P<num>[^\s:–—-]+))(?:\s*[:–—-].*)?\s*$", re.I
+)
 
 
 def numero_de_unidade(linha: str) -> int | None:

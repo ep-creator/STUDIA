@@ -16,7 +16,9 @@ _LINHA_ROTULOS = re.compile(r"^o\s+(.+)$")
 _UNIDADE_TITULO = re.compile(r"exercicios d[ao] (\w+) unidade")
 _LISTA_TITULO = re.compile(r"^(\w+)\s+lista\b", re.I)
 _LISTA_ARQUIVO = re.compile(r"lista\s*(\d+)", re.I)
-_QUESTAO = re.compile(r"^(\d{1,3})\.\s*(.*)$")
+# "1. …", "1) …", "Questão 1. …", "Questão 2) …"
+_QUESTAO = re.compile(r"^(?:quest[ãa]o\s+)?(\d{1,3})\s*[.)]\s*(.*)$", re.I)
+_MAX_LINHAS_CONTEUDOS = 4
 _ITEM = re.compile(r"^[a-z]\.\s")
 _CONTEUDOS = re.compile(r"^conte[úu]dos?\s*:\s*(.*)$", re.I)
 
@@ -100,11 +102,13 @@ def _conteudos(linhas: list[tuple[int, str]]) -> list[str]:
         if not m:
             continue
         texto = m.group(1)
-        j = i + 1
-        while not texto.rstrip().endswith(".") and j < len(linhas) and texto.rstrip().endswith(","):
-            texto = f"{texto} {linhas[j][1]}"
-            j += 1
-        return [c.strip().rstrip(".") for c in texto.split(",") if c.strip().rstrip(".")]
+        # A frase de conteúdos termina no ponto final, mesmo quebrando linha no meio de um item
+        for _, seguinte in linhas[i + 1: i + 1 + _MAX_LINHAS_CONTEUDOS]:
+            if texto.rstrip().endswith("."):
+                break
+            texto = f"{texto} {seguinte}"
+        itens = (c.strip().rstrip(".") for c in texto.split(","))
+        return [re.sub(r"^e\s+", "", c) for c in itens if c]
     return []
 
 
@@ -119,6 +123,11 @@ def _numerada(linhas: list[tuple[int, str]], arquivo: ArquivoListas, nome_arquiv
             lista.questoes.append(QuestaoExtraida(m.group(1), 1, m.group(2).strip(), pagina))
             esperado += 1
             continue
+        if m and int(m.group(1)) == 1 and lista.questoes:
+            arquivo.avisos.append(
+                f"{lista.codigo}: a numeração reinicia em 1 depois da questão {esperado - 1} (página {pagina}); "
+                "o trecho seguinte ficou junto da última questão — revise"
+            )
         if not lista.questoes:
             continue
         q = lista.questoes[-1]

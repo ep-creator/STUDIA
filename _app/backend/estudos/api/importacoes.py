@@ -30,14 +30,15 @@ def _saida(imp: Importacao) -> dict:
 
 
 @router.post("")
-async def enviar(arquivo: UploadFile = File(...), ctx: Contexto = Depends(contexto_dep)) -> JSONResponse:
+def enviar(arquivo: UploadFile = File(...), ctx: Contexto = Depends(contexto_dep)) -> JSONResponse:
+    # Rota síncrona de propósito: ler um livro leva segundos e o FastAPI a executa numa thread, sem travar o servidor
     limite = ctx.settings.limite_upload_mb * _BLOCO
     temporario = ctx.materia.pasta / ".versoes" / "_upload" / f"{uuid.uuid4().hex}.pdf"
     temporario.parent.mkdir(parents=True, exist_ok=True)
     try:
         tamanho, inicio = 0, b""
         with temporario.open("wb") as destino:
-            while bloco := await arquivo.read(_BLOCO):
+            while bloco := arquivo.file.read(_BLOCO):
                 tamanho += len(bloco)
                 if tamanho > limite:
                     raise ArquivoGrande(f"O arquivo passa do limite de {ctx.settings.limite_upload_mb} MB.")

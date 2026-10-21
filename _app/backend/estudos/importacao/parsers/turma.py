@@ -39,7 +39,10 @@ def _professor(linhas: list[str], turma: TurmaExtraida) -> None:
         m = _EMAIL.search(linha)
         if m:
             turma.email = m.group(0)
-            nome = _SEPARADOR_NOME.split(linha[: m.start()].strip())[0].strip(" –—-")
+            prefixo = linha[: m.start()].strip()
+            if ":" in prefixo:  # "Professor: Ana Lima -", "E-mail:" → o que vem antes do ":" é rótulo, não nome
+                prefixo = prefixo.split(":", 1)[1].strip()
+            nome = _SEPARADOR_NOME.split(prefixo)[0].strip(" –—-")
             turma.professor = nome or None
             return
 

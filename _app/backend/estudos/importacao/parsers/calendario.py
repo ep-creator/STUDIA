@@ -9,7 +9,9 @@ from estudos.importacao.idioma import numero_de_unidade
 _ANO = re.compile(r"\b(20\d\d)\b")
 _DATA = re.compile(r"^(\d{1,2})/(\d{1,2})\b\s*(.*)$")
 _HORARIO = re.compile(r"(\d{1,2})h(\d{2})?\s*[-–]\s*(\d{1,2})h(\d{2})?")
-_PROVA = re.compile(r"^\S+\s+(?:exame|prova)\s*:\s*(.+)$", re.I)
+_PROVA = re.compile(r"^(?:\S+\s+)?(?:exame|prova)(?:\s+\d+)?\s*:\s*(.+)$", re.I)  # "Primeiro exame:", "Prova 2:"
+_FERIADO = re.compile(r"\b(feriado|recesso|n[ãa]o haver[áa] aula|sem aula|suspens)", re.I)
+_ANOTACAO_PROVA = re.compile(r"\b(prova|exame)\b", re.I)
 _SEGUNDA_CHAMADA = re.compile(r"^segunda\s+chamada\s*:\s*(.+)$", re.I)
 _EXAME_FINAL = re.compile(r"^(?:exame|prova)\s+final\s*:\s*(.+)$", re.I)
 _VIRADA_DE_ANO = 6  # mês que "volta" mais de 6 meses indica o ano seguinte (semestre que cruza dezembro)
@@ -22,6 +24,7 @@ class EventoExtraido:
     hora_inicio: str | None = None
     hora_fim: str | None = None
     descricao: str = ""
+    revisar: bool = False
 
 
 @dataclass
@@ -75,6 +78,22 @@ def _evento(tipo: str, resto: str, datas: _Datas) -> EventoExtraido | None:
     return EventoExtraido(tipo, data, inicio, fim, m.group(3).strip(" ()"))
 
 
+def _data_anotada(unidade: UnidadeCalendario, data: str, anotacao: str) -> None:
+    """Classifica a data pela anotação, por regras explícitas; anotação que nenhuma regra explica pede revisão."""
+    inicio, fim = _horario(anotacao)
+    descricao = anotacao.strip("() ")
+    if not anotacao:
+        unidade.aulas.append(EventoExtraido("aula", data))
+    elif _FERIADO.search(anotacao):
+        unidade.aulas.append(EventoExtraido("feriado", data, descricao=descricao))
+    elif _ANOTACAO_PROVA.search(anotacao) and unidade.prova is None:
+        unidade.prova = EventoExtraido("prova", data, inicio, fim, descricao)
+    elif inicio or "extra" in anotacao.lower():
+        unidade.aulas.append(EventoExtraido("extra", data, inicio, fim, descricao))
+    else:
+        unidade.aulas.append(EventoExtraido("aula", data, descricao=descricao, revisar=True))
+
+
 def extrair_calendario(texto: str, ano_padrao: int | None = None) -> CalendarioExtraido:
     linhas = [l.strip() for l in texto.split("\n") if l.strip()]
     cabecalho = []
@@ -100,8 +119,5 @@ def extrair_calendario(texto: str, ano_padrao: int | None = None) -> CalendarioE
         elif (m := _PROVA.match(linha)) and (e := _evento("prova", m.group(1), datas)):
             calendario.unidades[-1].prova = e
         elif (m := _DATA.match(linha)) and (data := datas.iso(int(m.group(1)), int(m.group(2)))):
-            anotacao = m.group(3).strip()
-            inicio, fim = _horario(anotacao)
-            tipo = "extra" if anotacao else "aula"
-            calendario.unidades[-1].aulas.append(EventoExtraido(tipo, data, inicio, fim, anotacao.strip("()")))
+            _data_anotada(calendario.unidades[-1], data, m.group(3).strip())
     return calendario

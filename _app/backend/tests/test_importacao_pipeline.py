@@ -129,3 +129,44 @@ def test_livro_programa_e_lista_se_ligam(con, materia, settings):
     l158 = next(l for l in listas.listar(con, u3_id) if l.codigo == "15.8")
     assert con.execute("SELECT count(*) FROM lista_secao WHERE lista_id = ?", (l158.id,)).fetchone()[0] == 1
     assert len(listas.listar_questoes(con, l158.id)) == 8
+
+
+def test_reenviar_depois_de_descartar(con, materia, settings):
+    imp = _receber(con, materia, settings, DISCIPLINA / "Programa.pdf")
+    pipeline.descartar(con, imp.id)
+    novo = _receber(con, materia, settings, DISCIPLINA / "Programa.pdf")
+    assert novo.id != imp.id and novo.estado == "proposta" and len(fontes.listar(con)) == 1
+
+
+def test_reenviar_depois_de_desfazer_a_confirmacao(con, materia, settings):
+    imp = _receber(con, materia, settings, DISCIPLINA / "Programa.pdf")
+    pipeline.confirmar(con, materia.pasta, imp.id)
+    desfazer_ultimo(con, materia.pasta)
+    novo = _receber(con, materia, settings, DISCIPLINA / "Programa.pdf")
+    assert novo.estado == "proposta"
+    pipeline.confirmar(con, materia.pasta, novo.id)
+    assert len(unidades.listar(con)) == 3
+
+
+@pytest.mark.parametrize("estrago", ["numero_texto", "sem_codigo", "listas_texto"])
+def test_proposta_inconsistente_vira_dado_invalido(con, materia, settings, estrago):
+    imp = _receber(con, materia, settings, DISCIPLINA / "exercicios_3un.pdf")
+    proposta = imp.proposta
+    if estrago == "numero_texto":
+        proposta["listas"][0]["unidade"]["numero"] = "abc"
+    elif estrago == "sem_codigo":
+        del proposta["listas"][0]["codigo"]
+    else:
+        proposta["listas"] = "x"
+    importacoes.atualizar_proposta(con, imp.id, proposta)
+    with pytest.raises(DadoInvalido, match="inconsistente"):
+        pipeline.confirmar(con, materia.pasta, imp.id)
+    assert importacoes.obter(con, imp.id).estado == "proposta"
+
+
+def test_lista_sem_questoes_pede_revisao(con, materia, settings, tmp_path):
+    from pdfs_sinteticos import criar_pdf
+
+    caminho = criar_pdf(tmp_path / "vazia.pdf", ["Lista de exercícios de revisão\nSem questões numeradas aqui."])
+    imp = pipeline.reprocessar(con, materia.pasta, _receber(con, materia, settings, caminho).id, "lista", settings)
+    assert imp.proposta["listas"][0]["revisar"] is True

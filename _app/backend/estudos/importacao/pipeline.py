@@ -130,7 +130,8 @@ def _propor_turma(con, doc: DocumentoPdf, settings: Settings) -> dict:
         referencias.append({"texto": r.texto, "papel": r.papel, "fonte_id": v.chave if v else None,
                             "confianca": v.confianca if v else 0.0, "revisar": bool(v) and _revisar(v.confianca, settings)})
     return {"professor": t.professor, "email": t.email, "horarios": [list(h) for h in t.horarios],
-            "referencias": referencias, "criterios": t.criterios, "revisar": t.professor is None}
+            "referencias": referencias, "criterios": t.criterios,
+            "revisar": t.professor is None or len(t.professor.split()) < 2}
 
 
 def _propor_livro(con, doc: DocumentoPdf, settings: Settings, nome: str) -> dict:
@@ -197,11 +198,12 @@ def _propor_lista(con, doc: DocumentoPdf, settings: Settings, nome: str) -> dict
             "topicos": vinculos_topicos,
             "questoes": [dataclasses.asdict(q) for q in lista.questoes],
             "existente": diff,
+            "revisar": not lista.questoes,
         })
     unidade_arquivo = {"numero": arquivo.unidade, "confianca": 1.0 if arquivo.unidade else 0.0}
     return {"formato": arquivo.formato, "modo": "mesclar", "titulo": arquivo.titulo, "unidade": unidade_arquivo,
             "referencia_livro": arquivo.referencia_livro, "conteudos": arquivo.conteudos, "avisos": arquivo.avisos,
-            "listas": propostas, "revisar": not propostas}
+            "listas": propostas, "revisar": not propostas or bool(arquivo.avisos)}
 
 
 def propor(con, doc: DocumentoPdf, tipo: str, nome: str, settings: Settings, classificacao: Classificacao | None) -> dict:
@@ -229,8 +231,8 @@ def receber_arquivo(con, raiz: Path, origem: Path, nome_original: str, settings:
     existente = con.execute("SELECT id FROM fonte WHERE sha256 = ?", (sha,)).fetchone()
     if existente:
         imp = importacoes.por_fonte(con, existente["id"])
-        if imp is not None:
-            return imp
+        if imp is not None and imp.estado == "proposta":
+            return imp  # mesmo arquivo ainda em revisão; descartado ou já confirmado ganha proposta nova
     doc = abrir_pdf(origem)
     classificacao = classificar(doc, nome_original)
     tipo = classificacao.tipo
@@ -436,6 +438,16 @@ def confirmar(con, raiz: Path, importacao_id: int) -> dict:
         raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     fonte = _base.obter(con, "fonte", {"id": imp.fonte_id})
     resumo = dict.fromkeys(("unidades", "topicos", "eventos", "secoes", "listas", "questoes", "vinculos", "criterios"), 0)
+    try:
+        _aplicar(con, raiz, imp, fonte, resumo)
+    except DadoInvalido:
+        raise
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
+        raise DadoInvalido(f"Proposta inconsistente ({type(e).__name__}: {e}); corrija a revisão e confirme de novo.") from e
+    return resumo
+
+
+def _aplicar(con, raiz: Path, imp: Importacao, fonte: dict, resumo: dict) -> None:
     with operacao(con, f"Importar {Path(fonte['caminho']).name}", raiz) as op:
         if imp.tipo == "programa":
             _aplicar_programa(op, imp.proposta, resumo)
@@ -447,5 +459,4 @@ def confirmar(con, raiz: Path, importacao_id: int) -> dict:
             _aplicar_livro(op, imp.proposta, imp.fonte_id, resumo)
         elif imp.tipo == "lista":
             _aplicar_lista(op, imp.proposta, imp.fonte_id, resumo)
-        importacoes.marcar(con, importacao_id, "confirmada")
-    return resumo
+        importacoes.marcar(con, imp.id, "confirmada")
