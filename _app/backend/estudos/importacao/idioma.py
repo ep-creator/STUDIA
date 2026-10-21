@@ -61,3 +61,15 @@ def singular(palavra: str) -> str:
 
 def tokens_relevantes(texto: str) -> list[str]:
     return [singular(t) for t in normalizar(texto).split() if t not in STOPWORDS and not t.isdigit()]
+
+
+_CABECALHO_UNIDADE = re.compile(r"^(?:(?P<ord>\S+)\s+unidade|unidade\s+(?P<num>\S+))\s*:?$", re.I)
+
+
+def numero_de_unidade(linha: str) -> int | None:
+    """'Primeira Unidade', '1ª Unidade', 'Unidade II', 'Unidade 3' → número; qualquer outra linha → None."""
+    m = _CABECALHO_UNIDADE.match(linha.strip())
+    if not m:
+        return None
+    valor = m.group("ord") or m.group("num")
+    return int(valor) if valor.isdigit() else ordinal_para_int(valor)
