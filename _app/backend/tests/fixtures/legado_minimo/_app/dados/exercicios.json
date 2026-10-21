@@ -1,0 +1,78 @@
+[
+ {
+  "sec": "14.1",
+  "un": 1,
+  "nome": "Funções de Várias Variáveis",
+  "pg": "livro 792 · PDF 303",
+  "pdf": "livros/stewart.pdf#page=303",
+  "locked": false,
+  "l1": [
+   [
+    22,
+    "Determine e esboce o <b>domínio</b>.",
+    "f(x,y,z) = ln(16 − 4x² − 4y² − z²)",
+    "ex22"
+   ],
+   [
+    30,
+    "Esboce o gráfico.",
+    null,
+    null
+   ]
+  ],
+  "l2": [
+   [
+    30,
+    "Esboce o gráfico.",
+    null,
+    null
+   ],
+   [
+    33,
+    "Curvas de nível de f<sub>x</sub>.",
+    null,
+    null
+   ]
+  ]
+ },
+ {
+  "sec": "15.4",
+  "un": 3,
+  "nome": "Integrais Duplas em Coordenadas Polares",
+  "pg": "",
+  "pdf": null,
+  "locked": true,
+  "l1": [
+   [
+    7,
+    "Calcule <b>colocando em coordenadas polares</b>.",
+    "∬_D x²y dA",
+    null
+   ]
+  ],
+  "l2": []
+ },
+ {
+  "sec": "L5",
+  "un": 3,
+  "nome": "Lista 5",
+  "pg": "UFPE",
+  "pdf": "disciplina/listas/Lista5.pdf",
+  "locked": false,
+  "l1": [
+   [
+    4,
+    "<b>[⭐ Desenho polar]</b> Desenhe as curvas.",
+    "r = cos(3θ)",
+    null
+   ],
+   [
+    "6(a)",
+    "Item a.",
+    null,
+    null
+   ]
+  ],
+  "l2": []
+ }
+]

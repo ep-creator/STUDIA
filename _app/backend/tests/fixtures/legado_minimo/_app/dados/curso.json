@@ -1,0 +1,257 @@
+{
+ "id": "calculo-teste",
+ "nome": "Cálculo Teste",
+ "subtituloGeral": "UFPE · 2026.2",
+ "atualizadoEm": "20/10/2026",
+ "livros": [
+  {
+   "id": "stewart",
+   "nome": "Stewart",
+   "arquivo": "livros/stewart.pdf",
+   "offsetPdf": -489,
+   "gabaritoPdf": [
+    614,
+    643
+   ],
+   "secoes": {
+    "14.1": {
+     "titulo": "Funções de Várias Variáveis",
+     "pgLivro": 792,
+     "pgPdf": 303,
+     "pgFimPdf": 314
+    },
+    "15.4": {
+     "titulo": "Integrais Duplas em Coordenadas Polares",
+     "pgLivro": 895,
+     "pgPdf": 406
+    }
+   }
+  },
+  {
+   "id": "guidorizzi",
+   "nome": "Guidorizzi",
+   "arquivo": "livros/guidorizzi.pdf",
+   "offsetPdf": 15,
+   "gabaritoPdf": [
+    437,
+    490
+   ],
+   "secoes": {
+    "8": {
+     "titulo": "Funções de várias variáveis",
+     "pgLivro": 147,
+     "pgPdf": 162,
+     "pgFimPdf": 177,
+     "corresp": "14.1"
+    }
+   }
+  }
+ ],
+ "documentos": [
+  {
+   "key": "plano1",
+   "title": "Plano — 1ª unidade",
+   "src": "plano-estudos-unidade1.md",
+   "unidades": [
+    1
+   ],
+   "inicial": true
+  },
+  {
+   "key": "cal",
+   "title": "Calendário",
+   "src": "referencia/calendario.md",
+   "unidades": [
+    1,
+    3
+   ]
+  },
+  {
+   "key": "sumido",
+   "title": "Documento que não existe",
+   "src": "nao-existe.md",
+   "unidades": [
+    1
+   ]
+  }
+ ],
+ "resumosExtraUnidade": {
+  "00-polares": [
+   3
+  ]
+ },
+ "unidades": {
+  "1": {
+   "numero": 1,
+   "ordinal": "1ª",
+   "eyebrow": "UFPE · 2026.2 · 1ª unidade",
+   "titulo": "Cálculo Teste",
+   "tituloItalico": "Primeira unidade",
+   "subtitulo": "Funções de várias variáveis.",
+   "dataProva": "2026-09-14",
+   "tags": [
+    "Prova feita em 14/09",
+    "Nota: 8,0"
+   ],
+   "ondeEstamosSubtitulo": "Programa da 1ª unidade",
+   "ondeEstamos": [
+    {
+     "status": "seen",
+     "lv": "Visto",
+     "titulo": "Funções de várias variáveis",
+     "detalhe": "domínio e curvas de nível",
+     "where": "Stewart 14.1",
+     "secoes": [
+      "14.1"
+     ]
+    },
+    {
+     "status": "prova",
+     "lv": "Seg 14/09",
+     "titulo": "1ª prova",
+     "detalhe": "14h30",
+     "where": "",
+     "secoes": []
+    }
+   ],
+   "cronogramaTitulo": "Cronograma",
+   "cronogramaSubtitulo": "",
+   "fases": [
+    {
+     "estilo": "f1",
+     "eyebrow": "Plano",
+     "titulo": "Sessões",
+     "tag": "",
+     "colunas": [
+      "Sessão",
+      "Data",
+      "Foco",
+      "Exercícios"
+     ],
+     "linhas": [
+      {
+       "feito": true,
+       "s": "S1",
+       "d": "seg 31/08",
+       "t": "<strong>Funções</strong>",
+       "x": [
+        "14.1: 22, 30"
+       ]
+      },
+      {
+       "feito": false,
+       "s": "S2",
+       "d": "qui 03/09",
+       "t": "Revisão",
+       "x": [
+        "68 (pendente) + 20"
+       ]
+      }
+     ],
+     "nota": ""
+    }
+   ],
+   "resumosSubtitulo": "",
+   "formularioTitulo": "",
+   "formularioSubtitulo": "",
+   "formulario": [
+    {
+     "titulo": "Domínio do logaritmo",
+     "fml": "ln(u) exige u > 0",
+     "notas": [
+      "Cuidado: ≤ não vale"
+     ]
+    }
+   ]
+  },
+  "3": {
+   "numero": 3,
+   "ordinal": "3ª",
+   "eyebrow": "UFPE · 2026.2 · 3ª unidade",
+   "titulo": "Cálculo Teste",
+   "tituloItalico": "Terceira unidade",
+   "subtitulo": "Integrais.",
+   "dataProva": "2026-11-30",
+   "tags": [
+    "Nota ainda não saiu"
+   ],
+   "ondeEstamosSubtitulo": "",
+   "ondeEstamos": [
+    {
+     "status": "next",
+     "lv": "Sex 30/10",
+     "titulo": "Integrais duplas em polares",
+     "detalhe": "dA = r dr dθ",
+     "where": "Stewart 15.4, 10.3",
+     "secoes": [
+      "15.4",
+      "L5"
+     ]
+    }
+   ],
+   "cronogramaTitulo": "",
+   "cronogramaSubtitulo": "",
+   "fases": [
+    {
+     "estilo": "f1",
+     "eyebrow": "",
+     "titulo": "Sessões",
+     "tag": "",
+     "colunas": [
+      "Sessão",
+      "Data",
+      "Foco",
+      "Stewart",
+      "Lista 5"
+     ],
+     "linhas": [
+      {
+       "feito": false,
+       "s": "P1",
+       "d": "dom 25/10",
+       "t": "Polares <small>o começo</small>",
+       "x": [
+        "15.4: 7",
+        "L5 #6(a), ⭐#4"
+       ]
+      }
+     ],
+     "nota": ""
+    },
+    {
+     "estilo": "f2",
+     "eyebrow": "Se o tempo apertar",
+     "titulo": "Ordem de corte",
+     "tag": "",
+     "colunas": [
+      "Prioridade",
+      "O quê",
+      "Por quê"
+     ],
+     "linhas": [
+      {
+       "feito": false,
+       "s": "1",
+       "d": "Prio 1",
+       "t": "<strong>Triplas</strong>",
+       "x": [
+        "metade da prova"
+       ]
+      }
+     ],
+     "nota": ""
+    }
+   ],
+   "resumosSubtitulo": "",
+   "formularioTitulo": "",
+   "formularioSubtitulo": "",
+   "formulario": [
+    {
+     "titulo": "Polares",
+     "fml": "dA = r dr dθ",
+     "notas": []
+    }
+   ]
+  }
+ }
+}
