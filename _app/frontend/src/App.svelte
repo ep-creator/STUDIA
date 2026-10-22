@@ -13,6 +13,7 @@
   import { carregarPainel, estadoMateria } from './estado/materia.svelte'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
   import Materias from './rotas/Materias.svelte'
+  import Listas from './rotas/Listas.svelte'
   import Painel from './rotas/Painel.svelte'
   import { analisarRota, type Rota } from './rotas/rota'
 
@@ -71,6 +72,8 @@
           >
             {#if rota.area === 'painel'}
               <Painel {painel} />
+            {:else if rota.area === 'listas'}
+              <Listas {painel} />
             {:else}
               <p class="suave">Esta área chega nas próximas etapas.</p>
             {/if}
