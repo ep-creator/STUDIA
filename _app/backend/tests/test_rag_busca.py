@@ -88,4 +88,5 @@ def test_secao_completa(cenario):
 
 def test_cao_e_coes_casam():
     assert montar_consulta("funções") == '"func"*' == montar_consulta("função")
-    assert montar_consulta("equações integração") == '"equac"* OR "integrac"*'
+    assert montar_consulta("equações integração") == '"equac"* OR "integr"*'
+    assert montar_consulta("derivação") == montar_consulta("derivadas") == '"deriv"*'

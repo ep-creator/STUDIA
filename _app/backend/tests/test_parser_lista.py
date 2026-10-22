@@ -80,3 +80,50 @@ def test_questao_n_e_parenteses_e_reinicio(tmp_path):
     a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "q.pdf", [texto])), "q.pdf")
     assert [q.rotulo for q in a.listas[0].questoes] == ["1", "2", "3"]
     assert any("reinicia" in aviso for aviso in a.avisos)
+
+
+def test_conteudos_param_no_cabecalho_seguinte(tmp_path):
+    texto = ("Lista de exercícios\nConteúdos: Funções de duas variáveis, Limite e continuidade\n"
+             "Equipe de professores responsáveis:\nProf. Fulano (f@x.br)\n1. Calcule.")
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "c.pdf", [texto])), "c.pdf")
+    assert a.conteudos == ["Funções de duas variáveis", "Limite e continuidade"]
+
+
+def test_expoente_quebrado_nao_vira_questao(tmp_path):
+    texto = ("Lista de exercícios\n1. Considere o gráfico z = k(1-x2-y2)\n1\n2. Desenhe-o nos casos k = 0.\n"
+             "2.\nPara cada função, desenhe curvas de nível.\n3. Determine o domínio.")
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "e.pdf", [texto])), "e.pdf")
+    q = a.listas[0].questoes
+    assert [x.rotulo for x in q] == ["1", "2", "3"]
+    assert "Desenhe-o" in q[0].enunciado_md and q[1].enunciado_md.startswith("Para cada função")
+    assert any("número repetido" in aviso for aviso in a.avisos)
+
+
+def test_numero_repetido_sem_numero_solto_nao_mexe(tmp_path):
+    texto = "Lista de exercícios\n1. Primeira.\n2. Segunda, com itens:\n2. item que repete\n3. Terceira."
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "r.pdf", [texto])), "r.pdf")
+    q = a.listas[0].questoes
+    assert [x.rotulo for x in q] == ["1", "2", "3"] and "item que repete" in q[1].enunciado_md
+
+
+def test_lista1_real_conteudos_e_questoes():
+    a = _arquivo("listas-2026-1/Lista1_2026-1.pdf")
+    assert a.conteudos == ["Funções de duas variáveis", "Limite e continuidade"]
+    q = a.listas[0].questoes
+    assert "Desenhe-o" in q[0].enunciado_md and q[1].enunciado_md.startswith("Para cada uma das funções")
+
+
+def test_numero_de_pagina_e_gabarito_nao_disparam_a_regra(tmp_path):
+    paginas = ["Lista de exercícios\n1. Calcule a primeira.\n2. Calcule a segunda.\n1",
+               "3. Calcule a terceira integral.\n2", "Respostas\n1. 4\n2. 7\n3. 12"]
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "g.pdf", paginas)), "g.pdf")
+    q = a.listas[0].questoes
+    assert [x.rotulo for x in q] == ["1", "2", "3"]
+    assert q[2].enunciado_md.startswith("Calcule a terceira integral") and "Calcule a terceira" not in q[1].enunciado_md
+    assert not any("número repetido" in aviso for aviso in a.avisos)
+
+
+def test_conteudo_com_dois_pontos_no_meio_continua(tmp_path):
+    texto = "Lista de exercícios\nConteúdos: Integrais duplas, mudança de\nvariáveis: polares e cilíndricas.\n1. Calcule."
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "d.pdf", [texto])), "d.pdf")
+    assert a.conteudos == ["Integrais duplas", "mudança de variáveis: polares e cilíndricas"]

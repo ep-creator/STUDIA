@@ -50,17 +50,18 @@ def enviar(arquivo: UploadFile = File(...), ctx: Contexto = Depends(contexto_dep
         imp = pipeline.receber_arquivo(ctx.con, ctx.materia.pasta, temporario, arquivo.filename or "arquivo.pdf", ctx.settings)
     finally:
         temporario.unlink(missing_ok=True)
+    imp = pipeline.para_leitura(ctx.con, imp, ctx.settings)  # reenvio de arquivo igual devolve a proposta atual
     return JSONResponse(_saida(imp), status_code=200 if imp.id in antes else 201)
 
 
 @router.get("")
 def listar(estado: str | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[dict]:
-    return [_saida(i) for i in importacoes.listar(ctx.con, estado)]
+    return [_saida(pipeline.para_leitura(ctx.con, i, ctx.settings)) for i in importacoes.listar(ctx.con, estado)]
 
 
 @router.get("/{importacao_id}")
 def obter(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
-    return _saida(importacoes.obter(ctx.con, importacao_id))
+    return _saida(pipeline.para_leitura(ctx.con, importacoes.obter(ctx.con, importacao_id), ctx.settings))
 
 
 @router.put("/{importacao_id}")
@@ -69,8 +70,7 @@ def editar(importacao_id: int, proposta: dict, ctx: Contexto = Depends(contexto_
     faltando = [c for c in _ESTRUTURA.get(imp.tipo, ()) if c not in proposta]
     if faltando:
         raise DadoInvalido(f"Proposta de '{imp.tipo}' sem: {', '.join(faltando)}")
-    importacoes.atualizar_proposta(ctx.con, importacao_id, proposta)
-    return _saida(importacoes.obter(ctx.con, importacao_id))
+    return _saida(pipeline.editar(ctx.con, importacao_id, proposta))
 
 
 @router.post("/{importacao_id}/tipo")
@@ -80,7 +80,7 @@ def trocar_tipo(importacao_id: int, corpo: TipoEntrada, ctx: Contexto = Depends(
 
 @router.post("/{importacao_id}/confirmar")
 def confirmar(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
-    return pipeline.confirmar(ctx.con, ctx.materia.pasta, importacao_id)
+    return pipeline.confirmar(ctx.con, ctx.materia.pasta, importacao_id, ctx.settings)
 
 
 @router.post("/{importacao_id}/descartar")

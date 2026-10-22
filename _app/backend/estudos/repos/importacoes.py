@@ -57,6 +57,19 @@ def atualizar_proposta(con: sqlite3.Connection, importacao_id: int, proposta: di
     )
 
 
+def trocar_proposta(con: sqlite3.Connection, importacao_id: int, esperada: dict, nova: dict) -> bool:
+    """Grava `nova` só se a proposta gravada ainda é `esperada` e está pendente (troca condicional, sem perder uma
+    edição ou confirmação que aconteceu no meio). Devolve se gravou."""
+    linha = con.execute("SELECT proposta_json, estado FROM importacao WHERE id = ?", (importacao_id,)).fetchone()
+    if linha is None or linha["estado"] != "proposta" or json.loads(linha["proposta_json"]) != esperada:
+        return False
+    cursor = con.execute(
+        "UPDATE importacao SET proposta_json = ? WHERE id = ? AND estado = 'proposta' AND proposta_json = ?",
+        (json.dumps(nova, ensure_ascii=False), importacao_id, linha["proposta_json"]),
+    )
+    return cursor.rowcount == 1
+
+
 def marcar(con: sqlite3.Connection, importacao_id: int, estado: str) -> None:
     exigir_opcao(estado, ESTADOS_IMPORTACAO, "estado da importação")
     obter(con, importacao_id)
