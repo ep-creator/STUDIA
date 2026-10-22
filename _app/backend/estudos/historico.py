@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from estudos.db.conexao import transacao
-from estudos.erros import DadoInvalido
+from estudos.erros import DadoInvalido, NaoEncontrado
 from estudos.repos._base import aplicar_estado
 from estudos.seguranca import caminho_seguro
 
@@ -103,6 +103,37 @@ def _grupo(linha: sqlite3.Row) -> GrupoHistorico:
 def listar(con: sqlite3.Connection, limite: int = 50) -> list[GrupoHistorico]:
     linhas = con.execute("SELECT * FROM historico_grupo ORDER BY id DESC LIMIT ?", (limite,)).fetchall()
     return [_grupo(linha) for linha in linhas]
+
+
+def _ler_texto(raiz: Path, caminho_rel: str | None) -> str | None:
+    if caminho_rel is None:
+        return None
+    alvo = caminho_seguro(raiz, caminho_rel)
+    return alvo.read_text(encoding="utf-8") if alvo.is_file() else None
+
+
+def detalhar(con: sqlite3.Connection, raiz: Path, grupo_id: int) -> dict:
+    """O que uma ação mudou: linhas (antes/depois) e, para cada arquivo, o texto de antes e o de depois.
+    O "depois" de um arquivo é a versão guardada pela próxima ação que o mexeu; se nenhuma mexeu, é o arquivo atual."""
+    linha = con.execute("SELECT * FROM historico_grupo WHERE id = ?", (grupo_id,)).fetchone()
+    if linha is None:
+        raise NaoEncontrado(f"Ação {grupo_id} não encontrada no histórico")
+    mudancas, arquivos = [], []
+    for m in con.execute("SELECT * FROM historico_mudanca WHERE grupo_id = ? ORDER BY ordem", (grupo_id,)):
+        if m["arquivo"] is None:
+            mudancas.append({
+                "tabela": m["tabela"], "chave": json.loads(m["chave_json"]),
+                "antes": json.loads(m["antes_json"]) if m["antes_json"] else None,
+                "depois": json.loads(m["depois_json"]) if m["depois_json"] else None,
+            })
+            continue
+        seguinte = con.execute(
+            "SELECT versao_arquivo FROM historico_mudanca WHERE arquivo = ? AND grupo_id > ? ORDER BY grupo_id, ordem LIMIT 1",
+            (m["arquivo"], grupo_id),
+        ).fetchone()
+        depois = _ler_texto(raiz, seguinte["versao_arquivo"]) if seguinte else _ler_texto(raiz, m["arquivo"])
+        arquivos.append({"caminho": m["arquivo"], "antes": _ler_texto(raiz, m["versao_arquivo"]), "depois": depois})
+    return {"grupo": _grupo(linha), "mudancas": mudancas, "arquivos": arquivos}
 
 
 def versionar_arquivo(op: Operacao, caminho_rel: str) -> Path:
