@@ -10,11 +10,13 @@
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import Topo from './componentes/Topo.svelte'
   import { erro } from './estado/avisos.svelte'
+  import { atalhoDesfazer, desfazer } from './estado/desfazer'
   import { carregarPainel, estadoMateria } from './estado/materia.svelte'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
   import Cronograma from './rotas/Cronograma.svelte'
   import Documentos from './rotas/Documentos.svelte'
   import Formulario from './rotas/Formulario.svelte'
+  import Historico from './rotas/Historico.svelte'
   import Importacao from './rotas/Importacao.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
@@ -27,6 +29,13 @@
   let iaAberta = $state(true)
 
   aplicarTema()
+
+  function teclado(e: KeyboardEvent) {
+    if (rota.tela !== 'materias' && atalhoDesfazer(e)) {
+      e.preventDefault()
+      void desfazer()
+    }
+  }
   $effect(() => acompanharSistema())
 
   $effect(() => {
@@ -60,6 +69,8 @@
   const painel = $derived(rota.tela !== 'materias' && estadoMateria.uid === rota.uid ? estadoMateria.painel : null)
 </script>
 
+<svelte:window onkeydown={teclado} />
+
 <FaixaMotor />
 
 {#if rota.tela === 'materias'}
@@ -70,7 +81,9 @@
     <main>
       {#if painel}
         {#if rota.tela === 'materia'}
-          <Topo {painel} area={rota.area} />
+          <Topo {painel} area={rota.area}>
+            {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
+          </Topo>
           <MolduraEditorial
             topo={`${painel.materia.nome}${painel.materia.periodo ? ` · ${painel.materia.periodo}` : ''}`}
             base={painel.unidade ? nomeUnidade(painel.unidade) : 'sem unidades'}
@@ -95,6 +108,8 @@
           </MolduraEditorial>
         {:else if rota.tela === 'importar'}
           <Importacao {painel} />
+        {:else if rota.tela === 'historico'}
+          <Historico uid={rota.uid} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}

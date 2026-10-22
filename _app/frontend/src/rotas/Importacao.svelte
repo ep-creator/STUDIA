@@ -11,6 +11,7 @@
   import PropostaTurmaView from '../componentes/PropostaTurma.svelte'
   import SeloConfianca from '../componentes/SeloConfianca.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
+  import { desfazer } from '../estado/desfazer'
   import { recarregar } from '../estado/materia.svelte'
 
   let { painel }: { painel: Painel } = $props()
@@ -72,7 +73,7 @@
     const atual = imp
     try {
       const r = await requisitar<ResumoImportacao>('POST', `${base}/${atual.id}/confirmar`)
-      avisar(resumir(r), { rotulo: 'Desfazer', executar: () => void requisitar('POST', `/api/materias/${uid}/historico/desfazer`).then(() => { versao++; void recarregar() }, erro) })
+      avisar(resumir(r), { rotulo: 'Desfazer', executar: () => void desfazer().then(() => versao++) })
       selecionada = null
       versao++
       await recarregar()
