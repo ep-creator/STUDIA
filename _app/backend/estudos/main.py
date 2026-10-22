@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from estudos.api import (
+    app_web,
     cronograma, documentos, fontes, formulas, historico, importacoes, listas, marcacoes, materias, painel, rag, topicos,
     unidades,
 )
@@ -46,4 +47,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.add_exception_handler(RequestValidationError, _erro_validacao)
     for router in ROUTERS:
         app.include_router(router)
+    app_web.registrar(app, settings.app_dir / "frontend" / "dist")  # por último: rota coringa
     return app

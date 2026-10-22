@@ -120,3 +120,4 @@ class DocumentoSalvar(BaseModel):
     unidade_id: int | None = None
     secao_id: int | None = None
     questao_id: int | None = None
+    versao_esperada: str | None = None  # "versao" do documento quando foi aberto; diferente da atual → 409
