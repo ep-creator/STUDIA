@@ -1,0 +1,108 @@
+/* Quatro paletas (Padrão/Editorial × claro/escuro). Todo componente usa só estas variáveis. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/fraunces';
+
+:root {
+  --fonte-texto: 'Inter Variable', system-ui, sans-serif;
+  --fonte-titulo: var(--fonte-texto);
+  --raio: 10px;
+  --ok: #2e7d32;
+  --err: #c62828;
+  --dub: #f9a825;
+  --texto-sobre-destaque: #fff;
+}
+
+:root,
+:root[data-tema='padrao-claro'] {
+  --fundo: #fafaf7;
+  --lateral: #f2f1ec;
+  --cartao: #ffffff;
+  --borda: #e5e5e0;
+  --texto: #1f2328;
+  --suave: #6b6f76;
+  --destaque: #3b82f6;
+}
+
+:root[data-tema='padrao-escuro'] {
+  --fundo: #15171c;
+  --lateral: #1b1e24;
+  --cartao: #1e2128;
+  --borda: #2a2d35;
+  --texto: #e6e6e6;
+  --suave: #9aa0aa;
+  --destaque: #7c9cff;
+  --texto-sobre-destaque: #0b0d12;
+  --ok: #81c995;
+  --err: #f28b82;
+  --dub: #fdd663;
+}
+
+:root[data-tema='editorial-claro'] {
+  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
+  --raio: 4px;
+  --fundo: #f3ece0;
+  --lateral: #ece3d3;
+  --cartao: #f8f2e8;
+  --borda: #141413;
+  --texto: #141413;
+  --suave: #5f5a52;
+  --destaque: #d9572b;
+}
+
+:root[data-tema='editorial-escuro'] {
+  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
+  --raio: 4px;
+  --fundo: #191714;
+  --lateral: #201d19;
+  --cartao: #221f1a;
+  --borda: rgb(239 230 214 / 65%);
+  --texto: #efe6d6;
+  --suave: #b3a994;
+  --destaque: #f07a45;
+  --texto-sobre-destaque: #191714;
+  --ok: #8fcf8f;
+  --err: #f28b82;
+  --dub: #f2c25b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte-texto);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.botao {
+  border: 1.5px solid var(--borda);
+  background: var(--cartao);
+  border-radius: 999px;
+  padding: 0.25rem 0.9rem;
+  cursor: pointer;
+}
+.botao.primario { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
+.botao:disabled { opacity: 0.5; cursor: default; }
+
+.cartao {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 1rem;
+}
+
+.rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); }
+.suave { color: var(--suave); }
+.numero-grande { font-family: var(--fonte-titulo); font-size: 2.6rem; line-height: 1; }
+
+:root[data-tema^='editorial'] .cartao { border-width: 0; border-top: 1.5px solid var(--borda); border-radius: 0; background: transparent; }
+
+@media print {
+  .nao-imprimir { display: none !important; }
+}
