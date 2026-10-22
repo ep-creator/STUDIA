@@ -40,3 +40,9 @@ _app/backend/.venv/
 .superpowers/
 # Índice de busca (derivável, reconstruído pelo app)
 **/.indice/
+
+# Frontend (Fase 5)
+_app/frontend/node_modules/
+_app/frontend/dist/
+_app/frontend/test-results/
+_app/frontend/playwright-report/
