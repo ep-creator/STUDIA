@@ -1,5 +1,6 @@
 import pytest
 
+from estudos.importacao.idioma import normalizar, radical
 from estudos.importacao.vinculo import Candidato, construir_idf, melhores, similaridade, unidade_majoritaria
 
 STEWART = [
@@ -43,6 +44,29 @@ def test_maximo_de_resultados():
     assert len(melhores("Integrais triplas em coordenadas", CANDIDATOS, 0.1, maximo=3)) == 3
 
 
+def test_flexoes_diferentes_casam():
+    secoes = [Candidato("15.1", "15.1 Integrais Duplas sobre Retângulos"), Candidato("14.1", "14.1 Funções de Várias Variáveis")]
+    assert melhores("Integração dupla", secoes, 0.35)[0].chave == "15.1"
+
+
+@pytest.mark.parametrize("palavras,esperado", [
+    (("integração", "integral", "integrais"), "integr"),
+    (("derivada", "derivadas", "derivação", "derivável"), "deriv"),
+    (("função", "funções"), "func"),
+    (("continuidade", "contínua"), "continu"),
+    (("polar", "polares"), "polar"),
+    (("área",), "area"),
+])
+def test_radical(palavras, esperado):
+    assert {radical(normalizar(p)) for p in palavras} == {esperado}
+
+
 def test_unidade_majoritaria():
-    assert unidade_majoritaria([3, 3, 2]) == (3, pytest.approx(2 / 3))
+    assert unidade_majoritaria([(3, 1.0), (3, 1.0), (2, 1.0)]) == (3, pytest.approx(2 / 3))
     assert unidade_majoritaria([]) == (None, 0.0)
+
+
+def test_um_vinculo_fraco_nao_vira_certeza():
+    numero, confianca = unidade_majoritaria([(2, 0.4)])
+    assert numero == 2 and confianca == pytest.approx(0.4)
+    assert unidade_majoritaria([(1, 0.9), (1, 0.8), (2, 0.4)])[0] == 1

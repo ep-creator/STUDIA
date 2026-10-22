@@ -21,6 +21,9 @@ _QUESTAO = re.compile(r"^(?:quest[ãa]o\s+)?(\d{1,3})\s*[.)]\s*(.*)$", re.I)
 _MAX_LINHAS_CONTEUDOS = 4
 _ITEM = re.compile(r"^[a-z]\.\s")
 _CONTEUDOS = re.compile(r"^conte[úu]dos?\s*:\s*(.*)$", re.I)
+_FIM_CONTEUDOS = re.compile(r":\s*$|@|^prof(?:\.|essor)", re.I)  # cabeçalho ("Equipe:"), e-mail, "Prof. Fulano"
+_NUMERO_SOLTO = re.compile(r"^\d+$")  # resto de fração/expoente ("x^{1/2}" vira "1" numa linha e "2." na outra)
+_JANELA_REPETICAO = 4  # linhas entre a falsa questão e a repetição do número
 
 
 @dataclass
@@ -102,9 +105,10 @@ def _conteudos(linhas: list[tuple[int, str]]) -> list[str]:
         if not m:
             continue
         texto = m.group(1)
-        # A frase de conteúdos termina no ponto final, mesmo quebrando linha no meio de um item
+        # A frase de conteúdos termina no ponto final, mesmo quebrando linha no meio de um item; um cabeçalho
+        # ("Equipe de professores:"), e-mail, nome de professor ou questão já é outra parte do documento
         for _, seguinte in linhas[i + 1: i + 1 + _MAX_LINHAS_CONTEUDOS]:
-            if texto.rstrip().endswith("."):
+            if texto.rstrip().endswith(".") or _FIM_CONTEUDOS.search(seguinte) or _QUESTAO.match(seguinte):
                 break
             texto = f"{texto} {seguinte}"
         itens = (c.strip().rstrip(".") for c in texto.split(","))
@@ -117,13 +121,35 @@ def _numerada(linhas: list[tuple[int, str]], arquivo: ArquivoListas, nome_arquiv
     lista = ListaExtraida(_codigo_numerada(titulo, nome_arquivo), titulo, None)
     arquivo.listas.append(lista)
     esperado = 1
-    for pagina, linha in linhas:
+    # Questão suspeita: começou logo depois de um número solto na mesma página ("x^{1/2}" vira "1" e "2. …").
+    # Se o mesmo número reaparece poucas linhas depois, a primeira ocorrência era o expoente e volta para a anterior.
+    suspeita: int | None = None  # índice da linha em que a questão suspeita começou
+    reiniciou = False  # depois de a numeração reiniciar (gabarito no fim) a regra não vale mais
+    anterior = (None, "")
+    for i, (pagina, linha) in enumerate(linhas):
         m = _QUESTAO.match(linha)
         if m and int(m.group(1)) == esperado:
+            suspeita = i if anterior[0] == pagina and _NUMERO_SOLTO.match(anterior[1]) and not reiniciou else None
             lista.questoes.append(QuestaoExtraida(m.group(1), 1, m.group(2).strip(), pagina))
             esperado += 1
+            anterior = (pagina, linha)
             continue
+        if (m and int(m.group(1)) == esperado - 1 and suspeita is not None and len(lista.questoes) >= 2
+                and i - suspeita <= _JANELA_REPETICAO):
+            falsa = lista.questoes.pop()
+            q = lista.questoes[-1]
+            q.enunciado_md = f"{q.enunciado_md} {falsa.rotulo}. {falsa.enunciado_md}".strip()
+            lista.questoes.append(QuestaoExtraida(m.group(1), 1, m.group(2).strip(), pagina))
+            arquivo.avisos.append(
+                f"{lista.codigo} #{m.group(1)}: número repetido; a primeira ocorrência (depois de um número solto, "
+                f"provável expoente) ficou na questão {q.rotulo} — revise"
+            )
+            suspeita = None
+            anterior = (pagina, linha)
+            continue
+        anterior = (pagina, linha)
         if m and int(m.group(1)) == 1 and lista.questoes:
+            reiniciou, suspeita = True, None
             arquivo.avisos.append(
                 f"{lista.codigo}: a numeração reinicia em 1 depois da questão {esperado - 1} (página {pagina}); "
                 "o trecho seguinte ficou junto da última questão — revise"

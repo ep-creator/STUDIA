@@ -98,6 +98,6 @@ def test_reimportar_sobre_calculo2_migrado_nao_perde_marcacoes(tmp_path):
         imp = pipeline.receber_arquivo(con, pasta, DISCIPLINA / "exercicios_3un.pdf", "exercicios_3un.pdf", settings)
         assert imp.proposta["modo"] == "mesclar"
         assert all(l["existente"] is not None for l in imp.proposta["listas"])
-        pipeline.confirmar(con, pasta, imp.id)
+        pipeline.confirmar(con, pasta, imp.id, settings)
         assert dict(con.execute("SELECT questao_id, estado FROM marcacao")) == marcacoes_antes
         assert questoes_antes <= {r[0] for r in con.execute("SELECT id FROM questao")}

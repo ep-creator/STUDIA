@@ -4,6 +4,7 @@ A proposta é um JSON editável; nada do domínio é gravado antes de `confirmar
 (desfazível). Itens extraídos ou vinculados com confiança abaixo do limiar vão marcados com "revisar": true.
 """
 
+import copy
 import dataclasses
 import shutil
 import sqlite3
@@ -20,7 +21,7 @@ from estudos.importacao.parsers.lista import extrair_listas
 from estudos.importacao.parsers.programa import TopicoExtraido, extrair_programa
 from estudos.importacao.parsers.turma import extrair_turma
 from estudos.importacao.pdf import DocumentoPdf, abrir_pdf
-from estudos.importacao.vinculo import Candidato, melhores, unidade_majoritaria
+from estudos.importacao.vinculo import Candidato, construir_idf, melhores, pontuar, unidade_majoritaria
 from estudos.modelos import Importacao, QuestaoEntrada
 from estudos.rag.indexador import agendar_sincronizacao
 from estudos.workspace import ARQUIVO_DB
@@ -29,6 +30,8 @@ from estudos.repos.fontes import sha256_arquivo
 from estudos.seguranca import caminho_seguro
 
 ORIGEM = "importado"
+_MAX_TOPICOS_POR_CONTEUDO = 3
+_ERROS_DE_PROPOSTA = (KeyError, TypeError, ValueError, AttributeError, IndexError)
 PASTA_POR_TIPO = {
     "programa": "fontes/documentos", "calendario": "fontes/documentos", "turma": "fontes/documentos",
     "livro": "fontes/livros", "lista": "fontes/listas", "slides": "fontes/slides", "prova": "fontes/provas",
@@ -59,14 +62,14 @@ def contar_pendencias(proposta) -> int:
     return 0
 
 
-def _secoes_por_livro(con: sqlite3.Connection) -> dict[int, tuple[str, list[Candidato]]]:
-    resultado = {}
+def _secoes_por_livro(con: sqlite3.Connection) -> list[tuple[str, list[Candidato], dict[str, float]]]:
+    resultado = []
     for livro in con.execute(
         "SELECT l.fonte_id, coalesce(nullif(l.titulo_obra, ''), f.titulo) AS titulo, l.papel FROM livro l "
         "JOIN fonte f ON f.id = l.fonte_id ORDER BY l.papel = 'principal' DESC, l.fonte_id"
     ):
         candidatos = [Candidato((s.id, s.codigo), f"{s.codigo} {s.titulo}") for s in livros.listar_secoes(con, livro["fonte_id"])]
-        resultado[livro["fonte_id"]] = (livro["titulo"], candidatos)
+        resultado.append((livro["titulo"], candidatos, construir_idf([c.titulo for c in candidatos])))
     return resultado
 
 
@@ -74,35 +77,67 @@ def _unidade_por_numero(con: sqlite3.Connection) -> dict[int, int]:
     return {u.numero: u.id for u in unidades.listar(con)}
 
 
+def _todos_topicos(con: sqlite3.Connection) -> list[tuple[object, int]]:
+    return [(t, u.numero) for u in unidades.listar(con) for t in topicos.listar(con, u.id)]
+
+
 # ---------------- propostas por tipo ----------------
-def _proposta_topico(t: TopicoExtraido, secoes: dict, existentes: dict[str, int], settings: Settings) -> dict:
+# Cada proposta tem duas partes: o que foi extraído do arquivo (fixo) e o que é derivado do banco atual (vínculos,
+# unidade das listas, itens já existentes). A parte derivada é refeita sempre que a proposta é lida ou confirmada,
+# então a ordem em que os arquivos chegam não muda o resultado. As decisões da revisão sobrevivem ao recálculo:
+# vínculo recusado ("aceito": false), vínculo incluído à mão e campo escolhido à mão ("manual": true).
+def _mesclar(novos: list[dict], anteriores, chave) -> list[dict]:
+    antigos = {}
+    for v in anteriores if isinstance(anteriores, list) else []:
+        if isinstance(v, dict):
+            try:
+                antigos[chave(v)] = v
+            except (KeyError, TypeError):
+                continue
+    vistos = set()
+    for v in novos:
+        vistos.add(chave(v))
+        anterior = antigos.get(chave(v))
+        if anterior is not None and anterior.get("aceito") is False:
+            v["aceito"] = False
+    return novos + [v for k, v in antigos.items() if v.get("manual") and k not in vistos]
+
+
+def _topico_extraido(t: TopicoExtraido) -> dict:
+    return {"titulo": t.titulo, "filhos": [_topico_extraido(f) for f in t.filhos]}
+
+
+def _propor_programa(doc: DocumentoPdf) -> dict:
+    propostas = [
+        {"numero": u.numero, "titulo": u.titulo, "topicos": [_topico_extraido(t) for t in u.topicos]}
+        for u in extrair_programa(doc.texto())
+    ]
+    return {"unidades": propostas, "revisar": not propostas}
+
+
+def _derivar_topico(item: dict, secoes: list, existentes: dict[str, int], settings: Settings) -> None:
     vinculos = []
-    for fonte_id, (titulo_livro, candidatos) in secoes.items():
-        for v in melhores(t.titulo, candidatos, settings.limiar_vinculo):
+    for titulo_livro, candidatos, idf in secoes:
+        for v in melhores(item["titulo"], candidatos, settings.limiar_vinculo, idf=idf):
             secao_id, codigo = v.chave
             vinculos.append({"secao_id": secao_id, "codigo": codigo, "livro": titulo_livro, "confianca": v.confianca,
                              "aceito": True, "revisar": _revisar(v.confianca, settings)})
-    return {
-        "titulo": t.titulo,
-        "existente_id": existentes.get(normalizar(t.titulo)),
-        "secoes": vinculos,
-        "filhos": [_proposta_topico(f, secoes, existentes, settings) for f in t.filhos],
-    }
+    item["existente_id"] = existentes.get(normalizar(item["titulo"]))
+    item["secoes"] = _mesclar(vinculos, item.get("secoes"), lambda v: v["secao_id"])
+    for filho in item.get("filhos", []):
+        _derivar_topico(filho, secoes, existentes, settings)
 
 
-def _propor_programa(con, doc: DocumentoPdf, settings: Settings) -> dict:
+def _derivar_programa(con, proposta: dict, settings: Settings) -> None:
     secoes = _secoes_por_livro(con)
     por_numero = _unidade_por_numero(con)
-    propostas = []
-    for u in extrair_programa(doc.texto()):
+    for u in proposta.get("unidades", []):
         existentes = {}
-        if u.numero in por_numero:
-            existentes = {normalizar(t.titulo): t.id for t in topicos.listar(con, por_numero[u.numero])}
-        propostas.append({
-            "numero": u.numero, "titulo": u.titulo, "existente_id": por_numero.get(u.numero),
-            "topicos": [_proposta_topico(t, secoes, existentes, settings) for t in u.topicos],
-        })
-    return {"unidades": propostas, "revisar": not propostas}
+        if u["numero"] in por_numero:
+            existentes = {normalizar(t.titulo): t.id for t in topicos.listar(con, por_numero[u["numero"]])}
+        u["existente_id"] = por_numero.get(u["numero"])
+        for t in u.get("topicos", []):
+            _derivar_topico(t, secoes, existentes, settings)
 
 
 def _propor_calendario(con, doc: DocumentoPdf) -> dict:
@@ -123,31 +158,27 @@ def _livros_cadastrados(con) -> list[Candidato]:
     ]
 
 
-def _propor_turma(con, doc: DocumentoPdf, settings: Settings) -> dict:
+def _propor_turma(doc: DocumentoPdf) -> dict:
     t = extrair_turma(doc.texto())
-    cadastrados = _livros_cadastrados(con)
-    referencias = []
-    for r in t.referencias:
-        [v] = melhores(r.texto, cadastrados, settings.limiar_vinculo) or [None]
-        referencias.append({"texto": r.texto, "papel": r.papel, "fonte_id": v.chave if v else None,
-                            "confianca": v.confianca if v else 0.0, "revisar": bool(v) and _revisar(v.confianca, settings)})
     return {"professor": t.professor, "email": t.email, "horarios": [list(h) for h in t.horarios],
-            "referencias": referencias, "criterios": t.criterios,
+            "referencias": [{"texto": r.texto, "papel": r.papel} for r in t.referencias], "criterios": t.criterios,
             "revisar": t.professor is None or len(t.professor.split()) < 2}
 
 
-def _propor_livro(con, doc: DocumentoPdf, settings: Settings, nome: str) -> dict:
+def _derivar_turma(con, proposta: dict, settings: Settings) -> None:
+    cadastrados = _livros_cadastrados(con)
+    idf = construir_idf([c.titulo for c in cadastrados])
+    for r in proposta.get("referencias", []):
+        if r.get("manual"):
+            continue
+        [v] = melhores(r["texto"], cadastrados, settings.limiar_vinculo, idf=idf) or [None]
+        r.update(fonte_id=v.chave if v else None, confianca=v.confianca if v else 0.0,
+                 revisar=bool(v) and _revisar(v.confianca, settings))
+
+
+def _propor_livro(doc: DocumentoPdf, settings: Settings, nome: str) -> dict:
     extraido = extrair_livro(doc)
-    principal = livros.principal(con)
-    equivalencias = []
-    if principal is not None:
-        candidatos = [Candidato((s.id, s.codigo), f"{s.codigo} {s.titulo}") for s in livros.listar_secoes(con, principal.fonte_id)]
-        for s in extraido.secoes:
-            for v in melhores(s.titulo, candidatos, settings.limiar_vinculo):
-                equivalencias.append({"codigo": s.codigo, "equivalente_id": v.chave[0], "equivalente_codigo": v.chave[1],
-                                      "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
     return {
-        "papel": "complementar" if principal else "principal",
         "titulo_obra": PurePath(nome).stem,
         "offset_pagina": extraido.offset_pagina,
         "gabarito": list(extraido.gabarito) if extraido.gabarito else None,
@@ -155,9 +186,34 @@ def _propor_livro(con, doc: DocumentoPdf, settings: Settings, nome: str) -> dict
         "sem_texto": extraido.sem_texto,
         "avisos": extraido.avisos,
         "secoes": [{**dataclasses.asdict(s), "revisar": _revisar(s.confianca, settings)} for s in extraido.secoes],
-        "equivalencias": equivalencias,
         "revisar": extraido.offset_pagina is None or not extraido.secoes,
     }
+
+
+def _derivar_livro(con, proposta: dict, settings: Settings, fonte_id: int) -> None:
+    principal = livros.principal(con)
+    outro = principal if principal is not None and principal.fonte_id != fonte_id else None
+    if not proposta.get("papel_manual"):
+        proposta["papel"] = "complementar" if outro else "principal"
+    equivalencias = []
+    if outro is not None:
+        candidatos = [Candidato((s.id, s.codigo), f"{s.codigo} {s.titulo}") for s in livros.listar_secoes(con, outro.fonte_id)]
+        idf = construir_idf([c.titulo for c in candidatos])
+        for s in proposta.get("secoes", []):
+            for v in melhores(s["titulo"], candidatos, settings.limiar_vinculo, idf=idf):
+                equivalencias.append({"codigo": s["codigo"], "equivalente_id": v.chave[0], "equivalente_codigo": v.chave[1],
+                                      "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
+    proposta["equivalencias"] = _mesclar(equivalencias, proposta.get("equivalencias"),
+                                         lambda e: (e["codigo"], e["equivalente_id"]))
+    # Tópicos que já existem (programa importado antes do livro) ganham a seção mais parecida deste livro
+    candidatos_secao = [Candidato(s["codigo"], f"{s['codigo']} {s['titulo']}") for s in proposta.get("secoes", [])]
+    idf = construir_idf([c.titulo for c in candidatos_secao])
+    vinculos = []
+    for t, numero in _todos_topicos(con):
+        for v in melhores(t.titulo, candidatos_secao, settings.limiar_vinculo, idf=idf):
+            vinculos.append({"topico_id": t.id, "titulo": t.titulo, "unidade": numero, "codigo": v.chave,
+                             "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
+    proposta["topicos"] = _mesclar(vinculos, proposta.get("topicos"), lambda t: (t["topico_id"], t["codigo"]))
 
 
 def _unidade_da_secao(con, secao_id: int) -> list[int]:
@@ -167,64 +223,175 @@ def _unidade_da_secao(con, secao_id: int) -> list[int]:
     )]
 
 
-def _propor_lista(con, doc: DocumentoPdf, settings: Settings, nome: str) -> dict:
+def _propor_lista(doc: DocumentoPdf, nome: str) -> dict:
     arquivo = extrair_listas(doc, nome)
-    principal = livros.principal(con)
-    todos_topicos = [
-        (t, u.numero) for u in unidades.listar(con) for t in topicos.listar(con, u.id)
+    propostas = [
+        {"codigo": lista.codigo, "titulo": lista.titulo, "secao_livro": lista.secao_livro,
+         "questoes": [dataclasses.asdict(q) for q in lista.questoes], "revisar": not lista.questoes}
+        for lista in arquivo.listas
     ]
-    candidatos_topico = [Candidato((t.id, numero), t.titulo) for t, numero in todos_topicos]
-    vinculos_topicos = []
-    for conteudo in arquivo.conteudos:
-        for v in melhores(conteudo, candidatos_topico, settings.limiar_vinculo):
-            vinculos_topicos.append({"topico_id": v.chave[0], "titulo": v.titulo, "unidade": v.chave[1],
-                                     "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
-    propostas = []
-    for lista in arquivo.listas:
-        secao = livros.secao_por_codigo(con, principal.fonte_id, lista.secao_livro) if principal and lista.secao_livro else None
-        if arquivo.unidade is not None:
-            numero, confianca = arquivo.unidade, 1.0
-        else:
-            votos = (_unidade_da_secao(con, secao.id) if secao else []) + [v["unidade"] for v in vinculos_topicos]
-            numero, confianca = unidade_majoritaria(votos)
-        existente = con.execute("SELECT id FROM lista WHERE codigo = ?", (lista.codigo,)).fetchone()
-        diff = None
-        if existente:
-            atuais = {q.rotulo for q in listas.listar_questoes(con, existente["id"])}
-            novos = [q.rotulo for q in lista.questoes]
-            diff = {"lista_id": existente["id"], "novas": [r for r in novos if r not in atuais],
-                    "mantidas": [r for r in novos if r in atuais], "ausentes": sorted(atuais - set(novos))}
-        propostas.append({
-            "codigo": lista.codigo, "titulo": lista.titulo, "secao_id": secao.id if secao else None,
-            "unidade": {"numero": numero, "confianca": round(confianca, 4), "revisar": numero is None or _revisar(confianca, settings)},
-            "topicos": vinculos_topicos,
-            "questoes": [dataclasses.asdict(q) for q in lista.questoes],
-            "existente": diff,
-            "revisar": not lista.questoes,
-        })
     unidade_arquivo = {"numero": arquivo.unidade, "confianca": 1.0 if arquivo.unidade else 0.0}
     return {"formato": arquivo.formato, "modo": "mesclar", "titulo": arquivo.titulo, "unidade": unidade_arquivo,
             "referencia_livro": arquivo.referencia_livro, "conteudos": arquivo.conteudos, "avisos": arquivo.avisos,
             "listas": propostas, "revisar": not propostas or bool(arquivo.avisos)}
 
 
-def propor(con, doc: DocumentoPdf, tipo: str, nome: str, settings: Settings, classificacao: Classificacao | None) -> dict:
+def _derivar_lista(con, proposta: dict, settings: Settings) -> None:
+    principal = livros.principal(con)
+    candidatos_topico = [Candidato((t.id, numero), t.titulo) for t, numero in _todos_topicos(con)]
+    idf = construir_idf([c.titulo for c in candidatos_topico])
+    # Cada conteúdo vota em cada unidade com o tópico mais parecido dela ("Limite e continuidade" casa com dois
+    # tópicos da unidade 1); a unidade vencedora é a de maior soma, e só os tópicos dela viram vínculo da lista.
+    # Para votar basta metade do limiar (é evidência somada); para virar vínculo vale o limiar inteiro.
+    vinculos_topicos, votos_conteudos = [], []
+    for conteudo in proposta.get("conteudos", []):
+        pontuados = pontuar(conteudo, candidatos_topico, settings.limiar_vinculo / 2, idf=idf)
+        por_unidade: dict[int, float] = {}
+        for score, c in pontuados:
+            por_unidade[c.chave[1]] = max(por_unidade.get(c.chave[1], 0.0), score)
+        votos_conteudos += por_unidade.items()
+        fortes = [(s, c) for s, c in pontuados if s >= settings.limiar_vinculo][:_MAX_TOPICOS_POR_CONTEUDO]
+        for score, c in fortes:
+            topico_id, numero = c.chave
+            confianca = round(score, 4)
+            vinculos_topicos.append({"topico_id": topico_id, "titulo": c.titulo, "unidade": numero,
+                                     "confianca": confianca, "aceito": True, "revisar": _revisar(confianca, settings)})
+    explicita = (proposta.get("unidade") or {}).get("numero")
+    por_secao = proposta.get("formato") == "por_secao"
+    for item in proposta.get("listas", []):
+        # Na lista por seção o código é o da seção (propostas antigas não guardavam "secao_livro")
+        codigo_secao = item.get("secao_livro", item["codigo"] if por_secao else None)
+        if not item.get("secao_manual") and ("secao_livro" in item or por_secao):
+            secao = livros.secao_por_codigo(con, principal.fonte_id, codigo_secao) if principal and codigo_secao else None
+            item["secao_id"] = secao.id if secao else None
+        anterior = item.get("unidade") if isinstance(item.get("unidade"), dict) else {}
+        if anterior.get("manual"):
+            numero = anterior.get("numero")
+        else:
+            if explicita is not None:
+                numero, confianca = explicita, 1.0
+            else:
+                votos = [(n, 1.0) for n in (_unidade_da_secao(con, item["secao_id"]) if item.get("secao_id") else [])]
+                numero, confianca = unidade_majoritaria(votos + votos_conteudos)
+            item["unidade"] = {"numero": numero, "confianca": round(confianca, 4),
+                               "revisar": numero is None or _revisar(confianca, settings)}
+        existente = con.execute("SELECT id FROM lista WHERE codigo = ?", (item["codigo"],)).fetchone()
+        diff = None
+        if existente:
+            atuais = {q.rotulo for q in listas.listar_questoes(con, existente["id"])}
+            novos = [q["rotulo"] for q in item.get("questoes", [])]
+            diff = {"lista_id": existente["id"], "novas": [r for r in novos if r not in atuais],
+                    "mantidas": [r for r in novos if r in atuais], "ausentes": sorted(atuais - set(novos))}
+        unicos: dict[int, dict] = {}  # dois conteúdos podem casar com o mesmo tópico: fica o vínculo mais forte
+        for v in vinculos_topicos:
+            if (numero is None or v["unidade"] == numero) and v["confianca"] > unicos.get(v["topico_id"], {}).get("confianca", -1):
+                unicos[v["topico_id"]] = dict(v)
+        item["topicos"] = _mesclar(list(unicos.values()), item.get("topicos"), lambda t: t["topico_id"])
+        item["existente"] = diff
+
+
+def derivar(con, tipo: str, proposta: dict, settings: Settings, fonte_id: int) -> dict:
+    """Recalcula a parte da proposta que depende do banco atual, mantendo as decisões da revisão; devolve uma cópia."""
+    nova = copy.deepcopy(proposta)
+    if tipo == "programa":
+        _derivar_programa(con, nova, settings)
+    elif tipo == "turma":
+        _derivar_turma(con, nova, settings)
+    elif tipo == "livro":
+        _derivar_livro(con, nova, settings, fonte_id)
+    elif tipo == "lista":
+        _derivar_lista(con, nova, settings)
+    return nova
+
+
+def propor(con, doc: DocumentoPdf, tipo: str, nome: str, settings: Settings, classificacao: Classificacao | None,
+           fonte_id: int) -> dict:
     if classificacao is not None:
         base = {"classificacao": {"tipo": classificacao.tipo, "confianca": classificacao.confianca,
                                   "sinais": classificacao.sinais, "revisar": _revisar(classificacao.confianca, settings)}}
     else:
         base = {"classificacao": {"tipo": tipo, "confianca": 1.0, "sinais": {}, "revisar": False}}
     if tipo == "programa":
-        return {**base, **_propor_programa(con, doc, settings)}
-    if tipo == "calendario":
-        return {**base, **_propor_calendario(con, doc)}
-    if tipo == "turma":
-        return {**base, **_propor_turma(con, doc, settings)}
-    if tipo == "livro":
-        return {**base, **_propor_livro(con, doc, settings, nome)}
+        extraido = _propor_programa(doc)
+    elif tipo == "calendario":
+        extraido = _propor_calendario(con, doc)
+    elif tipo == "turma":
+        extraido = _propor_turma(doc)
+    elif tipo == "livro":
+        extraido = _propor_livro(doc, settings, nome)
+    elif tipo == "lista":
+        extraido = _propor_lista(doc, nome)
+    else:
+        extraido = {"observacao": "Arquivo registrado; o conteúdo entra na busca."}
+    return derivar(con, tipo, {**base, **extraido}, settings, fonte_id)
+
+
+def atualizar_derivados(con, imp: Importacao, settings: Settings) -> Importacao:
+    """Refaz a parte derivada de uma proposta pendente com o banco atual. Grava só se ninguém mudou a proposta entre
+    a leitura e a escrita (edição ou confirmação concorrente): nesse caso vale o que está no banco."""
+    if imp.estado != "proposta":
+        return imp
+    nova = derivar(con, imp.tipo, imp.proposta, settings, imp.fonte_id)
+    if nova != imp.proposta:
+        importacoes.trocar_proposta(con, imp.id, imp.proposta, nova)
+    return importacoes.obter(con, imp.id)
+
+
+def para_leitura(con, imp: Importacao, settings: Settings) -> Importacao:
+    """Para as rotas de leitura: proposta que não dá para recalcular (malformada na edição) volta como está; o erro
+    aparece ao confirmar, com a mensagem de proposta inconsistente."""
+    try:
+        return atualizar_derivados(con, imp, settings)
+    except _ERROS_DE_PROPOSTA:
+        return imp
+
+
+def _marcar_decisoes(tipo: str, antes: dict, depois: dict) -> None:
+    """Compara a proposta editada com a que estava gravada e marca o que o usuário escolheu à mão."""
+    def ids(itens, chave) -> set:
+        return {chave(v) for v in itens or [] if isinstance(v, dict)}
+
+    def novos_viram_manuais(itens, anteriores, chave) -> None:
+        conhecidos = ids(anteriores, chave)
+        for v in itens or []:
+            if isinstance(v, dict) and chave(v) not in conhecidos:
+                v["manual"] = True
+
     if tipo == "lista":
-        return {**base, **_propor_lista(con, doc, settings, nome)}
-    return {**base, "observacao": "Arquivo registrado; o conteúdo será indexado para busca na Fase 4."}
+        anteriores = {l["codigo"]: l for l in antes.get("listas", []) if isinstance(l, dict) and "codigo" in l}
+        for item in depois.get("listas", []):
+            a = anteriores.get(item.get("codigo")) if isinstance(item, dict) else None
+            if a is None:
+                continue
+            unidade = item.get("unidade")
+            if isinstance(unidade, dict) and unidade.get("numero") != (a.get("unidade") or {}).get("numero"):
+                unidade["manual"] = True
+            if item.get("secao_id") != a.get("secao_id"):
+                item["secao_manual"] = True
+            novos_viram_manuais(item.get("topicos"), a.get("topicos"), lambda t: t.get("topico_id"))
+    elif tipo == "livro":
+        if depois.get("papel") != antes.get("papel"):
+            depois["papel_manual"] = True
+        novos_viram_manuais(depois.get("topicos"), antes.get("topicos"), lambda t: (t.get("topico_id"), t.get("codigo")))
+        novos_viram_manuais(depois.get("equivalencias"), antes.get("equivalencias"),
+                            lambda e: (e.get("codigo"), e.get("equivalente_id")))
+    elif tipo == "turma":
+        anteriores = {r.get("texto"): r for r in antes.get("referencias", []) if isinstance(r, dict)}
+        for r in depois.get("referencias", []):
+            a = anteriores.get(r.get("texto")) if isinstance(r, dict) else None
+            if a is not None and r.get("fonte_id") != a.get("fonte_id"):
+                r["manual"] = True
+
+
+def editar(con, importacao_id: int, proposta: dict) -> Importacao:
+    """Grava a proposta revisada. O que o usuário decidiu fica marcado e sobrevive aos recálculos seguintes."""
+    atual = importacoes.obter(con, importacao_id)
+    try:
+        _marcar_decisoes(atual.tipo, atual.proposta, proposta)
+    except _ERROS_DE_PROPOSTA:
+        pass  # proposta malformada: grava como veio; confirmar devolve o erro de proposta inconsistente
+    importacoes.atualizar_proposta(con, importacao_id, proposta)
+    return importacoes.obter(con, importacao_id)
 
 
 # ---------------- entrada e reprocessamento ----------------
@@ -251,7 +418,7 @@ def receber_arquivo(con, raiz: Path, origem: Path, nome_original: str, settings:
         except BaseException:
             destino.unlink(missing_ok=True)
             raise
-    proposta = propor(con, doc, tipo, nome_original, settings, classificacao)
+    proposta = propor(con, doc, tipo, nome_original, settings, classificacao, fonte_id)
     return importacoes.obter(con, importacoes.criar(con, fonte_id, tipo, proposta))
 
 
@@ -263,7 +430,7 @@ def reprocessar(con, raiz: Path, importacao_id: int, tipo: str, settings: Settin
         raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     fonte = _base.obter(con, "fonte", {"id": imp.fonte_id})
     doc = abrir_pdf(caminho_seguro(raiz, fonte["caminho"]))
-    proposta = propor(con, doc, tipo, Path(fonte["caminho"]).name, settings, None)
+    proposta = propor(con, doc, tipo, Path(fonte["caminho"]).name, settings, None, imp.fonte_id)
     with operacao(con, f"Marcar {Path(fonte['caminho']).name} como {tipo}", raiz) as op:
         _base.atualizar(op, "fonte", {"id": imp.fonte_id}, {"tipo": tipo})
     importacoes.atualizar_proposta(con, importacao_id, proposta, tipo)
@@ -382,6 +549,19 @@ def _aplicar_livro(op: Operacao, proposta: dict, fonte_id: int, resumo: dict) ->
         if e.get("aceito") and e["codigo"] in ids:
             livros.vincular_equivalente(op, ids[e["codigo"]], e["equivalente_id"])
             resumo["vinculos"] += 1
+    for t in proposta.get("topicos", []):
+        if t.get("aceito") and t["codigo"] in ids and _base.obter(op.con, "topico", {"id": t["topico_id"]}):
+            livros.vincular_topico(op, t["topico_id"], ids[t["codigo"]], confianca=t.get("confianca"), confirmado=True)
+            resumo["vinculos"] += 1
+    if proposta.get("papel") == "principal":
+        # Listas por seção confirmadas antes do livro têm o código da seção ("15.4") e ainda nenhuma seção ligada;
+        # só códigos com ponto, para uma lista "1" (nome de arquivo) não virar o capítulo 1
+        for lista in op.con.execute(
+            "SELECT id, codigo FROM lista WHERE id NOT IN (SELECT lista_id FROM lista_secao)"
+        ).fetchall():
+            if "." in lista["codigo"] and lista["codigo"] in ids:
+                listas.vincular_secao(op, lista["id"], ids[lista["codigo"]])
+                resumo["vinculos"] += 1
 
 
 def _entradas_existentes(con, lista_id: int) -> list[QuestaoEntrada]:
@@ -434,17 +614,20 @@ def _aplicar_lista(op: Operacao, proposta: dict, fonte_id: int, resumo: dict) ->
                 resumo["vinculos"] += 1
 
 
-def confirmar(con, raiz: Path, importacao_id: int) -> dict:
+def confirmar(con, raiz: Path, importacao_id: int, settings: Settings) -> dict:
     imp = importacoes.obter(con, importacao_id)
     if imp.estado != "proposta":
         raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
     fonte = _base.obter(con, "fonte", {"id": imp.fonte_id})
     resumo = dict.fromkeys(("unidades", "topicos", "eventos", "secoes", "listas", "questoes", "vinculos", "criterios"), 0)
     try:
+        imp = atualizar_derivados(con, imp, settings)  # vínculos contra o banco de agora, não o do momento do envio
+        if imp.estado != "proposta":
+            raise Conflito(f"A importação {importacao_id} já está '{imp.estado}'.")
         _aplicar(con, raiz, imp, fonte, resumo)
     except DadoInvalido:
         raise
-    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
+    except _ERROS_DE_PROPOSTA as e:
         raise DadoInvalido(f"Proposta inconsistente ({type(e).__name__}: {e}); corrija a revisão e confirme de novo.") from e
     # A importação já está gravada; indexar (pode levar segundos num livro) roda em segundo plano e nunca a desfaz
     agendar_sincronizacao(raiz, raiz / ARQUIVO_DB)

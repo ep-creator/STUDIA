@@ -59,7 +59,7 @@ def test_confirmar_importacao_deixa_o_indice_pronto(ambiente, tmp_path):
     pdf = criar_pdf(tmp_path / "nota.pdf", ["Anotações de aula sobre coordenadas esféricas e cilíndricas."])
     with closing(conectar(materia.db)) as con:
         imp = pipeline.receber_arquivo(con, materia.pasta, pdf, "nota.pdf", settings)
-        resumo = pipeline.confirmar(con, materia.pasta, imp.id)
+        resumo = pipeline.confirmar(con, materia.pasta, imp.id, settings)
         assert resumo["indexacao"] == "em segundo plano"
         from estudos.rag.indexador import aguardar_sincronizacoes
 

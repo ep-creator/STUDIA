@@ -7,7 +7,7 @@ import math
 from collections import Counter
 from dataclasses import dataclass
 
-from estudos.importacao.idioma import tokens_relevantes
+from estudos.importacao.idioma import radicais_relevantes
 
 
 @dataclass(frozen=True)
@@ -24,14 +24,14 @@ class Vinculo:
 
 
 def construir_idf(titulos: list[str]) -> dict[str, float]:
-    documentos = [set(tokens_relevantes(t)) for t in titulos]
+    documentos = [set(radicais_relevantes(t)) for t in titulos]
     frequencia = Counter(token for tokens in documentos for token in tokens)
     total = max(1, len(documentos))
     return {token: math.log(1 + total / df) for token, df in frequencia.items()}
 
 
 def similaridade(a: str, b: str, idf: dict[str, float]) -> float:
-    ta, tb = set(tokens_relevantes(a)), set(tokens_relevantes(b))
+    ta, tb = set(radicais_relevantes(a)), set(radicais_relevantes(b))
     if not ta or not tb:
         return 0.0
     padrao = max(idf.values(), default=1.0)  # token desconhecido conta como raro
@@ -42,21 +42,40 @@ def similaridade(a: str, b: str, idf: dict[str, float]) -> float:
     return peso(ta & tb) / peso(ta | tb)
 
 
-def melhores(texto: str, candidatos: list[Candidato], limiar: float, maximo: int = 1) -> list[Vinculo]:
-    idf = construir_idf([c.titulo for c in candidatos])
+def pontuar(
+    texto: str, candidatos: list[Candidato], limiar: float, idf: dict[str, float] | None = None
+) -> list[tuple[float, Candidato]]:
+    """Candidatos com similaridade ≥ limiar, do mais parecido para o menos. Quem compara muitos textos com os mesmos
+    candidatos passa o `idf` pronto (construir_idf dos títulos) para não recalculá-lo a cada chamada."""
+    if idf is None:
+        idf = construir_idf([c.titulo for c in candidatos])
     pontuados = sorted(
         ((similaridade(texto, c.titulo, idf), c) for c in candidatos), key=lambda par: par[0], reverse=True
     )
-    pontuados = [(s, c) for s, c in pontuados if s >= limiar]
+    return [(s, c) for s, c in pontuados if s >= limiar]
+
+
+def melhores(
+    texto: str, candidatos: list[Candidato], limiar: float, maximo: int = 1, idf: dict[str, float] | None = None
+) -> list[Vinculo]:
+    pontuados = pontuar(texto, candidatos, limiar, idf)
     vinculos = []
     for i, (score, c) in enumerate(pontuados[:maximo]):
-        empate = i == 0 and len(pontuados) > 1 and math.isclose(pontuados[1][0], score)
+        # Escolha única entre candidatos igualmente parecidos é um chute: a confiança cai pela metade
+        empate = maximo == 1 and i == 0 and len(pontuados) > 1 and math.isclose(pontuados[1][0], score)
         vinculos.append(Vinculo(c.chave, c.titulo, round(score / 2 if empate else score, 4)))
     return vinculos
 
 
-def unidade_majoritaria(unidades: list[int]) -> tuple[int | None, float]:
-    if not unidades:
+def unidade_majoritaria(votos: list[tuple[int, float]]) -> tuple[int | None, float]:
+    """Votos (unidade, força do vínculo). Confiança = fatia da unidade vencedora × seu vínculo mais forte: um único
+    vínculo fraco não vira certeza, e votos divididos entre unidades também baixam a confiança."""
+    pesos: dict[int, float] = {}
+    for unidade, forca in votos:
+        pesos[unidade] = pesos.get(unidade, 0.0) + forca
+    total = sum(pesos.values())
+    if not total:
         return None, 0.0
-    unidade, votos = Counter(unidades).most_common(1)[0]
-    return unidade, votos / len(unidades)
+    unidade = max(pesos, key=pesos.get)
+    maior = max(forca for u, forca in votos if u == unidade)
+    return unidade, pesos[unidade] / total * maior

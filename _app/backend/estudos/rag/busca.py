@@ -8,11 +8,10 @@ import re
 import sqlite3
 from dataclasses import dataclass
 
-from estudos.importacao.idioma import STOPWORDS, sem_acento, singular
+from estudos.importacao.idioma import STOPWORDS, radical, sem_acento
 
 _PALAVRA = re.compile(r"[a-z0-9]+")
-_MIN_PREFIXO = 5      # palavras com 5+ letras viram prefixo (casa singular/plural e flexões)
-_MIN_RADICAL = 4
+_MIN_PREFIXO = 5      # palavras com 5+ letras viram prefixo do radical (casa singular/plural e flexões)
 _PESO_TITULO, _PESO_TEXTO = 3.0, 1.0
 _TAMANHO_SNIPPET = 24
 
@@ -32,24 +31,13 @@ class Resultado:
     score: float
 
 
-def _radical(palavra: str) -> str:
-    base = singular(palavra)
-    if base.endswith("ao"):  # função/funções, equação/equações: o radical comum vem antes do "ão"/"ões"
-        base = base[:-2]
-    elif base.endswith(("al", "el", "il")):
-        base = base[:-2]
-    elif base[-1] in "aeo":
-        base = base[:-1]
-    return base if len(base) >= _MIN_RADICAL else palavra
-
-
 def montar_consulta(texto: str) -> str | None:
     """Termos do usuário viram termos entre aspas unidos por OR; operadores do FTS5 nunca passam."""
     termos = []
     for palavra in _PALAVRA.findall(sem_acento(texto or "").lower()):
         if len(palavra) < 2 or palavra in STOPWORDS:
             continue
-        termo = f'"{_radical(palavra)}"*' if len(palavra) >= _MIN_PREFIXO else f'"{palavra}"'
+        termo = f'"{radical(palavra)}"*' if len(palavra) >= _MIN_PREFIXO else f'"{palavra}"'
         if termo not in termos:
             termos.append(termo)
     return " OR ".join(termos) or None

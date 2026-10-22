@@ -55,12 +55,33 @@ def singular(palavra: str) -> str:
         return palavra
     for plural, troca in _PLURAIS:
         if palavra.endswith(plural):
-            return palavra[: -len(plural)] + troca
+            base = palavra[: -len(plural)] + troca
+            return base if len(base) >= 3 else palavra  # "três" não é plural de "tr"
     return palavra
 
 
 def tokens_relevantes(texto: str) -> list[str]:
     return [singular(t) for t in normalizar(texto).split() if t not in STOPWORDS and not t.isdigit()]
+
+
+# Terminações derivacionais/flexionais, da mais longa para a mais curta: integração/integral/integrais → "integr".
+# As longas só saem de palavras com radical de 5+ letras (variação → "variac", não "vari" como "várias"); sem
+# terminações de verbo, para "linear"/"calcular" não virarem prefixos de palavras sem relação.
+_SUFIXOS = (("acao", 5), ("icao", 5), ("idade", 5), ("mente", 5), ("avel", 5), ("ivel", 5), ("ada", 5), ("ado", 5),
+            ("ida", 5), ("ido", 5), ("ao", 4), ("al", 4), ("el", 4), ("il", 4), ("a", 4), ("e", 4), ("o", 4))
+
+
+def radical(palavra: str) -> str:
+    """Radical comum de uma palavra normalizada (sem acento, minúscula); nunca fica com menos de 4 letras."""
+    base = singular(palavra)
+    for sufixo, minimo in _SUFIXOS:
+        if base.endswith(sufixo) and len(base) - len(sufixo) >= minimo:
+            return base[: -len(sufixo)]
+    return base
+
+
+def radicais_relevantes(texto: str) -> list[str]:
+    return [radical(t) for t in tokens_relevantes(texto)]
 
 
 # "Primeira Unidade", "Unidade II", "Unidade 1 - Limites", "Unidade 2: Derivadas"
