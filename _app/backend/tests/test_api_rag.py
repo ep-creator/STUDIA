@@ -60,7 +60,10 @@ def test_confirmar_importacao_deixa_o_indice_pronto(ambiente, tmp_path):
     with closing(conectar(materia.db)) as con:
         imp = pipeline.receber_arquivo(con, materia.pasta, pdf, "nota.pdf", settings)
         resumo = pipeline.confirmar(con, materia.pasta, imp.id)
-        assert resumo["avisos_indice"] == []
+        assert resumo["indexacao"] == "em segundo plano"
+        from estudos.rag.indexador import aguardar_sincronizacoes
+
+        assert aguardar_sincronizacoes(60)
         assert sincronizar(con, materia.pasta).indexadas == 0
 
 

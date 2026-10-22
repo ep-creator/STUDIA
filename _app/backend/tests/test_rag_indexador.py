@@ -117,3 +117,50 @@ def test_arquivo_sumido_vira_aviso(con, materia, base):
     (materia.pasta / "fontes/listas/lista.pdf").unlink()
     r = sincronizar(con, materia.pasta)
     assert any("lista.pdf" in a for a in r.avisos) and _trechos(materia, fonte_id=base["lista"]) == []
+
+
+def test_sincronizacoes_simultaneas_nao_quebram(con, materia, base):
+    import threading
+
+    from estudos.db.conexao import conectar
+
+    erros = []
+
+    def rodar():
+        c = conectar(materia.db)
+        try:
+            sincronizar(c, materia.pasta)
+        except Exception as e:  # pragma: no cover - só aparece se falhar
+            erros.append(e)
+        finally:
+            c.close()
+
+    threads = [threading.Thread(target=rodar) for _ in range(3)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(60)
+    assert erros == []
+    assert sincronizar(con, materia.pasta).indexadas == 0
+
+
+def test_corrupcao_no_meio_do_indice_e_reconstruida(con, materia, base):
+    from estudos.rag.indice import caminho_indice
+
+    sincronizar(con, materia.pasta)
+    caminho = caminho_indice(materia.pasta)
+    dados = bytearray(caminho.read_bytes())
+    for i in range(4096, len(dados) - 512):
+        dados[i] = 0xAB
+    caminho.write_bytes(bytes(dados))
+    r = sincronizar(con, materia.pasta)
+    assert r.indexadas == 4 and any("reconstruído" in a for a in r.avisos)
+
+
+def test_livro_sem_secoes_usa_o_nome_do_arquivo(con, materia):
+    criar_pdf(materia.pasta / "fontes/livros/Stewart vol 1.pdf", ["página um do volume", "página dois do volume"])
+    with operacao(con, "v1", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/Stewart vol 1.pdf")
+        livros.criar(op, f, "complementar")
+    sincronizar(con, materia.pasta)
+    assert {t["titulo"] for t in _trechos(materia, fonte_id=f)} == {"Stewart vol 1"}

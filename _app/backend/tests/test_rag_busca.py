@@ -84,3 +84,8 @@ def test_secao_completa(cenario):
     texto = secao_completa(cenario["indice"], cenario["s12"])
     assert texto.index("integrais triplas em coordenadas") < texto.index("exercícios de integrais triplas")
     assert "Coordenadas polares" not in texto
+
+
+def test_cao_e_coes_casam():
+    assert montar_consulta("funções") == '"func"*' == montar_consulta("função")
+    assert montar_consulta("equações integração") == '"equac"* OR "integrac"*'

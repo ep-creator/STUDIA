@@ -34,7 +34,9 @@ class Resultado:
 
 def _radical(palavra: str) -> str:
     base = singular(palavra)
-    if base.endswith(("al", "el", "il")):
+    if base.endswith("ao"):  # função/funções, equação/equações: o radical comum vem antes do "ão"/"ões"
+        base = base[:-2]
+    elif base.endswith(("al", "el", "il")):
         base = base[:-2]
     elif base[-1] in "aeo":
         base = base[:-1]

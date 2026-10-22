@@ -58,3 +58,29 @@ def test_caminho_alternativo(materia, tmp_path):
     con = abrir_indice(materia.pasta, destino)
     assert destino.is_file() and not caminho_indice(materia.pasta).exists()
     con.close()
+
+
+def test_banco_ocupado_nao_e_tratado_como_corrupcao(materia):
+    import threading
+
+    escritor = abrir_indice(materia.pasta)
+    escritor.execute("INSERT INTO trecho (origem, tipo, titulo, texto, ordem) VALUES ('x', 't', 'polares', 'polares', 1)")
+    escritor.execute("BEGIN IMMEDIATE")
+    escritor.execute("INSERT INTO trecho (origem, tipo, titulo, texto, ordem) VALUES ('y', 't', 'outro', 'outro', 1)")
+    resultado = {}
+
+    def ler():
+        try:
+            leitor = abrir_indice(materia.pasta)
+            resultado["linhas"] = leitor.execute("SELECT count(*) FROM trecho").fetchone()[0]
+            leitor.close()
+        except Exception as e:  # pragma: no cover - só aparece se falhar
+            resultado["erro"] = e
+
+    t = threading.Thread(target=ler)
+    t.start()
+    t.join(15)
+    escritor.execute("COMMIT")
+    escritor.close()
+    assert resultado == {"linhas": 1}
+    assert caminho_indice(materia.pasta).is_file()

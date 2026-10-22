@@ -7,12 +7,14 @@ nenhum arquivo é aberto.
 import datetime
 import hashlib
 import sqlite3
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from estudos.importacao.pdf import DocumentoPdf, PdfInvalido, abrir_pdf
-from estudos.rag.indice import abrir_indice
+from estudos.db.conexao import conectar
+from estudos.rag.indice import abrir_indice, caminho_indice, descartar_indice, eh_corrupcao
 from estudos.rag.trechos import TrechoNovo, dividir_markdown, dividir_paginas
 from estudos.repos import documentos, livros
 from estudos.seguranca import caminho_seguro
@@ -65,12 +67,12 @@ def _secao_de_cada_pagina(con: sqlite3.Connection, fonte_id: int) -> dict[int, o
     return dona
 
 
-def _indexar_livro(indice, con, origem: str, fonte_id: int, doc: DocumentoPdf) -> int:
+def _indexar_livro(indice, con, origem: str, fonte_id: int, doc: DocumentoPdf, titulo: str) -> int:
     livro = con.execute("SELECT gabarito_pdf_ini, gabarito_pdf_fim FROM livro WHERE fonte_id = ?", (fonte_id,)).fetchone()
     dona = _secao_de_cada_pagina(con, fonte_id)
     if not dona:
         paginas = [(p.indice, p.texto) for p in doc.paginas]
-        return _inserir(indice, origem, dividir_paginas(paginas, Path(origem).name), "livro", fonte_id=fonte_id)
+        return _inserir(indice, origem, dividir_paginas(paginas, titulo), "livro", fonte_id=fonte_id)
     total = 0
     grupos: list[tuple[object, list[tuple[int, str]]]] = []
     for pagina in doc.paginas:
@@ -108,7 +110,7 @@ def indexar_fonte(indice, con, raiz: Path, fonte_id: int, avisos: list[str]) -> 
         avisos.append(f"{fonte['caminho']}: PDF sem texto (escaneado); fora da busca")
         return 0
     if fonte["tipo"] == "livro":
-        return _indexar_livro(indice, con, origem, fonte_id, doc)
+        return _indexar_livro(indice, con, origem, fonte_id, doc, caminho.stem)
     paginas = [(p.indice, p.texto) for p in doc.paginas]
     return _inserir(indice, origem, dividir_paginas(paginas, caminho.stem), fonte["tipo"], fonte_id=fonte_id)
 
@@ -124,14 +126,74 @@ def _indexar_documento(indice, con, raiz: Path, documento_id: int, avisos: list[
                     documento_id=documento_id, secao_id=doc.secao_id)
 
 
-def sincronizar(con: sqlite3.Connection, raiz: Path, caminho_indice: Path | None = None) -> ResumoSincronizacao:
+_travas: dict[str, threading.Lock] = {}
+_trava_das_travas = threading.Lock()
+_pendentes: set[threading.Thread] = set()
+
+
+def _trava(caminho: Path) -> threading.Lock:
+    with _trava_das_travas:
+        return _travas.setdefault(str(caminho.resolve()), threading.Lock())
+
+
+def sincronizar(
+    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path | None = None, esperar: bool = True
+) -> ResumoSincronizacao:
+    """Uma sincronização por índice de cada vez. Com esperar=False, quem chega durante outra sincronização não espera:
+    devolve um aviso e quem chamou segue buscando no índice como ele está."""
+    caminho = caminho_indice_ or caminho_indice(raiz)
+    trava = _trava(caminho)
+    if not trava.acquire(blocking=esperar):
+        return ResumoSincronizacao(avisos=["sincronização em andamento; resultados podem ainda não incluir tudo"])
+    try:
+        try:
+            return _sincronizar(con, raiz, caminho)
+        except sqlite3.DatabaseError as erro:
+            if not eh_corrupcao(erro):
+                raise
+            descartar_indice(raiz, caminho)
+            resumo = _sincronizar(con, raiz, caminho)
+            resumo.avisos.insert(0, "índice de busca estava corrompido e foi reconstruído")
+            return resumo
+    finally:
+        trava.release()
+
+
+def agendar_sincronizacao(raiz: Path, arquivo_banco: Path) -> threading.Thread:
+    """Sincroniza numa thread própria (com sua própria conexão), sem segurar quem pediu."""
+
+    def rodar() -> None:
+        con = conectar(arquivo_banco)
+        try:
+            sincronizar(con, raiz)
+        except Exception:  # índice é derivável; a próxima busca tenta de novo
+            pass
+        finally:
+            con.close()
+            _pendentes.discard(threading.current_thread())
+
+    tarefa = threading.Thread(target=rodar, name=f"indexacao-{raiz.name}", daemon=True)
+    _pendentes.add(tarefa)
+    tarefa.start()
+    return tarefa
+
+
+def aguardar_sincronizacoes(timeout: float | None = None) -> bool:
+    """Espera as sincronizações em segundo plano terminarem; True se todas terminaram dentro do prazo."""
+    limite = None if timeout is None else time.monotonic() + timeout
+    for tarefa in list(_pendentes):
+        tarefa.join(None if limite is None else max(0.0, limite - time.monotonic()))
+    return not any(t.is_alive() for t in list(_pendentes))
+
+
+def _sincronizar(con: sqlite3.Connection, raiz: Path, caminho_indice_: Path) -> ResumoSincronizacao:
     inicio = time.perf_counter()
     resumo = ResumoSincronizacao()
     atuais = {f"fonte:{r['id']}": assinatura_fonte(con, r["id"]) for r in con.execute("SELECT id FROM fonte")}
     atuais |= {
         f"documento:{r['id']}": assinatura_documento(con, raiz, r["id"]) for r in con.execute("SELECT id FROM documento")
     }
-    indice = abrir_indice(raiz, caminho_indice)
+    indice = abrir_indice(raiz, caminho_indice_)
     try:
         estado = {r["origem"]: r["assinatura"] for r in indice.execute("SELECT origem, assinatura FROM estado")}
         for origem in set(estado) - set(atuais):

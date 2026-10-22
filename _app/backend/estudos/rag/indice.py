@@ -49,6 +49,15 @@ END;
 """
 
 
+class IndiceDesatualizado(sqlite3.DatabaseError):
+    """Arquivo de índice de outra versão: é descartado e refeito."""
+
+
+def eh_corrupcao(erro: BaseException) -> bool:
+    """Só arquivo inválido/corrompido (ou de outra versão) justifica apagar o índice; banco ocupado não."""
+    return isinstance(erro, IndiceDesatualizado) or getattr(erro, "sqlite_errorname", "") in ("SQLITE_NOTADB", "SQLITE_CORRUPT")
+
+
 def caminho_indice(raiz: Path) -> Path:
     return raiz / PASTA_INDICE / _ARQUIVO
 
@@ -66,13 +75,20 @@ def _conectar(caminho: Path) -> sqlite3.Connection:
 
 
 def _preparar(con: sqlite3.Connection) -> None:
-    """Cria o schema; índice de outra versão é descartado (sempre dá para reconstruir)."""
+    """Cria o schema só quando o arquivo é novo; abrir um índice existente não precisa de escrita."""
     versao = con.execute("PRAGMA user_version").fetchone()[0]
     existe = con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0] > 0
-    if existe and versao != VERSAO_INDICE:
-        raise sqlite3.DatabaseError("versão do índice diferente")
+    if existe and versao == VERSAO_INDICE:
+        return
+    if existe:
+        raise IndiceDesatualizado(f"índice na versão {versao}, esperada {VERSAO_INDICE}")
+    con.execute("PRAGMA journal_mode=WAL")  # leitores não esperam enquanto a indexação escreve
     con.executescript(_SCHEMA)
     con.execute(f"PRAGMA user_version = {VERSAO_INDICE}")
+
+
+def descartar_indice(raiz: Path, caminho: Path | None = None) -> None:
+    _apagar(caminho or caminho_indice(raiz))
 
 
 def abrir_indice(raiz: Path, caminho: Path | None = None) -> sqlite3.Connection:
@@ -81,7 +97,9 @@ def abrir_indice(raiz: Path, caminho: Path | None = None) -> sqlite3.Connection:
     try:
         con = _conectar(caminho)
         _preparar(con)
-    except sqlite3.DatabaseError:
+    except sqlite3.DatabaseError as erro:
+        if not eh_corrupcao(erro):
+            raise  # ocupado ou outro problema transitório: o índice continua lá
         try:
             con.close()
         except Exception:  # conexão pode nem ter sido criada
