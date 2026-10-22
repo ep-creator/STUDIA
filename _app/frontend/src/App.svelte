@@ -13,6 +13,7 @@
   import { carregarPainel, estadoMateria } from './estado/materia.svelte'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
   import Cronograma from './rotas/Cronograma.svelte'
+  import Documentos from './rotas/Documentos.svelte'
   import Formulario from './rotas/Formulario.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
@@ -83,6 +84,8 @@
               <Topicos {painel} />
             {:else if rota.area === 'cronograma'}
               <Cronograma {painel} />
+            {:else if rota.area === 'documentos'}
+              <Documentos {painel} />
             {:else if rota.area === 'formulario'}
               <Formulario {painel} />
             {:else}
