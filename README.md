@@ -141,6 +141,11 @@ Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, p
   prova, tópicos, sumário do livro, questões e critérios por regras, liga tópicos ↔ seções ↔ listas por similaridade e
   devolve uma **proposta** para revisar (itens com pouca confiança vêm marcados com `"revisar": true`). Nada é gravado
   até `POST …/importacoes/{id}/confirmar`; reimportar uma lista só acrescenta questões (modo `mesclar`), sem apagar marcações.
+- **Busca (RAG):** `GET /api/materias/{uid}/busca?q=…&unidade=3&tipo=livro` procura em livros (por seção, com página),
+  listas, gabaritos e resumos, com filtros exatos de unidade, seção e tipo; `GET …/secoes/{id}/texto` devolve a seção
+  inteira do livro. O índice fica em `<matéria>/.indice/` (fora do Git, sempre reconstruível) e se atualiza sozinho: só o
+  que mudou é reindexado e o que foi apagado sai da busca. Para montar de uma vez: `python -m estudos.rag "../../Calculo 2"`
+  (Cálculo 2: 64 origens, 2232 trechos, ~25 s na primeira vez; depois ~50 ms).
 - **Migrar de novo antes do corte:** enquanto o app atual for o de uso diário, as marcações e edições feitas nele
   podem ser trazidas para o motor novo com `python -m estudos.migracao "../../Calculo 2"` (dentro de `_app/backend`, com o
   ambiente ativo). A matéria nova é reconstruída a partir do legado, mantendo o mesmo identificador; o resultado sai em
