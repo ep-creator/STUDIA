@@ -38,3 +38,5 @@ desktop.ini
 _app/backend/.venv/
 *.egg-info/
 .superpowers/
+# Índice de busca (derivável, reconstruído pelo app)
+**/.indice/

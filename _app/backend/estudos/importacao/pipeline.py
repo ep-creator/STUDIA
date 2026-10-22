@@ -22,6 +22,8 @@ from estudos.importacao.parsers.turma import extrair_turma
 from estudos.importacao.pdf import DocumentoPdf, abrir_pdf
 from estudos.importacao.vinculo import Candidato, melhores, unidade_majoritaria
 from estudos.modelos import Importacao, QuestaoEntrada
+from estudos.rag.indexador import agendar_sincronizacao
+from estudos.workspace import ARQUIVO_DB
 from estudos.repos import _base, eventos, fontes, importacoes, listas, livros, materia, topicos, turma, unidades
 from estudos.repos.fontes import sha256_arquivo
 from estudos.seguranca import caminho_seguro
@@ -444,6 +446,9 @@ def confirmar(con, raiz: Path, importacao_id: int) -> dict:
         raise
     except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
         raise DadoInvalido(f"Proposta inconsistente ({type(e).__name__}: {e}); corrija a revisão e confirme de novo.") from e
+    # A importação já está gravada; indexar (pode levar segundos num livro) roda em segundo plano e nunca a desfaz
+    agendar_sincronizacao(raiz, raiz / ARQUIVO_DB)
+    resumo["indexacao"] = "em segundo plano"
     return resumo
 
 

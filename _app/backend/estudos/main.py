@@ -7,7 +7,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from estudos.api import (
-    cronograma, documentos, formulas, historico, importacoes, listas, marcacoes, materias, painel, topicos, unidades,
+    cronograma, documentos, formulas, historico, importacoes, listas, marcacoes, materias, painel, rag, topicos,
+    unidades,
 )
 from estudos.config import Settings
 from estudos.erros import ArquivoGrande, Conflito, DadoInvalido, NaoEncontrado
@@ -16,7 +17,7 @@ from estudos.seguranca import CaminhoInvalido, OrigemLocalMiddleware
 
 ROUTERS = (
     materias.router, painel.router, marcacoes.router, historico.router, unidades.router, topicos.router,
-    listas.router, cronograma.router, formulas.router, documentos.router, importacoes.router,
+    listas.router, cronograma.router, formulas.router, documentos.router, importacoes.router, rag.router,
 )
 
 

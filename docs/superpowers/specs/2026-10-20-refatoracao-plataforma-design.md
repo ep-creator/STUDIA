@@ -237,6 +237,12 @@ Unidade de lista/documento proposta = unidade majoritária dos tópicos vinculad
 
 ## 8. RAG
 
+> **Emenda (Fase 4):** o índice mora em `<matéria>/.indice/indice.db`, separado do `materia.db` e fora do Git (é derivável).
+> A tabela `chunk` da §5 virou `trecho` nesse arquivo, sem `unidade_id`: a unidade é resolvida **na consulta**, anexando o
+> `materia.db` em modo somente leitura, para que mudar um vínculo tópico↔seção não deixe o índice desatualizado. Cada página
+> do livro pertence à seção mais profunda que a contém; o gabarito é indexado como tipo `gabarito`.
+
+
 - Unidades indexáveis: seções de livro (texto integral da faixa de páginas, dividido em teoria/exemplos/exercícios),
   páginas de listas/provas/slides, blocos `##` de documentos Markdown.
 - Livros são indexados **na importação**, por seção (não mais sob demanda).
