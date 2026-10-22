@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 
 from estudos import resumo
 from estudos.api.deps import Contexto, contexto_dep
+from estudos.api.respostas import Painel
 from estudos.erros import NaoEncontrado
 from estudos.repos import cronograma, documentos, eventos, formulas, listas, marcacoes, materia, topicos, unidades
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["painel"])
 
 
 @router.get("/painel")
-def painel(unidade: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def painel(unidade: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> Painel:
     con = ctx.con
     todas = unidades.listar(con)
     atual = unidades.unidade_atual(con, date.today())

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from estudos import resumo
 from estudos.api.deps import obter_settings
 from estudos.api.esquemas import MateriaCriar
+from estudos.api.respostas import MateriaCriada, ResumoMateria
 from estudos.config import Settings
 from estudos.db.conexao import conectar
 from estudos.repos import materia
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/api/materias", tags=["matérias"])
 
 
 @router.get("")
-def listar(settings: Settings = Depends(obter_settings)) -> list[dict]:
+def listar(settings: Settings = Depends(obter_settings)) -> list[ResumoMateria]:
     """Cada matéria com o resumo dos cartões da tela inicial (abre e fecha o banco de cada uma)."""
     hoje = date.today()
     saida = []
@@ -30,6 +31,6 @@ def listar(settings: Settings = Depends(obter_settings)) -> list[dict]:
 
 
 @router.post("", status_code=201)
-def criar(corpo: MateriaCriar, settings: Settings = Depends(obter_settings)) -> dict:
+def criar(corpo: MateriaCriar, settings: Settings = Depends(obter_settings)) -> MateriaCriada:
     ref = criar_materia(settings.workspace, corpo.nome, corpo.periodo)
     return {"uid": ref.uid, "nome": ref.nome}

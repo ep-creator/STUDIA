@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 
 from estudos.api.deps import Contexto, contexto_dep, materia_dep
 from estudos.api.esquemas import DocumentoSalvar
+from estudos.api.respostas import Criado, Documento, DocumentoComCorpo, Ok
 from estudos.erros import Conflito, NaoEncontrado
 from estudos.repos import documentos
 from estudos.seguranca import caminho_seguro
@@ -15,12 +16,12 @@ _PREFIXO = "/api/materias/{materia_uid}/documentos"
 
 
 @router.get(_PREFIXO)
-def listar(tipo: str | None = None, unidade_id: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[dict]:
+def listar(tipo: str | None = None, unidade_id: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[Documento]:
     return [asdict(d) for d in documentos.listar(ctx.con, tipo, unidade_id)]
 
 
 @router.get(_PREFIXO + "/{documento_id}")
-def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> DocumentoComCorpo:
     documento = documentos.obter(ctx.con, documento_id)
     return {
         **asdict(documento), "corpo": documentos.ler_corpo(ctx.materia.pasta, documento),
@@ -29,7 +30,7 @@ def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
 
 
 @router.put(_PREFIXO)
-def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> Criado:
     dados = corpo.model_dump(exclude={"versao_esperada"})
     if corpo.versao_esperada is not None:
         atual = documentos.versao(ctx.materia.pasta, documentos.caminho_documento(corpo.tipo, corpo.nome_arquivo))
@@ -40,7 +41,7 @@ def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> dic
 
 
 @router.delete(_PREFIXO + "/{documento_id}")
-def remover(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def remover(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> Ok:
     titulo = documentos.obter(ctx.con, documento_id).titulo
     with ctx.acao(f"Remover documento '{titulo}'") as op:
         documentos.remover(op, documento_id)

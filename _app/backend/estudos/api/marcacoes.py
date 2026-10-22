@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 
 from estudos.api.deps import Contexto, contexto_dep
 from estudos.api.esquemas import MarcacaoDefinir
+from estudos.api.respostas import Marcado
 from estudos.erros import NaoEncontrado
 from estudos.repos import marcacoes
 
@@ -13,7 +14,7 @@ _ROTULO_ESTADO = {"ok": "acertei", "err": "errei", "dub": "dúvida", None: "sem 
 
 
 @router.put("/marcacoes/{questao_id}")
-def definir(questao_id: int, corpo: MarcacaoDefinir, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def definir(questao_id: int, corpo: MarcacaoDefinir, ctx: Contexto = Depends(contexto_dep)) -> Marcado:
     questao = ctx.con.execute(
         "SELECT q.rotulo, l.codigo, l.unidade_id FROM questao q JOIN lista l ON l.id = q.lista_id WHERE q.id = ?",
         (questao_id,),
