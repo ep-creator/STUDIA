@@ -15,6 +15,7 @@
   import Cronograma from './rotas/Cronograma.svelte'
   import Documentos from './rotas/Documentos.svelte'
   import Formulario from './rotas/Formulario.svelte'
+  import Importacao from './rotas/Importacao.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
   import Painel from './rotas/Painel.svelte'
@@ -92,6 +93,8 @@
               <p class="suave">Esta área chega nas próximas etapas.</p>
             {/if}
           </MolduraEditorial>
+        {:else if rota.tela === 'importar'}
+          <Importacao {painel} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}
