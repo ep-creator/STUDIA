@@ -12,9 +12,12 @@
   import { erro } from './estado/avisos.svelte'
   import { carregarPainel, estadoMateria } from './estado/materia.svelte'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
-  import Materias from './rotas/Materias.svelte'
+  import Cronograma from './rotas/Cronograma.svelte'
+  import Formulario from './rotas/Formulario.svelte'
   import Listas from './rotas/Listas.svelte'
+  import Materias from './rotas/Materias.svelte'
   import Painel from './rotas/Painel.svelte'
+  import Topicos from './rotas/Topicos.svelte'
   import { analisarRota, type Rota } from './rotas/rota'
 
   let rota = $state<Rota>(analisarRota(location.hash))
@@ -72,8 +75,16 @@
           >
             {#if rota.area === 'painel'}
               <Painel {painel} />
+            {:else if !painel.unidade}
+              <Painel {painel} />
             {:else if rota.area === 'listas'}
               <Listas {painel} />
+            {:else if rota.area === 'topicos'}
+              <Topicos {painel} />
+            {:else if rota.area === 'cronograma'}
+              <Cronograma {painel} />
+            {:else if rota.area === 'formulario'}
+              <Formulario {painel} />
             {:else}
               <p class="suave">Esta área chega nas próximas etapas.</p>
             {/if}
