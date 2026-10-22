@@ -1,12 +1,14 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import type { Criado, DocumentoComCorpo, FonteResumo, Painel } from '../api/tipos'
+  import type { DocumentoComCorpo, FonteResumo, Painel } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
   import ListaDocumentos, { type Selecao } from '../componentes/ListaDocumentos.svelte'
   import Markdown from '../componentes/Markdown.svelte'
   import VisualizadorPdf from '../componentes/VisualizadorPdf.svelte'
+  import { criarDocumento } from '../documentos'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
+  import { podeSair } from '../estado/saida'
 
   let { painel }: { painel: Painel } = $props()
 
@@ -34,23 +36,17 @@
   }
 
   function selecionar(s: Selecao) {
+    if (!podeSair()) return
     selecao = s
     editando = false
     documento = null
     if (s?.tipo === 'documento') void abrirDocumento(s.id)
   }
 
-  function nomeArquivo(titulo: string): string {
-    const base = titulo.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    return `${base || 'documento'}.md`
-  }
-
   async function criar(e: SubmitEvent) {
     e.preventDefault()
     try {
-      const { id } = await requisitar<Criado>('PUT', `/api/materias/${uid}/documentos`, {
-        tipo: novoTipo, nome_arquivo: nomeArquivo(novoTitulo), titulo: novoTitulo.trim(), corpo: '', unidade_id: unidade.id,
-      })
+      const id = await criarDocumento(uid, { tipo: novoTipo, titulo: novoTitulo, unidade_id: unidade.id })
       criando = false
       novoTitulo = ''
       await recarregar()
@@ -95,7 +91,7 @@
       </header>
       {#if editando}
         {#key documento.versao}
-          <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => (editando = false)} />
+          <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => { if (podeSair()) editando = false }} />
         {/key}
       {:else}
         <Markdown texto={documento.corpo} />

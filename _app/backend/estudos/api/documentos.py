@@ -33,8 +33,11 @@ def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> Documento
 def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> Criado:
     dados = corpo.model_dump(exclude={"versao_esperada"})
     if corpo.versao_esperada is not None:
-        atual = documentos.versao(ctx.materia.pasta, documentos.caminho_documento(corpo.tipo, corpo.nome_arquivo))
-        if atual is not None and atual != corpo.versao_esperada:
+        caminho = documentos.caminho_documento(corpo.tipo, corpo.nome_arquivo)
+        atual = documentos.versao(ctx.materia.pasta, caminho)
+        if corpo.versao_esperada == "" and atual is not None:  # "" = criar: o arquivo ainda não pode existir
+            raise Conflito(f"Já existe um documento em {caminho}; escolha outro nome.")
+        if corpo.versao_esperada and atual is not None and atual != corpo.versao_esperada:
             raise Conflito("O documento mudou desde que foi aberto; recarregue para ver a versão atual.")
     with ctx.acao(f"Salvar {corpo.tipo} '{corpo.titulo}'") as op:
         return {"id": documentos.salvar(op, **dados)}

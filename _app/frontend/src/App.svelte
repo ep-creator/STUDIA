@@ -10,8 +10,10 @@
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import Topo from './componentes/Topo.svelte'
   import { erro } from './estado/avisos.svelte'
+  import { aoReconectar } from './estado/conexao.svelte'
   import { atalhoDesfazer, desfazer } from './estado/desfazer'
-  import { carregarPainel, estadoMateria } from './estado/materia.svelte'
+  import { carregarPainel, estadoMateria, painelACarregar } from './estado/materia.svelte'
+  import { haAlteracoes, podeSair } from './estado/saida'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
   import Cronograma from './rotas/Cronograma.svelte'
   import Documentos from './rotas/Documentos.svelte'
@@ -38,11 +40,31 @@
   }
   $effect(() => acompanharSistema())
 
+  // Mudar de tela com texto não salvo pergunta antes; se o usuário ficar, o endereço volta ao anterior
+  let hashAtual = location.hash
   $effect(() => {
-    const atualizar = () => (rota = analisarRota(location.hash))
+    const atualizar = () => {
+      if (location.hash !== hashAtual && !podeSair()) {
+        history.replaceState(null, '', hashAtual || '#/')
+        return
+      }
+      hashAtual = location.hash
+      rota = analisarRota(location.hash)
+    }
+    const antesDeFechar = (e: BeforeUnloadEvent) => { if (haAlteracoes()) e.preventDefault() }
     window.addEventListener('hashchange', atualizar)
-    return () => window.removeEventListener('hashchange', atualizar)
+    window.addEventListener('beforeunload', antesDeFechar)
+    return () => {
+      window.removeEventListener('hashchange', atualizar)
+      window.removeEventListener('beforeunload', antesDeFechar)
+    }
   })
+
+  // Motor voltou depois de cair: recarrega o que pode ter falhado enquanto estava fora
+  $effect(() => aoReconectar(() => {
+    void carregarMaterias()
+    if (rota.tela !== 'materias') void carregarPainel(rota.uid, rota.tela === 'materia' ? rota.unidade : null)
+  }))
 
   async function carregarMaterias() {
     try {
@@ -59,11 +81,8 @@
 
   // Painel da matéria/unidade da rota (só recarrega quando muda a matéria ou a unidade pedida).
   $effect(() => {
-    if (rota.tela === 'materias') return
-    const unidadePedida = rota.tela === 'materia' ? rota.unidade : estadoMateria.unidade
-    if (rota.uid !== estadoMateria.uid || (unidadePedida !== null && unidadePedida !== estadoMateria.unidade)) {
-      void carregarPainel(rota.uid, unidadePedida)
-    }
+    const alvo = painelACarregar(rota, { uid: estadoMateria.uid, unidade: estadoMateria.unidade })
+    if (alvo) void carregarPainel(alvo.uid, alvo.unidade)
   })
 
   const painel = $derived(rota.tela !== 'materias' && estadoMateria.uid === rota.uid ? estadoMateria.painel : null)

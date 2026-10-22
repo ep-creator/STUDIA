@@ -11,7 +11,12 @@ export type Rota =
 const INICIO: Rota = { tela: 'materias' }
 
 export function analisarRota(hash: string): Rota {
-  const partes = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
+  let partes: string[]
+  try {
+    partes = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent)
+  } catch {
+    return INICIO   // endereço com escape inválido (favorito estragado): tela inicial em vez de quebrar
+  }
   if (partes[0] !== 'm' || !partes[1]) return INICIO
   const uid = partes[1]
   if (partes.length === 2) return { tela: 'materia', uid, unidade: null, area: 'painel' }

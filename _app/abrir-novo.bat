@@ -26,11 +26,8 @@ if errorlevel 1 (
   echo.
 ) else (
   pushd "%~dp0frontend"
-  if not exist "node_modules" (
-    echo Instalando as dependencias da interface...
-    call npm ci --no-audit --no-fund || echo Falha ao instalar as dependencias da interface.
-  )
-  call node scripts\build-se-preciso.mjs || echo Falha ao compilar a interface.
+  rem instala dependencias quando o package-lock muda e compila quando o codigo muda
+  call node scripts\build-se-preciso.mjs || echo Falha ao preparar a interface.
   popd
 )
 

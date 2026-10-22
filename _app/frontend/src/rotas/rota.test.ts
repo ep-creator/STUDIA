@@ -19,3 +19,7 @@ test('montarHash da área com unidade', () => {
   expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos' })).toBe('#/m/ab/u/3/topicos')
   expect(montarHash({ tela: 'materia', uid: 'ab', unidade: null, area: 'painel' })).toBe('#/m/ab')
 })
+
+test('hash malformado não derruba o app: volta para a tela inicial', () => {
+  expect(analisarRota('#/m/%E0%A4%A')).toEqual({ tela: 'materias' })
+})

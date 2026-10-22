@@ -98,3 +98,13 @@ test('quatro temas persistem', async ({ page }) => {
     await expect(page.locator('html')).toHaveAttribute('data-tema', esperado)
   }
 })
+
+test('criar outra matéria depois de abrir uma não trava em "Carregando"', async ({ page }) => {
+  await abrirArea(page, '1ª', 'Listas')
+  await page.getByRole('link', { name: '← Matérias' }).click()
+  await page.getByRole('button', { name: '＋ Nova matéria' }).click()
+  await page.getByLabel('Nome').fill('Segunda matéria')
+  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Importar arquivos' })).toBeVisible()
+  await expect(page.getByText('Carregando…')).toHaveCount(0)
+})

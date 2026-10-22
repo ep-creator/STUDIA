@@ -44,3 +44,14 @@ test('conflito ao salvar oferece ver a versão atual sem perder o texto', async 
   await userEvent.click(screen.getByRole('button', { name: 'Ver versão atual' }))
   expect(await screen.findByText('Mudado por fora')).toBeInTheDocument()
 })
+
+test('digitar marca alterações não salvas e salvar limpa', async () => {
+  const { haAlteracoes } = await import('../estado/saida')
+  respostas([200, { id: 3 }])
+  render(EditorMarkdown, { uid: 'ab', documento: doc, onsalvo: vi.fn(), oncancelar: vi.fn() })
+  expect(haAlteracoes()).toBe(false)
+  await userEvent.type(screen.getByRole('textbox', { name: 'Texto do documento' }), ' novo')
+  expect(haAlteracoes()).toBe(true)
+  await userEvent.click(screen.getByRole('button', { name: 'Salvar' }))
+  expect(haAlteracoes()).toBe(false)
+})

@@ -34,13 +34,16 @@ export function marcar(questaoId: number, marca: Marca): Promise<void> {
   mostrar(questaoId, marca)
   const uid = estadoMateria.uid
   const anterior = filas.get(questaoId) ?? Promise.resolve()
-  const proxima = anterior.then(async () => {
+  // Só a última requisição da fila decide o que a tela mostra; as do meio só atualizam a "última gravada"
+  const ehUltima = () => filas.get(questaoId) === proxima
+  const proxima: Promise<void> = anterior.then(async () => {
     try {
       const r = await requisitar<Marcado>('PUT', `/api/materias/${uid}/marcacoes/${questaoId}`, { estado: marca })
       confirmadas.set(questaoId, marca)
       if (estadoMateria.painel) estadoMateria.painel.placar = r.placar
+      if (ehUltima()) mostrar(questaoId, marca)
     } catch (e) {
-      mostrar(questaoId, confirmadas.get(questaoId) ?? null)
+      if (ehUltima()) mostrar(questaoId, confirmadas.get(questaoId) ?? null)
       erro(e)
     }
   })

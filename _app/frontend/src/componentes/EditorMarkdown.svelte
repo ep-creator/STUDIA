@@ -2,6 +2,7 @@
   import { ErroApi, requisitar } from '../api/cliente'
   import type { DocumentoComCorpo } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
+  import { marcarAlteracoes } from '../estado/saida'
   import Markdown from './Markdown.svelte'
 
   let { uid, documento, onsalvo, oncancelar }: {
@@ -17,6 +18,10 @@
   let conflito = $state(false)
   let versaoAtual = $state<DocumentoComCorpo | null>(null)
 
+  // Texto diferente do aberto conta como não salvo (trocar de tela pergunta antes); ao sair do editor, deixa de contar
+  $effect(() => marcarAlteracoes('editor', corpo !== documento.corpo))
+  $effect(() => () => marcarAlteracoes('editor', false))
+
   const nomeArquivo = $derived(documento.caminho.split('/').pop() ?? `${documento.id}.md`)
 
   async function salvar(sobrescrever = false) {
@@ -27,6 +32,7 @@
         unidade_id: documento.unidade_id, secao_id: documento.secao_id, questao_id: documento.questao_id,
         versao_esperada: sobrescrever ? null : (versaoAtual?.versao ?? documento.versao),
       })
+      marcarAlteracoes('editor', false)
       onsalvo()
     } catch (e) {
       if (e instanceof ErroApi && e.status === 409) conflito = true

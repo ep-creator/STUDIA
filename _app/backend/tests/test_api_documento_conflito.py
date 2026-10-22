@@ -49,3 +49,15 @@ def test_salvar_com_versao_atual_funciona(cliente, uid):
 def test_salvar_sem_versao_continua_como_antes(cliente, uid):
     _abrir(cliente, uid)
     assert cliente.put(f"/api/materias/{uid}/documentos", json={**DOC, "corpo": "v2"}).status_code == 200
+
+
+def test_criar_com_nome_que_ja_existe_da_conflito_e_nao_apaga(cliente, uid):
+    aberto = _abrir(cliente, uid)  # "a.md" com "v1"
+    r = cliente.put(f"/api/materias/{uid}/documentos", json={**DOC, "corpo": "", "versao_esperada": ""})
+    assert r.status_code == 409 and "existe um documento" in r.json()["erro"]
+    assert cliente.get(f"/api/materias/{uid}/documentos/{aberto['id']}").json()["corpo"].strip() == "v1"
+
+
+def test_criar_com_nome_livre_funciona(cliente, uid):
+    r = cliente.put(f"/api/materias/{uid}/documentos", json={**DOC, "nome_arquivo": "novo.md", "versao_esperada": ""})
+    assert r.status_code == 200

@@ -15,14 +15,25 @@ async function motorResponde(): Promise<boolean> {
   }
 }
 
+const aoVoltar = new Set<() => void>()
+
+/** Avisa quando o motor volta depois de cair (para recarregar o que falhou enquanto estava fora). */
+export function aoReconectar(f: () => void): () => void {
+  aoVoltar.add(f)
+  return () => aoVoltar.delete(f)
+}
+
 /** Testa o motor e, se estiver desligado, repete até ele voltar. Chamadas simultâneas compartilham a mesma espera. */
 export function verificarMotor(): Promise<void> {
   verificando ??= (async () => {
+    let caiu = false
     while (!(await motorResponde())) {
+      caiu = true
       conexao.motorLigado = false
       await new Promise((r) => setTimeout(r, INTERVALO_RECONEXAO_MS))
     }
     conexao.motorLigado = true
+    if (caiu) aoVoltar.forEach((f) => f())
   })().finally(() => { verificando = null })
   return verificando
 }

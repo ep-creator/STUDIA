@@ -13,6 +13,7 @@
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { recarregar } from '../estado/materia.svelte'
+  import { EdicaoProposta } from '../estado/revisao'
 
   let { painel }: { painel: Painel } = $props()
 
@@ -30,30 +31,41 @@
     return [...new Set([...ns, maior + 1])].sort((a, b) => a - b)
   })
 
+  let edicao: EdicaoProposta<Record<string, unknown>> | null = null
+
+  function abrir(r: ImportacaoSaida) {
+    imp = r
+    const id = r.id
+    // Edições em fila: a tela muda na hora e cada PUT leva todas as mudanças feitas até ali
+    edicao = new EdicaoProposta(r.proposta, async (proposta) => {
+      const salvo = await requisitar<ImportacaoSaida>('PUT', `${base}/${id}`, proposta)
+      if (imp?.id === id) imp = { ...salvo, proposta: edicao!.proposta }   // mantém o que já foi editado depois
+      versao++
+    }, (e) => {
+      erro(e)
+      requisitar<ImportacaoSaida>('GET', `${base}/${id}`).then((atual) => { if (selecionada === id) abrir(atual) }, erro)
+    })
+  }
+
   $effect(() => {
     const id = selecionada
     imp = null
+    edicao = null
     if (id === null) return
-    requisitar<ImportacaoSaida>('GET', `${base}/${id}`).then((r) => { if (selecionada === id) imp = r }, erro)
+    requisitar<ImportacaoSaida>('GET', `${base}/${id}`).then((r) => { if (selecionada === id) abrir(r) }, erro)
   })
 
-  /** Edita uma cópia da proposta e grava a proposta inteira; o motor guarda as decisões da revisão. */
-  async function alterar<T>(mudar: (p: T) => void) {
-    if (!imp) return
-    const copia = structuredClone($state.snapshot(imp.proposta)) as T
-    mudar(copia)
-    try {
-      imp = await requisitar<ImportacaoSaida>('PUT', `${base}/${imp.id}`, copia)
-      versao++
-    } catch (e) {
-      erro(e)
-    }
+  /** Edita a proposta (o motor guarda as decisões da revisão). */
+  function alterar<T>(mudar: (p: T) => void) {
+    if (!imp || !edicao) return
+    void edicao.alterar(mudar as unknown as (p: Record<string, unknown>) => void)
+    imp = { ...imp, proposta: edicao.proposta }
   }
 
   async function trocarTipo(tipo: string) {
     if (!imp) return
     try {
-      imp = await requisitar<ImportacaoSaida>('POST', `${base}/${imp.id}/tipo`, { tipo })
+      abrir(await requisitar<ImportacaoSaida>('POST', `${base}/${imp.id}/tipo`, { tipo }))
       versao++
     } catch (e) {
       erro(e)
@@ -72,6 +84,7 @@
     if (!imp) return
     const atual = imp
     try {
+      await edicao?.esperar()   // a última edição da revisão precisa chegar ao motor antes de confirmar
       const r = await requisitar<ResumoImportacao>('POST', `${base}/${atual.id}/confirmar`)
       avisar(resumir(r), { rotulo: 'Desfazer', executar: () => void desfazer().then(() => versao++) })
       selecionada = null

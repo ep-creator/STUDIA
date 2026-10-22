@@ -17,3 +17,23 @@ test('motor volta depois de desligado', async () => {
   expect(fetchFalso).toHaveBeenCalledTimes(2)
   vi.useRealTimers()
 })
+
+test('quem se inscreveu é avisado quando o motor volta (e só então)', async () => {
+  vi.useFakeTimers()
+  const { aoReconectar } = await import('./conexao.svelte')
+  const voltou = vi.fn()
+  const sair = aoReconectar(voltou)
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('[]', { status: 200 })))
+  await verificarMotor()
+  expect(voltou).not.toHaveBeenCalled()   // estava ligado o tempo todo
+
+  vi.stubGlobal('fetch', vi.fn()
+    .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    .mockResolvedValue(new Response('[]', { status: 200 })))
+  const verificando = verificarMotor()
+  await vi.advanceTimersByTimeAsync(3000)
+  await verificando
+  expect(voltou).toHaveBeenCalledTimes(1)
+  sair()
+  vi.useRealTimers()
+})

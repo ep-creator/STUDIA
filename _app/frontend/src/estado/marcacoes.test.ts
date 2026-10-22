@@ -45,3 +45,23 @@ test('cliques rápidos terminam na última marca e na ordem', async () => {
   expect(ordem).toEqual(['ok', 'err', 'dub'])
   expect(marcaDe(7)).toBe('dub')
 })
+
+test('1º envio falha e o 2º passa: a tela fica com a marca que foi gravada', async () => {
+  let chamada = 0
+  vi.stubGlobal('fetch', vi.fn(async () => {
+    chamada++
+    await new Promise((r) => setTimeout(r, 5))
+    return chamada === 1 ? json(500, { erro: 'falhou' }) : json(200, { placar: placarVazio })
+  }))
+  void marcar(7, 'ok')
+  await marcar(7, 'err')
+  expect(marcaDe(7)).toBe('err')
+})
+
+test('falha no último envio volta para a última marca gravada', async () => {
+  let chamada = 0
+  vi.stubGlobal('fetch', vi.fn(async () => (++chamada === 1 ? json(200, { placar: placarVazio }) : json(500, { erro: 'falhou' }))))
+  void marcar(8, 'ok')
+  await marcar(8, 'err')
+  expect(marcaDe(8)).toBe('ok')
+})
