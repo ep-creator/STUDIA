@@ -40,7 +40,7 @@
         <select
           aria-label={`Unidade da lista ${item.codigo}`}
           value={item.unidade.numero === null ? '' : String(item.unidade.numero)}
-          onchange={(e) => alterar((p) => (p.listas[i].unidade.numero = e.currentTarget.value ? Number(e.currentTarget.value) : null))}
+          onchange={(e) => alterar((p) => { const n = e.currentTarget.value; p.listas[i].unidade.numero = n ? Number(n) : null; p.listas[i].unidade.revisar = !n })}
         >
           <option value="">escolha…</option>
           {#each unidades as n (n)}<option value={String(n)}>{n}ª unidade</option>{/each}
@@ -53,7 +53,7 @@
         <span class="rotulo">Tópicos ligados</span>
         {#each item.topicos as t, j (t.topico_id)}
           <label class="vinculo">
-            <input type="checkbox" checked={t.aceito} onchange={(e) => alterar((p) => (p.listas[i].topicos[j].aceito = e.currentTarget.checked))} />
+            <input type="checkbox" checked={t.aceito} onchange={(e) => alterar((p) => Object.assign(p.listas[i].topicos[j], { aceito: e.currentTarget.checked, revisar: false }))} />
             {t.titulo} <SeloConfianca item={t} />
           </label>
         {/each}

@@ -1,0 +1,100 @@
+// Fluxos principais contra o motor real (PDFs reais de Cálculo 2). Rodam em série sobre a mesma matéria.
+import { expect, test, type Page } from '@playwright/test'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const DISCIPLINA = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'Calculo 2', 'disciplina')
+const PROGRAMA = join(DISCIPLINA, 'Programa.pdf')
+const CALENDARIO = join(DISCIPLINA, 'Calendario.pdf')
+const LISTA1 = join(DISCIPLINA, 'listas-2026-1', 'Lista1_2026-1.pdf')
+const LISTA3 = join(DISCIPLINA, 'listas-2026-1', 'Lista3_2026-1.pdf')
+
+test.describe.configure({ mode: 'serial' })
+test.skip(!existsSync(PROGRAMA), 'PDFs reais de Cálculo 2 ausentes')
+
+let inicioMateria = ''
+
+async function abrirArea(page: Page, unidade: string, area: string) {
+  await page.goto(inicioMateria)
+  await page.getByRole('navigation', { name: 'Unidades' }).getByRole('link', { name: unidade, exact: true }).click()
+  await page.getByRole('navigation', { name: 'Áreas da matéria' }).getByRole('link', { name: area, exact: true }).click()
+}
+
+test('matéria nova só com cliques', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: '＋ Nova matéria' }).click()
+  await page.getByLabel('Nome').fill('Cálculo E2E')
+  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  await expect(page).toHaveURL(/#\/m\/[^/]+\/importar$/)
+  inicioMateria = page.url().replace(/\/importar$/, '')
+
+  await page.setInputFiles('input[type=file]', [PROGRAMA, CALENDARIO, LISTA1, LISTA3])
+  const fila = page.getByRole('list', { name: 'Arquivos esperando revisão' })
+  await expect(fila.getByRole('listitem')).toHaveCount(4, { timeout: 60_000 })
+
+  // Revisão: a L1 vai para a 1ª unidade (escolha do usuário)
+  await fila.getByText('Lista1_2026-1.pdf').click()
+  await page.getByLabel('Unidade da lista L1').selectOption('1')
+
+  // Primeiro o que não tem pendência (o programa); com os tópicos no banco, o motor recalcula a unidade da L3
+  await page.getByRole('button', { name: /Confirmar todos sem pendências/ }).click()
+  await expect(page.getByRole('status').getByText(/confirmado/)).toBeVisible()
+  await expect(fila.getByRole('listitem')).toHaveCount(3)
+
+  // Depois o resto, um por um
+  for (let restantes = await fila.getByRole('listitem').count(); restantes > 0; restantes--) {
+    await fila.getByRole('button').first().click()
+    await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
+    await expect(fila.getByRole('listitem')).toHaveCount(restantes - 1)   // espera a fila andar
+  }
+  await expect(page.getByText('Nenhum arquivo esperando revisão.')).toBeVisible()
+
+  await page.getByRole('link', { name: 'Painel', exact: true }).click()
+  await expect(page.getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
+  await expect(page.getByText('Tópicos vistos')).toBeVisible()
+})
+
+test('marcar e desfazer', async ({ page }) => {
+  await abrirArea(page, '1ª', 'Listas')
+  const q1 = page.getByRole('button', { name: /^Questão L1 #1( |$)/ })
+  await q1.click()
+  await q1.click()   // vazio → ✓ → ✗
+  await expect(page.getByRole('button', { name: 'Questão L1 #1 (✗)' })).toBeVisible()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('3')
+  await expect(page.getByRole('button', { name: 'Questão L1 #2 (?)' })).toBeVisible()
+  await expect(page.getByText('0 ✓ · 1 ✗ · 1 ? · 6 por fazer')).toBeVisible()
+
+  await page.keyboard.press('Control+z')
+  await expect(page.getByRole('status').getByText(/^Desfeito: Marcar questão L1 #2/)).toBeVisible()
+  await expect(page.getByText('0 ✓ · 1 ✗ · 0 ? · 7 por fazer')).toBeVisible()
+})
+
+test('editar resumo e ver a diferença', async ({ page }) => {
+  await abrirArea(page, '1ª', 'Documentos')
+  await page.getByRole('button', { name: '＋ Novo documento' }).click()
+  await page.getByLabel('Título do documento').fill('Resumo E2E')
+  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  await page.getByRole('textbox', { name: 'Texto do documento' }).fill('Primeira linha com $x^2$')
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+  await expect(page.getByRole('status').getByText('Documento salvo')).toBeVisible()
+  await expect(page.locator('.leitor .katex')).toHaveCount(1)
+
+  await page.getByRole('link', { name: 'Histórico', exact: true }).click()
+  await page.getByRole('button', { name: 'Ver diferença' }).first().click()
+  await expect(page.getByText('+ Primeira linha com $x^2$')).toBeVisible()
+})
+
+test('quatro temas persistem', async ({ page }) => {
+  await page.goto(inicioMateria)
+  for (const [identidade, modo, esperado] of [
+    ['padrao', 'claro', 'padrao-claro'], ['padrao', 'escuro', 'padrao-escuro'],
+    ['editorial', 'claro', 'editorial-claro'], ['editorial', 'escuro', 'editorial-escuro'],
+  ]) {
+    await page.getByLabel('Identidade visual').selectOption(identidade)
+    await page.getByLabel('Claro ou escuro').selectOption(modo)
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-tema', esperado)
+  }
+})

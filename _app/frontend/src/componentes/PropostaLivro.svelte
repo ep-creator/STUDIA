@@ -41,7 +41,7 @@
   <div class="vinculos">
     {#each proposta.topicos as t, i (`${t.topico_id}-${t.codigo}`)}
       <label>
-        <input type="checkbox" checked={t.aceito} onchange={(e) => alterar((p) => (p.topicos[i].aceito = e.currentTarget.checked))} />
+        <input type="checkbox" checked={t.aceito} onchange={(e) => alterar((p) => Object.assign(p.topicos[i], { aceito: e.currentTarget.checked, revisar: false }))} />
         {t.titulo} → {t.codigo} <SeloConfianca item={t} />
       </label>
     {/each}

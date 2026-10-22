@@ -294,3 +294,16 @@ def test_topico_repetido_entre_conteudos_vira_um_vinculo(con, materia, settings)
     lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
     ids = [t["topico_id"] for t in lista.proposta["listas"][0]["topicos"]]
     assert ids and len(ids) == len(set(ids))
+
+
+def test_vinculo_revisado_nao_volta_a_pedir_revisao(con, materia, settings):
+    pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
+    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista1_2026-1.pdf")
+    proposta = lista.proposta
+    for t in proposta["listas"][0]["topicos"]:
+        t["revisar"] = False  # o usuário conferiu os vínculos na revisão
+    proposta["listas"][0]["unidade"].update(numero=1, revisar=False)
+    pipeline.editar(con, lista.id, proposta)
+    relida = pipeline.atualizar_derivados(con, importacoes.obter(con, lista.id), settings).proposta["listas"][0]
+    assert relida["topicos"] and not any(t["revisar"] for t in relida["topicos"])
+    assert relida["unidade"]["revisar"] is False

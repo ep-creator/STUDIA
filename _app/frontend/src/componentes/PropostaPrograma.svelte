@@ -24,7 +24,7 @@
               type="checkbox"
               checked={s.aceito}
               aria-label={`Ligar ${t.titulo} à seção ${s.codigo}`}
-              onchange={(e) => alterar((p) => (noTopico(p, [...caminho, k]).secoes[j].aceito = e.currentTarget.checked))}
+              onchange={(e) => alterar((p) => Object.assign(noTopico(p, [...caminho, k]).secoes[j], { aceito: e.currentTarget.checked, revisar: false }))}
             />
             {s.codigo} <SeloConfianca item={s} />
           </label>
