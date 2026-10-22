@@ -271,10 +271,10 @@ revisão com destaques de confiança); histórico; agente (porta do painel atual
 | Fase | Entrega | Critério de pronto |
 |---|---|---|
 | 1. Fundação do backend | `_app/backend` com config, segurança, workspace, SQLite+migrações, repos, histórico, API CRUD básica, testes | `pytest` verde; servidor sobe em porta própria ao lado do legado |
-| 2. Migração de Cálculo 2 | `estudos.migracao`: legado → `materia.db` + `fontes/` (hardlink) + `conteudo/` com frontmatter, por regras explícitas | `relatorio.bate()` e teste com os dados reais verdes; legado intacto (o congelamento em `legado/` passa para a Fase 5) |
+| 2. Migração de Cálculo 2 | `estudos.migracao`: legado → `materia.db` + `fontes/` (hardlink) + `conteudo/` com frontmatter, por regras explícitas | `relatorio.bate()` e teste com os dados reais verdes; legado intacto (o congelamento em `legado/` passa para a Fase 7) |
 | 3. Importação por regras | `pdf.py`, classificador, parsers, vínculo, pipeline, rotas de revisão | os PDFs reais de Cálculo 2 viram propostas corretas (testes com fixtures reais) |
 | 4. RAG novo | indexador incremental com remoção, livros por seção, busca filtrada | buscas de referência retornam as seções esperadas; reindexação idempotente |
-| 5. Frontend novo | Svelte com todas as telas e KaTeX | paridade de uso diário com o legado; criar matéria nova só com cliques |
+| 5. Frontend novo | Svelte com todas as telas e KaTeX, conforme `2026-10-22-fase-5-frontend-design.md` (o congelamento do legado em `legado/` passa para a Fase 7, pois o agente antigo segue em uso até a Fase 6) | paridade de uso diário com o legado; criar matéria nova só com cliques |
 | 6. Agente adaptado e inteligência | tools do agente sobre repos/rag; preços/câmbio em config; reestruturação da inteligência (embeddings, busca híbrida, segunda opinião do Gemini) conforme `2026-10-22-reestruturacao-inteligencia.md` | os fluxos tutor/resumidor/estrategista funcionam sobre o novo banco; trocas de técnica decididas por gabarito |
 | 7. Limpeza | remover `legado/`, atualizar README e docs | nenhum código morto; docs descrevem o pipeline real |
 

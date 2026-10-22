@@ -134,6 +134,26 @@ Regras quando a confiança é alta; embeddings para desempatar e para a busca; G
 - **Vínculos:** `estudos/importacao/vinculo.py` passa a combinar as duas notas; limiares continuam no `config.toml`.
 - **Config:** novas chaves para o modelo (nome, ligado/desligado), para o usuário poder desligar os embeddings e voltar às
   regras puras.
+- **Provedor de embeddings trocável:** o resto do sistema só pede "o vetor deste texto". Quem gera fica atrás de uma
+  interface única, com três opções:
+  - modelo local no notebook;
+  - o mesmo modelo num servidor;
+  - uma API, como a de embeddings do Gemini.
+
+  Trocar de provedor (ou de modelo) muda a versão do índice, que é refeito.
+
+### 5.1 Se o app for para um servidor (possibilidade futura, não planejada)
+
+- **Modelo no servidor:** um modelo pequeno (`e5-small`) roda só no processador. Um servidor simples (2–4 núcleos,
+  2–4 GB de RAM) basta. A pergunta vira vetor em dezenas de ms, e a indexação vai para a fila de tarefas em segundo plano.
+- **Embeddings por API:**
+  - a favor: nada para hospedar;
+  - contra: custo por volume de texto (indexar livros pesa), dependência de rede em cada busca e reprocessar tudo ao
+    trocar de modelo.
+- **Onde ficam os vetores:**
+  - no SQLite do índice enquanto for local;
+  - com PostgreSQL, na extensão **pgvector**. A busca híbrida continua possível com a busca textual do próprio
+    PostgreSQL.
 
 ## 6. Ligação com o agente (Fase 6)
 
