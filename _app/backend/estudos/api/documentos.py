@@ -5,7 +5,8 @@ from fastapi.responses import FileResponse
 
 from estudos.api.deps import Contexto, contexto_dep, materia_dep
 from estudos.api.esquemas import DocumentoSalvar
-from estudos.erros import NaoEncontrado
+from estudos.api.respostas import Criado, Documento, DocumentoComCorpo, Ok
+from estudos.erros import Conflito, NaoEncontrado
 from estudos.repos import documentos
 from estudos.seguranca import caminho_seguro
 from estudos.workspace import MateriaRef
@@ -15,24 +16,35 @@ _PREFIXO = "/api/materias/{materia_uid}/documentos"
 
 
 @router.get(_PREFIXO)
-def listar(tipo: str | None = None, unidade_id: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[dict]:
+def listar(tipo: str | None = None, unidade_id: int | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[Documento]:
     return [asdict(d) for d in documentos.listar(ctx.con, tipo, unidade_id)]
 
 
 @router.get(_PREFIXO + "/{documento_id}")
-def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def obter(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> DocumentoComCorpo:
     documento = documentos.obter(ctx.con, documento_id)
-    return {**asdict(documento), "corpo": documentos.ler_corpo(ctx.materia.pasta, documento)}
+    return {
+        **asdict(documento), "corpo": documentos.ler_corpo(ctx.materia.pasta, documento),
+        "versao": documentos.versao(ctx.materia.pasta, documento.caminho),
+    }
 
 
 @router.put(_PREFIXO)
-def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> Criado:
+    dados = corpo.model_dump(exclude={"versao_esperada"})
+    if corpo.versao_esperada is not None:
+        caminho = documentos.caminho_documento(corpo.tipo, corpo.nome_arquivo)
+        atual = documentos.versao(ctx.materia.pasta, caminho)
+        if corpo.versao_esperada == "" and atual is not None:  # "" = criar: o arquivo ainda não pode existir
+            raise Conflito(f"Já existe um documento em {caminho}; escolha outro nome.")
+        if corpo.versao_esperada and atual is not None and atual != corpo.versao_esperada:
+            raise Conflito("O documento mudou desde que foi aberto; recarregue para ver a versão atual.")
     with ctx.acao(f"Salvar {corpo.tipo} '{corpo.titulo}'") as op:
-        return {"id": documentos.salvar(op, **corpo.model_dump())}
+        return {"id": documentos.salvar(op, **dados)}
 
 
 @router.delete(_PREFIXO + "/{documento_id}")
-def remover(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def remover(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> Ok:
     titulo = documentos.obter(ctx.con, documento_id).titulo
     with ctx.acao(f"Remover documento '{titulo}'") as op:
         documentos.remover(op, documento_id)

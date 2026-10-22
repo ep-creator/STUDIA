@@ -18,6 +18,19 @@ if not exist ".venv\Scripts\python.exe" (
   )
 )
 
+rem Interface: compila so quando o codigo mudou. Sem Node.js o motor abre e mostra como compilar.
+where node >nul 2>nul
+if errorlevel 1 (
+  echo.
+  echo Aviso: Node.js nao encontrado. Instale em https://nodejs.org para compilar a interface.
+  echo.
+) else (
+  pushd "%~dp0frontend"
+  rem instala dependencias quando o package-lock muda e compila quando o codigo muda
+  call node scripts\build-se-preciso.mjs || echo Falha ao preparar a interface.
+  popd
+)
+
 ".venv\Scripts\python.exe" -m estudos %*
 
 echo.

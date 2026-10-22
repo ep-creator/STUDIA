@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from estudos.api.deps import Contexto, contexto_dep
 from estudos.api.esquemas import TopicoCriar, TopicoEditar
+from estudos.api.respostas import Criado, Ok
 from estudos.erros import NaoEncontrado
 from estudos.repos import _base, topicos
 
@@ -16,13 +17,13 @@ def _titulo(ctx: Contexto, topico_id: int) -> str:
 
 
 @router.post("")
-def criar(corpo: TopicoCriar, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def criar(corpo: TopicoCriar, ctx: Contexto = Depends(contexto_dep)) -> Criado:
     with ctx.acao(f"Adicionar tópico '{corpo.titulo}'") as op:
         return {"id": topicos.criar(op, **corpo.model_dump())}
 
 
 @router.patch("/{topico_id}")
-def editar(topico_id: int, corpo: TopicoEditar, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def editar(topico_id: int, corpo: TopicoEditar, ctx: Contexto = Depends(contexto_dep)) -> Ok:
     campos = corpo.campos()
     titulo = _titulo(ctx, topico_id)
     descricao = (
@@ -34,7 +35,7 @@ def editar(topico_id: int, corpo: TopicoEditar, ctx: Contexto = Depends(contexto
 
 
 @router.delete("/{topico_id}")
-def remover(topico_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def remover(topico_id: int, ctx: Contexto = Depends(contexto_dep)) -> Ok:
     with ctx.acao(f"Remover tópico '{_titulo(ctx, topico_id)}'") as op:
         topicos.remover(op, topico_id)
     return {"ok": True}

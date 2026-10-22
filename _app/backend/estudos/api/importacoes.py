@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from estudos.api.deps import Contexto, contexto_dep
+from estudos.api.respostas import ImportacaoSaida, Ok, ResumoImportacao
 from estudos.erros import ArquivoGrande, DadoInvalido
 from estudos.importacao import pipeline
 from estudos.modelos import Importacao
@@ -29,7 +30,7 @@ def _saida(imp: Importacao) -> dict:
     return {**asdict(imp), "pendencias": pipeline.contar_pendencias(imp.proposta)}
 
 
-@router.post("")
+@router.post("", response_model=ImportacaoSaida)
 def enviar(arquivo: UploadFile = File(...), ctx: Contexto = Depends(contexto_dep)) -> JSONResponse:
     # Rota síncrona de propósito: ler um livro leva segundos e o FastAPI a executa numa thread, sem travar o servidor
     limite = ctx.settings.limite_upload_mb * _BLOCO
@@ -55,17 +56,17 @@ def enviar(arquivo: UploadFile = File(...), ctx: Contexto = Depends(contexto_dep
 
 
 @router.get("")
-def listar(estado: str | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[dict]:
+def listar(estado: str | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[ImportacaoSaida]:
     return [_saida(pipeline.para_leitura(ctx.con, i, ctx.settings)) for i in importacoes.listar(ctx.con, estado)]
 
 
 @router.get("/{importacao_id}")
-def obter(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def obter(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> ImportacaoSaida:
     return _saida(pipeline.para_leitura(ctx.con, importacoes.obter(ctx.con, importacao_id), ctx.settings))
 
 
 @router.put("/{importacao_id}")
-def editar(importacao_id: int, proposta: dict, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def editar(importacao_id: int, proposta: dict, ctx: Contexto = Depends(contexto_dep)) -> ImportacaoSaida:
     imp = importacoes.obter(ctx.con, importacao_id)
     faltando = [c for c in _ESTRUTURA.get(imp.tipo, ()) if c not in proposta]
     if faltando:
@@ -74,16 +75,16 @@ def editar(importacao_id: int, proposta: dict, ctx: Contexto = Depends(contexto_
 
 
 @router.post("/{importacao_id}/tipo")
-def trocar_tipo(importacao_id: int, corpo: TipoEntrada, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def trocar_tipo(importacao_id: int, corpo: TipoEntrada, ctx: Contexto = Depends(contexto_dep)) -> ImportacaoSaida:
     return _saida(pipeline.reprocessar(ctx.con, ctx.materia.pasta, importacao_id, corpo.tipo, ctx.settings))
 
 
 @router.post("/{importacao_id}/confirmar")
-def confirmar(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def confirmar(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> ResumoImportacao:
     return pipeline.confirmar(ctx.con, ctx.materia.pasta, importacao_id, ctx.settings)
 
 
 @router.post("/{importacao_id}/descartar")
-def descartar(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> dict:
+def descartar(importacao_id: int, ctx: Contexto = Depends(contexto_dep)) -> Ok:
     pipeline.descartar(ctx.con, importacao_id)
     return {"ok": True}
