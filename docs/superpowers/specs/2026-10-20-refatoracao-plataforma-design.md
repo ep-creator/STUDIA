@@ -275,7 +275,7 @@ revisão com destaques de confiança); histórico; agente (porta do painel atual
 | 3. Importação por regras | `pdf.py`, classificador, parsers, vínculo, pipeline, rotas de revisão | os PDFs reais de Cálculo 2 viram propostas corretas (testes com fixtures reais) |
 | 4. RAG novo | indexador incremental com remoção, livros por seção, busca filtrada | buscas de referência retornam as seções esperadas; reindexação idempotente |
 | 5. Frontend novo | Svelte com todas as telas e KaTeX | paridade de uso diário com o legado; criar matéria nova só com cliques |
-| 6. Agente adaptado | tools do agente sobre repos/rag; preços/câmbio em config | os fluxos tutor/resumidor/estrategista funcionam sobre o novo banco |
+| 6. Agente adaptado e inteligência | tools do agente sobre repos/rag; preços/câmbio em config; reestruturação da inteligência (embeddings, busca híbrida, segunda opinião do Gemini) conforme `2026-10-22-reestruturacao-inteligencia.md` | os fluxos tutor/resumidor/estrategista funcionam sobre o novo banco; trocas de técnica decididas por gabarito |
 | 7. Limpeza | remover `legado/`, atualizar README e docs | nenhum código morto; docs descrevem o pipeline real |
 
 Fases 3 e 4 dependem de 1; 2 depende de 1 (e usa o parser de livro da 3 opcionalmente — a migração lê o sumário já
