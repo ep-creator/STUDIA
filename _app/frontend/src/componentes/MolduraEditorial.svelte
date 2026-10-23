@@ -2,10 +2,11 @@
   import type { Snippet } from 'svelte'
 
   // Moldura fina com rótulos nas bordas; só aparece nos temas Editorial (nos demais é um contêiner neutro).
-  let { topo, base, children }: { topo: string; base: string; children: Snippet } = $props()
+  // ajustada: ocupa a altura que sobrar na tela (para telas que rolam por dentro, como Documentos)
+  let { topo, base, ajustada = false, children }: { topo: string; base: string; ajustada?: boolean; children: Snippet } = $props()
 </script>
 
-<div class="moldura">
+<div class="moldura" class:ajustada>
   <span class="etiqueta topo">{topo}</span>
   {@render children()}
   <span class="etiqueta base">{base}</span>
@@ -14,6 +15,8 @@
 <style>
   .moldura { position: relative; }
   .etiqueta { display: none; }
+  .ajustada { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  @media print { .ajustada { display: block; } }
   :global(:root[data-tema^='editorial']) .moldura { border: 1px solid var(--borda); padding: 2rem 1.75rem; margin: 0.75rem 0; }
   :global(:root[data-tema^='editorial']) .etiqueta {
     display: block; position: absolute; left: 50%; transform: translateX(-50%); background: var(--fundo);

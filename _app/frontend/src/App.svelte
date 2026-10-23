@@ -97,13 +97,14 @@
 {:else}
   <div class="app">
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />
-    <main>
+    <main class:ajustada={rota.tela === 'materia' && rota.area === 'documentos'}>
       {#if painel}
         {#if rota.tela === 'materia'}
           <Topo {painel} area={rota.area}>
             {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
           </Topo>
           <MolduraEditorial
+            ajustada={rota.area === 'documentos'}
             topo={`${painel.materia.nome}${painel.materia.periodo ? ` · ${painel.materia.periodo}` : ''}`}
             base={painel.unidade ? nomeUnidade(painel.unidade) : 'sem unidades'}
           >
@@ -150,6 +151,9 @@
 <style>
   .app { display: flex; min-height: 100vh; }
   main { flex: 1; min-width: 0; padding: 0.5rem 2rem 3rem; }
+  /* Documentos ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
+  main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
+  @media print { main.ajustada { height: auto; display: block; } }
   .ia { width: 14rem; flex: none; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
   .ia.fechada { width: auto; }
 </style>

@@ -48,7 +48,7 @@
 </nav>
 
 <style>
-  .lista { display: grid; gap: 0.2rem; align-content: start; max-height: 80vh; overflow: auto; }
+  .lista { display: grid; gap: 0.2rem; align-content: start; }
   .rotulo { margin-top: 0.6rem; }
   ul { list-style: none; margin: 0; padding: 0; }
   button { background: none; border: 0; text-align: left; width: 100%; padding: 0.2rem 0.4rem; border-radius: 6px; cursor: pointer; }

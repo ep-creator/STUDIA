@@ -23,6 +23,13 @@
   let criando = $state(false)
   let novoTitulo = $state('')
   let novoTipo = $state('resumo')
+  let leitor = $state<HTMLElement>()
+
+  // abrir outro documento começa do topo dele (o texto rola dentro do leitor, não na página)
+  $effect(() => {
+    void selecao
+    leitor?.scrollTo?.({ top: 0 })
+  })
 
   $effect(() => {
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
@@ -82,7 +89,7 @@
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={selecionar} />
   </aside>
 
-  <section class="leitor">
+  <section class="leitor" bind:this={leitor}>
     {#if documento}
       <header>
         <h2>{documento.titulo}</h2>
@@ -105,8 +112,11 @@
 </div>
 
 <style>
-  .documentos { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-  aside { display: grid; gap: 0.5rem; position: sticky; top: 1rem; }
+  /* As duas colunas rolam por dentro: a lista não é cortada e o texto não arrasta a página junto */
+  .documentos { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; }
+  aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
+  .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
+  @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
   .novo { display: grid; gap: 0.4rem; }
   .novo input { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
