@@ -20,8 +20,8 @@
   let { alvo, onfim }: { alvo: () => HTMLElement | null | undefined; onfim: () => void } = $props()
 
   const PALAVRA = 'STUDIA'
-  // ritmo de quem digita: nem todas as teclas levam o mesmo tempo
-  const INTERVALOS = [170, 120, 150, 110, 160, 130]
+  // ritmo de quem digita com calma: teclas desiguais e uma hesitação no meio da palavra (antes do D)
+  const INTERVALOS = [360, 250, 300, 470, 240, 330]
 
   let raiz: HTMLDivElement
   let texto: HTMLSpanElement
@@ -59,28 +59,27 @@
     const depois = (ms: number, f: () => void) => esperas.push(setTimeout(f, ms))
     // espera a fonte do título carregar, senão a palavra muda de fonte no meio da digitação
     void (document.fonts?.ready ?? Promise.resolve()).then(() => {
-      let t = 650 // o cursor pisca um pouco antes da primeira tecla
+      let t = 1050 // o cursor pisca um pouco antes da primeira tecla
       depois(t, () => (digitando = true))
       for (let i = 0; i < PALAVRA.length; i++) {
         t += INTERVALOS[i]
         depois(t, () => (digitadas = i + 1))
       }
-      depois(t + 120, () => (digitando = false))
-      depois(t + 900, () => (cursorFora = true))
-      depois(t + 1100, voar)
+      depois(t + 150, () => (digitando = false))
+      depois(t + 1150, () => (cursorFora = true))
+      depois(t + 1350, voar)
     })
     return () => esperas.forEach(clearTimeout)
   })
 </script>
 
-{#snippet cursor()}<span class="cursor" class:digitando class:fora={cursorFora}></span>{/snippet}
-
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="abertura" bind:this={raiz} onclick={terminar} aria-hidden="true">
   <div class="fundo" bind:this={fundo}></div>
   <div class="linha">
-    <span class="palavra" bind:this={texto}
-      >{#each PALAVRA as letra, i}{#if i === digitadas}{@render cursor()}{/if}<span class="letra" class:visivel={i < digitadas}>{letra}</span>{/each}{#if digitadas === PALAVRA.length}{@render cursor()}{/if}</span
+    <span class="palavra" class:digitando class:cursor-fora={cursorFora} bind:this={texto}
+      >{#each PALAVRA as letra, i}<span class="letra" class:visivel={i < digitadas} class:proxima={i === digitadas}>{letra}</span>{/each}<span
+        class="fim" class:proxima={digitadas === PALAVRA.length}></span></span
     >
   </div>
 </div>
@@ -97,17 +96,21 @@
   :global(:root[data-tema^='editorial']) .palavra { font-weight: 500; }
 
   /* A palavra inteira já ocupa o lugar (fica centrada desde o início); cada tecla só revela a sua letra */
-  .letra { display: inline-block; opacity: 0; }
-  .letra.visivel { opacity: 1; animation: tecla 160ms ease-out; }
+  .letra { display: inline-block; color: transparent; }
+  .letra { position: relative; }
+  .letra.visivel { color: inherit; animation: tecla 220ms ease-out; }
   @keyframes tecla { from { opacity: 0.2; transform: translateY(0.04em); } }
 
-  /* O cursor fica logo depois da última letra digitada: pisca parado, fica firme enquanto digita e some antes do voo */
-  .cursor { display: inline-block; position: relative; width: 0; height: 1em; vertical-align: top; }
-  .cursor::after {
-    content: ''; position: absolute; left: -0.06em; top: 0.02em; width: 0.08em; height: 0.96em;
-    background: var(--destaque); border-radius: 1px; animation: piscar 1s steps(1) infinite;
+  /* O cursor é um sublinhado no chão da próxima letra (ou logo depois da última): pisca parado,
+     fica firme enquanto digita e some antes do voo. O espaçamento entre letras fica de fora da largura. */
+  .fim { display: inline-block; position: relative; width: 0; height: 1em; vertical-align: top; }
+  .proxima::after {
+    content: ''; position: absolute; left: 0; right: 0.28em; bottom: 0.04em; height: 0.07em; opacity: 1;
+    background: var(--destaque); border-radius: 1px; animation: piscar 1.05s steps(1) infinite;
   }
-  .cursor.digitando::after { animation: none; }
-  .cursor.fora::after { opacity: 0; animation: none; transition: opacity 200ms ease; }
+  .letra.proxima::after { right: 0.28em; }
+  .fim.proxima::after { right: auto; width: 0.62em; }
+  .digitando .proxima::after { animation: none; }
+  .cursor-fora .proxima::after { opacity: 0; animation: none; transition: opacity 250ms ease; }
   @keyframes piscar { 50% { opacity: 0; } }
 </style>
