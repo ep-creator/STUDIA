@@ -118,3 +118,37 @@ export function ordenarPeloAssunto<D extends { titulo: string; unidade_id: numbe
     .sort((a, b) => grupo(a.d) - grupo(b.d) || posicao.get(a.d)! - posicao.get(b.d)! || a.i - b.i)
     .map(({ d }) => d)
 }
+
+type MarcaRevisao = 'err' | 'dub'
+
+/** Questões marcadas ✗ ou ?, agrupadas por lista (só as listas que têm alguma), na ordem das listas. */
+export function paraRevisar<L extends { questoes: { id: number }[] }>(
+  listas: L[],
+  marcacoes: Record<string, string>,
+): { lista: L; questoes: { questao: L['questoes'][number]; marca: MarcaRevisao }[] }[] {
+  return listas
+    .map((lista) => ({
+      lista,
+      questoes: lista.questoes
+        .filter((q) => marcacoes[String(q.id)] === 'err' || marcacoes[String(q.id)] === 'dub')
+        .map((questao) => ({ questao, marca: marcacoes[String(questao.id)] as MarcaRevisao })),
+    }))
+    .filter((g) => g.questoes.length)
+}
+
+export function desempenho(lista: { questoes: { id: number }[] }, marcacoes: Record<string, string>) {
+  const conta = (m: string) => lista.questoes.filter((q) => marcacoes[String(q.id)] === m).length
+  const ok = conta('ok'), err = conta('err'), dub = conta('dub'), total = lista.questoes.length
+  return { ok, err, dub, falta: total - ok - err - dub, total }
+}
+
+/** O documento (resumo) que mais se parece com o título do tópico, ou null se nenhum tiver palavra em comum. */
+export function documentoDoTopico<D extends { titulo: string }>(titulo: string, docs: D[]): D | null {
+  const minhas = palavrasChave(titulo)
+  let melhor: { doc: D; pontos: number } | null = null
+  for (const doc of docs) {
+    const pontos = [...palavrasChave(doc.titulo)].filter((p) => minhas.has(p)).length
+    if (pontos > 0 && (!melhor || pontos > melhor.pontos)) melhor = { doc, pontos }
+  }
+  return melhor?.doc ?? null
+}

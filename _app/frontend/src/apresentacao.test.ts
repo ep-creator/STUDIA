@@ -84,3 +84,30 @@ test('resumos seguem a ordem dos tópicos; sem tópico, ficam junto do vizinho d
   expect(ordenarPeloAssunto([d('Resolução 14.2-7'), d('Resolução 14.1-30'), d('Resolução 14.2-11')], [], 1).map((x) => x.titulo))
     .toEqual(['Resolução 14.1-30', 'Resolução 14.2-7', 'Resolução 14.2-11'])
 })
+
+test('para revisar: questões ✗ e ?, agrupadas por lista, na ordem das listas', async () => {
+  const { paraRevisar } = await import('./apresentacao')
+  const listas = [
+    { id: 1, codigo: '14.1', titulo: 'Funções', questoes: [{ id: 10, rotulo: '22' }, { id: 11, rotulo: '46' }, { id: 12, rotulo: '50' }] },
+    { id: 2, codigo: '14.2', titulo: 'Limites', questoes: [{ id: 20, rotulo: '12' }] },
+    { id: 3, codigo: '14.3', titulo: 'Derivadas', questoes: [{ id: 30, rotulo: '1' }] },
+  ]
+  const grupos = paraRevisar(listas, { '10': 'ok', '11': 'err', '12': 'dub', '20': 'err' })
+  expect(grupos.map((g) => [g.lista.codigo, g.questoes.map((x) => `${x.questao.rotulo}${x.marca}`)])).toEqual([
+    ['14.1', ['46err', '50dub']],
+    ['14.2', ['12err']],
+  ])
+})
+
+test('desempenho de uma lista conta acertos, erros, dúvidas e o que falta', async () => {
+  const { desempenho } = await import('./apresentacao')
+  expect(desempenho({ questoes: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] }, { '1': 'ok', '2': 'ok', '3': 'err' }))
+    .toEqual({ ok: 2, err: 1, dub: 0, falta: 1, total: 4 })
+})
+
+test('resumo do tópico: o documento com mais palavras em comum', async () => {
+  const { documentoDoTopico } = await import('./apresentacao')
+  const docs = [{ id: 1, titulo: '14.2 Limite e continuidade' }, { id: 2, titulo: '14.3 Derivadas parciais' }]
+  expect(documentoDoTopico('Derivadas parciais e de ordens superiores', docs)?.id).toBe(2)
+  expect(documentoDoTopico('Aula extra', docs)).toBeNull()
+})

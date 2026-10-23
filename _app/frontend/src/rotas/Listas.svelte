@@ -5,11 +5,13 @@
   import GradeQuestoes from '../componentes/GradeQuestoes.svelte'
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import { consumirQuestao } from '../estado/pedido.svelte'
   import { montarHash } from './rota'
 
   let { painel }: { painel: Painel } = $props()
 
-  let selecionada = $state<number | null>(null)
+  // o painel pode ter pedido uma questão específica ("Para revisar")
+  let selecionada = $state<number | null>(consumirQuestao())
   let menu = $state<HTMLElement>()
 
   // outra questão aberta: o menu volta ao topo dela

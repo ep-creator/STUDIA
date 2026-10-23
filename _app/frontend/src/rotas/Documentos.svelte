@@ -1,5 +1,6 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
+  import { consumirDocumento } from '../estado/pedido.svelte'
   import type { DocumentoComCorpo, FonteResumo, Painel } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
   import ListaDocumentos, { type Selecao } from '../componentes/ListaDocumentos.svelte'
@@ -31,6 +32,10 @@
     void selecao
     leitor?.scrollTo?.({ top: 0 })
   })
+
+  // o painel pode ter pedido um resumo específico ("Ler o resumo" do próximo passo)
+  const pedido = consumirDocumento()
+  if (pedido !== null) selecionar({ tipo: 'documento', id: pedido })
 
   $effect(() => {
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
