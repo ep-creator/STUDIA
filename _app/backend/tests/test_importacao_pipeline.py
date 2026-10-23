@@ -6,7 +6,7 @@ from estudos.historico import desfazer_ultimo
 from estudos.importacao import pipeline
 from estudos.importacao.pdf import PdfInvalido
 from estudos.repos import eventos, fontes, importacoes, listas, livros, topicos, unidades
-from pdfs_sinteticos import DISCIPLINA, STEWART
+from pdfs_sinteticos import DISCIPLINA, STEWART, pdf_real
 
 pytestmark = pytest.mark.skipif(not (DISCIPLINA / "Programa.pdf").is_file(), reason="PDFs reais ausentes")
 
@@ -181,7 +181,7 @@ def test_tudo_enviado_antes_de_confirmar_da_o_mesmo_resultado(con, materia, sett
     """Ordem não importa: as propostas pendentes são recalculadas com o banco de quando são lidas/confirmadas."""
     programa = _receber(con, materia, settings, DISCIPLINA / "Programa.pdf")
     livro = _receber(con, materia, settings, STEWART)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista3_2026-1.pdf"))
     assert lista.proposta["listas"][0]["unidade"]["numero"] is None  # ainda não há tópicos no banco
 
     pipeline.confirmar(con, materia.pasta, programa.id, settings)
@@ -214,12 +214,12 @@ def test_topicos_do_programa_ganham_secao(con, materia, settings):
 
 def test_lista_1_cai_na_unidade_1(con, materia, settings):
     pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista1_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista1_2026-1.pdf"))
     assert lista.proposta["listas"][0]["unidade"]["numero"] == 1
 
 
 def test_unidade_escolhida_na_revisao_sobrevive_e_o_resto_acompanha(con, materia, settings):
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista3_2026-1.pdf"))
     proposta = lista.proposta
     proposta["listas"][0]["unidade"]["numero"] = 3
     pipeline.editar(con, lista.id, proposta)
@@ -232,7 +232,7 @@ def test_unidade_escolhida_na_revisao_sobrevive_e_o_resto_acompanha(con, materia
 
 def test_vinculo_recusado_continua_recusado(con, materia, settings):
     pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista3_2026-1.pdf"))
     proposta = lista.proposta
     recusado = proposta["listas"][0]["topicos"][0]["topico_id"]
     proposta["listas"][0]["topicos"][0]["aceito"] = False
@@ -267,7 +267,7 @@ def test_leitura_de_proposta_malformada_nao_quebra(con, materia, settings):
 
 def test_recalculo_nao_sobrescreve_edicao_concorrente(con, materia, settings):
     pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista3_2026-1.pdf"))
     lida_antes = importacoes.obter(con, lista.id)  # leitura de um GET...
     editada = lida_antes.proposta
     editada["modo"] = "substituir"
@@ -291,14 +291,14 @@ def test_lista_por_secao_antes_do_livro_ganha_a_secao_depois(con, materia, setti
 
 def test_topico_repetido_entre_conteudos_vira_um_vinculo(con, materia, settings):
     pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista3_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista3_2026-1.pdf"))
     ids = [t["topico_id"] for t in lista.proposta["listas"][0]["topicos"]]
     assert ids and len(ids) == len(set(ids))
 
 
 def test_vinculo_revisado_nao_volta_a_pedir_revisao(con, materia, settings):
     pipeline.confirmar(con, materia.pasta, _receber(con, materia, settings, DISCIPLINA / "Programa.pdf").id, settings)
-    lista = _receber(con, materia, settings, DISCIPLINA / "listas-2026-1/Lista1_2026-1.pdf")
+    lista = _receber(con, materia, settings, pdf_real("Lista1_2026-1.pdf"))
     proposta = lista.proposta
     for t in proposta["listas"][0]["topicos"]:
         t["revisar"] = False  # o usuário conferiu os vínculos na revisão

@@ -9,7 +9,7 @@ from estudos.config import carregar_settings
 from estudos.db.conexao import aplicar_migracoes, conectar
 from estudos.importacao import pipeline
 from estudos.main import create_app
-from pdfs_sinteticos import DISCIPLINA, REAL, STEWART
+from pdfs_sinteticos import DISCIPLINA, LISTAS, REAL, STEWART
 
 pytestmark = pytest.mark.skipif(
     not (STEWART.is_file() and (DISCIPLINA / "Programa.pdf").is_file()), reason="PDFs reais ausentes"
@@ -22,7 +22,7 @@ ORDEM = [
     DISCIPLINA / "exercicios_1un.pdf",
     DISCIPLINA / "exercicios_2un.pdf",
     DISCIPLINA / "exercicios_3un.pdf",
-    DISCIPLINA / "listas-2026-1" / "Lista5_2026-1.pdf",
+    LISTAS / "Lista5_2026-1.pdf",
 ]
 
 

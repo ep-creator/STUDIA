@@ -3,7 +3,7 @@ import pytest
 from estudos.importacao.classificador import classificar
 from estudos.importacao.idioma import normalizar, ordinal_para_int, tokens_relevantes
 from estudos.importacao.pdf import abrir_pdf
-from pdfs_sinteticos import DISCIPLINA, LIVROS, criar_pdf
+from pdfs_sinteticos import LIVROS, criar_pdf, pdf_real
 
 
 @pytest.mark.parametrize("palavra,numero", [
@@ -31,13 +31,13 @@ REAIS = {
     "exercicios_1un.pdf": "lista",
     "exercicios_2un.pdf": "lista",
     "exercicios_3un.pdf": "lista",
-    **{f"listas-2026-1/Lista{n}_2026-1.pdf": "lista" for n in range(1, 7)},
+    **{f"Lista{n}_2026-1.pdf": "lista" for n in range(1, 7)},
 }
 
 
 @pytest.mark.parametrize("rel,tipo", sorted(REAIS.items()))
 def test_documentos_reais(rel, tipo):
-    caminho = DISCIPLINA / rel
+    caminho = pdf_real(rel)
     if not caminho.is_file():
         pytest.skip("arquivo real ausente")
     c = classificar(abrir_pdf(caminho), caminho.name)

@@ -10,9 +10,12 @@ from estudos.db.conexao import conectar
 from estudos.migracao.__main__ import main
 from estudos.repos import documentos, listas, unidades
 
-REAL = Path(__file__).resolve().parents[3] / "Calculo 2"
+# O Cálculo 2 no formato antigo agora fica em _legado/, sem os PDFs (iguais aos de Calculo 2/fontes/).
+# A migração já foi feita; este teste só roda com o legado completo, recuperado do histórico do Git.
+REAL = Path(__file__).resolve().parents[3] / "_legado" / "Calculo 2"
 pytestmark = pytest.mark.skipif(
-    not (REAL / "_app/dados/curso.json").is_file(), reason="pasta real de Cálculo 2 ausente"
+    not ((REAL / "_app/dados/curso.json").is_file() and (REAL / "livros").is_dir()),
+    reason="legado completo de Cálculo 2 ausente (a migração já foi feita)",
 )
 
 

@@ -4,11 +4,12 @@ import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const DISCIPLINA = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'Calculo 2', 'disciplina')
-const PROGRAMA = join(DISCIPLINA, 'Programa.pdf')
-const CALENDARIO = join(DISCIPLINA, 'Calendario.pdf')
-const LISTA1 = join(DISCIPLINA, 'listas-2026-1', 'Lista1_2026-1.pdf')
-const LISTA3 = join(DISCIPLINA, 'listas-2026-1', 'Lista3_2026-1.pdf')
+// PDFs reais do Cálculo 2: documentos da turma (com as listas 1 e 2) e a pasta das listas 3 a 6
+const FONTES = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'Calculo 2', 'fontes')
+const PROGRAMA = join(FONTES, 'documentos', 'Programa.pdf')
+const CALENDARIO = join(FONTES, 'documentos', 'Calendario.pdf')
+const LISTA1 = join(FONTES, 'documentos', 'Lista1_2026-1.pdf')
+const LISTA3 = join(FONTES, 'listas', 'Lista3_2026-1.pdf')
 
 test.describe.configure({ mode: 'serial' })
 test.skip(!existsSync(PROGRAMA), 'PDFs reais de Cálculo 2 ausentes')
