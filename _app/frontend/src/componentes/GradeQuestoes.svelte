@@ -28,10 +28,9 @@
     return [['Linha 1', l.questoes.filter((q) => q.linha !== 2)], ['Linha 2', l.questoes.filter((q) => q.linha === 2)]]
   }
 
-  function placar(l: ListaComQuestoes): string {
-    const conta = (m: string) => l.questoes.filter((q) => marcacoes[String(q.id)] === m).length
-    const feitas = l.questoes.filter((q) => marcacoes[String(q.id)]).length
-    return `${conta('ok')} ✓ · ${conta('err')} ✗ · ${conta('dub')} ? · ${l.questoes.length - feitas} por fazer`
+  // quantas questões da lista já foram feitas (com qualquer marca), no estilo 2/15
+  function feitas(l: ListaComQuestoes): number {
+    return l.questoes.filter((q) => marcacoes[String(q.id)]).length
   }
 
   // Clicar só abre a questão no menu ao lado (marcar é lá, ou pelas teclas 1/2/3/0).
@@ -74,7 +73,7 @@
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
           <h3>{l.titulo}</h3>
         </button>
-        <span class="suave placar">{placar(l)}</span>
+        <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões feitas`}>{feitas(l)}/{l.questoes.length}</span>
       </header>
       {#if aberto}
       {#each linhas(l) as [titulo, questoes] (titulo)}
@@ -109,7 +108,7 @@
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
   h3 { transition: color var(--transicao); }
-  .placar { font-size: 0.9rem; }
+  .placar { font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
   h3 { font-size: 1.05rem; margin: 0; }
   .rotulo { margin: 0.4rem 0 0.2rem; }
   .questoes { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }

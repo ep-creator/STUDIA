@@ -8,6 +8,7 @@
   import EspacoIA from './componentes/EspacoIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
+  import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
@@ -28,7 +29,6 @@
 
   let rota = $state<Rota>(analisarRota(location.hash))
   let materias = $state<ResumoMateria[]>([])
-  let iaAberta = $state(true)
 
   aplicarTema()
 
@@ -137,11 +137,11 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    <div class="ia nao-imprimir" class:fechada={!iaAberta}>
-      <button class="botao" onclick={() => (iaAberta = !iaAberta)} aria-expanded={iaAberta}>
-        {iaAberta ? 'Recolher IA ›' : '‹ IA'}
+    <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
+      <button class="botao" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
+        {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
       </button>
-      {#if iaAberta}<EspacoIA contexto="geral" />{/if}
+      {#if ia.aberta}<EspacoIA contexto="geral" />{/if}
     </div>
   </div>
 {/if}

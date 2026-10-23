@@ -67,11 +67,11 @@ test('marcar e desfazer', async ({ page }) => {
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('3')
   await expect(page.getByRole('button', { name: 'Questão L1 #2 (?)' })).toBeVisible()
-  await expect(page.getByText('0 ✓ · 1 ✗ · 1 ? · 6 por fazer')).toBeVisible()
+  await expect(page.getByText('2/8', { exact: true })).toBeVisible()
 
   await page.keyboard.press('Control+z')
   await expect(page.getByRole('status').getByText(/^Desfeito: Marcar questão L1 #2/)).toBeVisible()
-  await expect(page.getByText('0 ✓ · 1 ✗ · 0 ? · 7 por fazer')).toBeVisible()
+  await expect(page.getByText('1/8', { exact: true })).toBeVisible()
 })
 
 test('editar resumo e ver a diferença', async ({ page }) => {

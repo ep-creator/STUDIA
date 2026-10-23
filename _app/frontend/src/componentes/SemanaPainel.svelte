@@ -43,7 +43,7 @@
   .dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.4rem; margin-top: 0.5rem; }
   .dia { min-height: 6.5rem; padding: 0.45rem; border-radius: 6px; background: color-mix(in srgb, var(--texto) 3%, transparent); display: grid; gap: 0.3rem; align-content: start; }
   .dia.hoje { box-shadow: inset 0 2px 0 var(--destaque); background: var(--realce); }
-  .cabeca { display: flex; justify-content: space-between; align-items: baseline; }
+  .cabeca { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 0.35rem; }
   .nome { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
   .hoje .nome { color: var(--destaque); font-weight: 600; }
   .numero { font-family: var(--fonte-titulo); font-size: 1.15rem; }

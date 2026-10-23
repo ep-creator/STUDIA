@@ -35,6 +35,15 @@ test('a resolução da questão fica escondida até pedir, e aparece no próprio
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/documentos/16'))).toBe(true)
 })
 
+test('abrir a resolução recolhe a área de IA para dar espaço', async () => {
+  motor()
+  const { ia } = await import('../estado/ia.svelte')
+  ia.aberta = true
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
+  await userEvent.click(screen.getByRole('button', { name: /Ver resolução/ }))
+  expect(ia.aberta).toBe(false)
+})
+
 test('sem resolução, o menu não oferece o botão', () => {
   motor()
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao: null, onmarcar: vi.fn() })
