@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import type { Painel } from '../api/tipos'
-  import { ordinal, textoContagem } from '../apresentacao'
+  import { ordinal, textoTopoProva } from '../apresentacao'
   import { montarHash, type Area } from '../rotas/rota'
 
   let { painel, area, hoje = new Date(), acoes }: { painel: Painel; area: Area; hoje?: Date; acoes?: Snippet } = $props()
@@ -24,7 +24,7 @@
       >{ordinal(u.numero)}</a>
     {/each}
   </nav>
-  {#if unidade}<span class="suave contagem">Prova: {textoContagem(prova, hoje)}</span>{/if}
+  {#if unidade}<span class="suave contagem">{textoTopoProva(prova, hoje)}</span>{/if}
   <div class="acoes">{@render acoes?.()}</div>
 </header>
 

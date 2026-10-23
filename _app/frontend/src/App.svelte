@@ -8,6 +8,7 @@
   import EspacoIA from './componentes/EspacoIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
+  import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
@@ -28,7 +29,6 @@
 
   let rota = $state<Rota>(analisarRota(location.hash))
   let materias = $state<ResumoMateria[]>([])
-  let iaAberta = $state(true)
 
   aplicarTema()
 
@@ -97,13 +97,14 @@
 {:else}
   <div class="app">
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />
-    <main>
+    <main class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
         {#if rota.tela === 'materia'}
           <Topo {painel} area={rota.area}>
             {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
           </Topo>
           <MolduraEditorial
+            ajustada={rota.area === 'documentos' || rota.area === 'listas'}
             topo={`${painel.materia.nome}${painel.materia.periodo ? ` · ${painel.materia.periodo}` : ''}`}
             base={painel.unidade ? nomeUnidade(painel.unidade) : 'sem unidades'}
           >
@@ -136,11 +137,11 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    <div class="ia nao-imprimir" class:fechada={!iaAberta}>
-      <button class="botao" onclick={() => (iaAberta = !iaAberta)} aria-expanded={iaAberta}>
-        {iaAberta ? 'Recolher IA ›' : '‹ IA'}
+    <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
+      <button class="botao" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
+        {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
       </button>
-      {#if iaAberta}<EspacoIA contexto="geral" />{/if}
+      {#if ia.aberta}<EspacoIA contexto="geral" />{/if}
     </div>
   </div>
 {/if}
@@ -150,6 +151,9 @@
 <style>
   .app { display: flex; min-height: 100vh; }
   main { flex: 1; min-width: 0; padding: 0.5rem 2rem 3rem; }
+  /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
+  main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
+  @media print { main.ajustada { height: auto; display: block; } }
   .ia { width: 14rem; flex: none; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
   .ia.fechada { width: auto; }
 </style>

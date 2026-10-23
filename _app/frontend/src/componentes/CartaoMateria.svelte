@@ -18,13 +18,35 @@
     </p>
   {/if}
   {#if materia.importacoes_pendentes > 0}
-    <p class="pendente">{materia.importacoes_pendentes} importação(ões) esperando revisão</p>
+    <p class="pendente">{materia.importacoes_pendentes} {materia.importacoes_pendentes === 1 ? 'arquivo esperando' : 'arquivos esperando'} revisão</p>
   {/if}
+  <span class="abrir" aria-hidden="true">Abrir →</span>
 </a>
 
 <style>
-  .materia { display: block; text-decoration: none; }
-  .materia:hover { outline: 2px solid var(--destaque); }
+  .materia { position: relative; display: block; text-decoration: none; min-height: 9rem; padding-bottom: 2.2rem; }
   p { margin: 0.25rem 0; }
+  h2 { transition: color var(--transicao); }
   .pendente { color: var(--destaque); }
+  .abrir {
+    position: absolute; right: 1rem; bottom: 0.9rem; font-size: 0.85rem; color: var(--destaque);
+    opacity: 0; transform: translateX(-6px); transition: opacity var(--transicao), transform var(--transicao);
+  }
+  .materia:hover h2, .materia:focus-visible h2 { color: var(--destaque); }
+  .materia:hover .abrir, .materia:focus-visible .abrir { opacity: 1; transform: none; }
+
+  /* Editorial: a linha do topo vira laranja, da esquerda para a direita */
+  .materia::before {
+    content: ''; position: absolute; left: 0; top: -1.5px; height: 1.5px; width: 0; background: var(--destaque);
+    transition: width 280ms ease;
+  }
+  .materia:hover::before, .materia:focus-visible::before { width: 100%; }
+  :global(:root[data-tema^='editorial']) .materia:hover { background: var(--realce); }
+
+  /* Padrão: o cartão sobe um pouco e a borda ganha o destaque */
+  :global(:root[data-tema^='padrao']) .materia::before { display: none; }
+  :global(:root[data-tema^='padrao']) .materia:hover {
+    border-color: var(--destaque); transform: translateY(-2px); box-shadow: 0 10px 28px rgb(0 0 0 / 14%);
+  }
+  .materia:focus-visible { outline: none; }
 </style>

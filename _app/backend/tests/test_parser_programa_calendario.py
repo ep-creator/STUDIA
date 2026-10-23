@@ -80,3 +80,31 @@ def test_calendario_anotacoes_nao_viram_extra():
     assert u1.aulas[-1].revisar is True and u1.aulas[0].revisar is False
     assert u1.prova.data == "2026-03-17"
     assert (cal.unidades[1].prova.data, cal.unidades[1].prova.hora_inicio) == ("2026-04-10", "14:00")
+
+
+def test_programa_com_conteudo_em_frases_e_cronograma_de_aulas():
+    """Formato da Geometria Analítica: '1ª unidade. Tópico. Tópico.' e depois '— Aula N: ...' por unidade."""
+    texto = (
+        "Conteúdo Programático\n"
+        "1ª unidade. Vetores no plano e no espaço. Coordenadas Cartesianas no plano e no espaço. Os\n"
+        "R^2 e R^3. Sistemas lineares e Eliminação Gaussiana.\n"
+        "2ª unidade. Determinantes. Bases e dimensão.\n\n"
+        "Cronograma de Aulas\n"
+        "1ª unidade\n"
+        "— Aula 1: Vetores no plano e no espaço. Operações vetoriais.\n"
+        "— Aula de Atividade 1: 100% da aula dedicada a uma atividade.\n"
+        "2ª unidade\n"
+        "— Aula 7: Determinantes.\n"
+        "3ª unidade\n"
+        "— Aula 13: O método dos Mínimos Quadrados. (a atividade valerá 1pt)\n"
+        "— Aula 14: Áreas, volumes e o Gramiano.\n"
+    )
+    unidades = extrair_programa(texto)
+    assert [(u.numero, u.titulo) for u in unidades] == [(1, "1ª unidade"), (2, "2ª unidade"), (3, "3ª unidade")]
+    assert [t.titulo for t in unidades[0].topicos] == [
+        "Vetores no plano e no espaço", "Coordenadas Cartesianas no plano e no espaço", "Os R^2 e R^3",
+        "Sistemas lineares e Eliminação Gaussiana",
+    ]
+    assert [t.titulo for t in unidades[1].topicos] == ["Determinantes", "Bases e dimensão"]  # o cronograma não duplica
+    # Unidade só descrita no cronograma: cada aula vira tópico (sem "Aula N:", sem as atividades, sem parênteses)
+    assert [t.titulo for t in unidades[2].topicos] == ["O método dos Mínimos Quadrados", "Áreas, volumes e o Gramiano"]

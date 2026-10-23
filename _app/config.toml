@@ -1,4 +1,4 @@
-# Configuração do motor da Plataforma de Estudos.
+# Configuração do motor do STUDIA.
 # Valores ausentes usam os defaults de _app/backend/estudos/config.py.
 
 [servidor]

@@ -33,11 +33,21 @@ export async function requisitar<T>(metodo: Metodo, caminho: string, corpo?: unk
   } catch {
     throw new MotorDesligado()
   }
-  const texto = await resposta.text()
-  const dados = texto ? JSON.parse(texto) : null
+  let texto: string
+  try {
+    texto = await resposta.text()
+  } catch {
+    throw new MotorDesligado() // a conexão caiu no meio da resposta
+  }
+  let dados: { erro?: unknown } | null = null
+  try {
+    dados = texto ? JSON.parse(texto) : null
+  } catch {
+    dados = null // erro que não veio do motor em JSON (ex.: 500 em texto puro)
+  }
   if (!resposta.ok) {
-    const mensagem = (dados && typeof dados.erro === 'string' && dados.erro) || resposta.statusText || 'Erro no motor'
-    throw new ErroApi(mensagem, resposta.status)
+    const erro = typeof dados?.erro === 'string' ? dados.erro : null
+    throw new ErroApi(erro ?? `Erro no motor (${resposta.status}): ${resposta.statusText || texto.slice(0, 80)}`, resposta.status)
   }
   return dados as T
 }

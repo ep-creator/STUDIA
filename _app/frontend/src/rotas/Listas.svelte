@@ -5,11 +5,20 @@
   import GradeQuestoes from '../componentes/GradeQuestoes.svelte'
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import { consumirQuestao } from '../estado/pedido.svelte'
   import { montarHash } from './rota'
 
   let { painel }: { painel: Painel } = $props()
 
-  let selecionada = $state<number | null>(null)
+  // o painel pode ter pedido uma questão específica ("Para revisar")
+  let selecionada = $state<number | null>(consumirQuestao())
+  let menu = $state<HTMLElement>()
+
+  // outra questão aberta: o menu volta ao topo dela
+  $effect(() => {
+    void selecionada
+    menu?.scrollTo?.({ top: 0 })
+  })
 
   const uid = $derived(painel.materia.uid)
   const achada = $derived.by(() => {
@@ -35,7 +44,10 @@
   <EstadoVazio texto="Nenhuma lista nesta unidade ainda." acao={{ rotulo: 'Importar listas', href: montarHash({ tela: 'importar', uid }) }} />
 {:else}
   <div class="listas">
+    <div class="coluna questoes">
     <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
+    </div>
+    <div class="coluna menu" bind:this={menu}>
     {#if achada}
       <DetalheQuestao
         {uid}
@@ -43,15 +55,20 @@
         questao={achada.questao}
         marca={marcaDe(achada.questao.id)}
         secao={painel.vinculos.listas[String(achada.lista.id)]?.secao ?? null}
+        resolucao={painel.documentos.find((d) => d.tipo === 'resolucao' && d.questao_id === achada.questao.id) ?? null}
         onmarcar={aoMarcar}
       />
     {:else}
-      <p class="suave dica">Clique numa questão para marcar (✓ → ✗ → ? → vazio) e ver os detalhes. No teclado: setas para andar, 1 ✓, 2 ✗, 3 ?, 0 limpa.</p>
+      <p class="suave dica">Escolha uma questão para ver o enunciado, marcar como acertei, errei ou dúvida e abrir a resolução, quando houver. Atalhos: setas para andar entre as questões · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
     {/if}
+    </div>
   </div>
 {/if}
 
 <style>
-  .listas { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
-  .dica { position: sticky; top: 1rem; }
+  /* As questões e o menu rolam cada um no seu espaço (a página fica parada), como em Documentos */
+  .listas { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 1fr); gap: 1.75rem; }
+  .coluna { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.6rem; }
+  .dica { margin: 0; }
+  @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }
 </style>

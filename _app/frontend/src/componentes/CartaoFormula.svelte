@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Formula } from '../api/tipos'
-  import { renderizarLatex } from '../markdown'
+  import { renderizarFormula } from '../markdown'
   import Markdown from './Markdown.svelte'
 
   let { formula, oneditar, onapagar }: { formula: Formula; oneditar: () => void; onapagar: () => void } = $props()
-  const html = $derived(renderizarLatex(formula.corpo_tex, true))
+  const html = $derived(renderizarFormula(formula.corpo_tex))
 </script>
 
 <article class="formula">

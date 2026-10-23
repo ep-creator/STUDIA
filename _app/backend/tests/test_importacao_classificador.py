@@ -71,3 +71,11 @@ def test_pagina_em_branco_e_outro(tmp_path):
 def test_prova_sintetica(tmp_path):
     texto = "Cálculo 2 - Primeiro Exame\n1. Calcule o limite.\n2. Determine o domínio.\n3. Ache os pontos críticos."
     assert classificar(abrir_pdf(criar_pdf(tmp_path / "prova.pdf", [texto]))).tipo == "prova"
+
+
+def test_gabarito_de_prova_com_problemas_e_itens(tmp_path):
+    texto = ("MA036 – GEOMETRIA ANALÍTICA 1 – 2026.2\nTurmas:\nE1, E2, E3\nP1, P2\n1ª Prova – Gabarito\n1o problema\n"
+             "A figura abaixo representa um paralelepípedo.\na) (1,0 pt) Expresse o vetor.\nb) (1,0 pt) Determine F.\n"
+             "Solução:\na) Por um lado.\n2o problema\nConsidere a reta.\na) (1,5 pt) Ache.")
+    doc = abrir_pdf(criar_pdf(tmp_path / "prova.pdf", [texto, "3o problema\na) (2,0 pt) Calcule.", "Solução: ...", "fim"]))
+    assert classificar(doc, "Prova 1 - gabarito oficial.pdf").tipo == "prova"

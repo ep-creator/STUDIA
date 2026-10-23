@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PropostaLivro } from '../api/proposta'
   import SeloConfianca from './SeloConfianca.svelte'
+  import Seletor from './Seletor.svelte'
 
   let { proposta, alterar }: { proposta: PropostaLivro; alterar: (mudar: (p: PropostaLivro) => void) => void } = $props()
 
@@ -17,12 +18,10 @@
   <dt>Obra</dt><dd>{proposta.titulo_obra}</dd>
   <dt>Papel</dt>
   <dd>
-    <select aria-label="Papel do livro" value={proposta.papel} onchange={(e) => alterar((p) => (p.papel = e.currentTarget.value as PropostaLivro['papel']))}>
-      <option value="principal">principal (o livro da disciplina)</option>
-      <option value="complementar">complementar</option>
-    </select>
+    <Seletor rotulo="Papel do livro" variante="compacto" valor={proposta.papel} onmudar={(v) => alterar((p) => (p.papel = v as PropostaLivro['papel']))}
+      opcoes={[{ valor: 'principal', rotulo: 'principal (o livro da disciplina)' }, { valor: 'complementar', rotulo: 'complementar' }]} />
   </dd>
-  <dt>Seções</dt><dd>{proposta.secoes.length} ({proposta.origem === 'sumario_embutido' ? 'sumário do próprio PDF' : 'sumário lido do texto'}){#if duvidosas.length} · {duvidosas.length} para conferir{/if}</dd>
+  <dt>Seções</dt><dd>{proposta.secoes.length} ({proposta.origem === 'sumario_embutido' ? 'sumário do próprio PDF' : proposta.origem === 'sumario_embutido_sem_codigo' ? 'sumário do PDF, códigos pela ordem' : 'sumário lido do texto'}){#if duvidosas.length} · {duvidosas.length} para conferir{/if}</dd>
   <dt>Páginas</dt><dd>{proposta.offset_pagina === null ? 'não consegui alinhar a numeração impressa' : `página impressa + ${-proposta.offset_pagina} = página do PDF`}</dd>
   <dt>Respostas</dt><dd>{proposta.gabarito ? `páginas ${proposta.gabarito[0]}–${proposta.gabarito[1]} do PDF` : 'não encontradas'}</dd>
 </dl>
@@ -61,5 +60,4 @@
   .vinculos { display: grid; gap: 0.2rem; }
   label { display: flex; gap: 0.4rem; align-items: center; }
   h4 { margin: 1rem 0 0.4rem; font-family: var(--fonte-titulo); font-weight: 500; }
-  select { background: var(--cartao); border: 1px solid var(--borda); border-radius: 6px; }
 </style>

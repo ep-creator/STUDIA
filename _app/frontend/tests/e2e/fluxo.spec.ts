@@ -35,7 +35,8 @@ test('matéria nova só com cliques', async ({ page }) => {
 
   // Revisão: a L1 vai para a 1ª unidade (escolha do usuário)
   await fila.getByText('Lista1_2026-1.pdf').click()
-  await page.getByLabel('Unidade da lista L1').selectOption('1')
+  await page.getByRole('button', { name: /^Unidade da lista L1/ }).click()
+  await page.getByRole('option', { name: '1ª unidade' }).click()
 
   // Primeiro o que não tem pendência (o programa); com os tópicos no banco, o motor recalcula a unidade da L3
   await page.getByRole('button', { name: /Confirmar todos sem pendências/ }).click()
@@ -51,24 +52,26 @@ test('matéria nova só com cliques', async ({ page }) => {
   await expect(page.getByText('Nenhum arquivo esperando revisão.')).toBeVisible()
 
   await page.getByRole('link', { name: 'Painel', exact: true }).click()
-  await expect(page.getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Prova' }).getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
   await expect(page.getByText('Tópicos vistos')).toBeVisible()
 })
 
 test('marcar e desfazer', async ({ page }) => {
   await abrirArea(page, '1ª', 'Listas')
   const q1 = page.getByRole('button', { name: /^Questão L1 #1( |$)/ })
-  await q1.click()
-  await q1.click()   // vazio → ✓ → ✗
+  await q1.click()   // clicar só abre a questão no menu ao lado
+  await expect(page.getByRole('button', { name: 'Questão L1 #1', exact: true })).toBeVisible()
+  await page.getByRole('group', { name: 'Marcar questão' }).getByRole('button', { name: /Errei/ }).click()
   await expect(page.getByRole('button', { name: 'Questão L1 #1 (✗)' })).toBeVisible()
+  await page.getByRole('button', { name: 'Questão L1 #1 (✗)' }).focus()
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('3')
   await expect(page.getByRole('button', { name: 'Questão L1 #2 (?)' })).toBeVisible()
-  await expect(page.getByText('0 ✓ · 1 ✗ · 1 ? · 6 por fazer')).toBeVisible()
+  await expect(page.getByText('2/8', { exact: true })).toBeVisible()
 
   await page.keyboard.press('Control+z')
   await expect(page.getByRole('status').getByText(/^Desfeito: Marcar questão L1 #2/)).toBeVisible()
-  await expect(page.getByText('0 ✓ · 1 ✗ · 0 ? · 7 por fazer')).toBeVisible()
+  await expect(page.getByText('1/8', { exact: true })).toBeVisible()
 })
 
 test('editar resumo e ver a diferença', async ({ page }) => {
@@ -82,18 +85,20 @@ test('editar resumo e ver a diferença', async ({ page }) => {
   await expect(page.locator('.leitor .katex')).toHaveCount(1)
 
   await page.getByRole('link', { name: 'Histórico', exact: true }).click()
-  await page.getByRole('button', { name: 'Ver diferença' }).first().click()
+  await page.getByRole('button', { name: 'Detalhes' }).first().click()
   await expect(page.getByText('+ Primeira linha com $x^2$')).toBeVisible()
 })
 
 test('quatro temas persistem', async ({ page }) => {
   await page.goto(inicioMateria)
   for (const [identidade, modo, esperado] of [
-    ['padrao', 'claro', 'padrao-claro'], ['padrao', 'escuro', 'padrao-escuro'],
-    ['editorial', 'claro', 'editorial-claro'], ['editorial', 'escuro', 'editorial-escuro'],
+    ['Padrão', 'Claro', 'padrao-claro'], ['Padrão', 'Escuro', 'padrao-escuro'],
+    ['Editorial', 'Claro', 'editorial-claro'], ['Editorial', 'Escuro', 'editorial-escuro'],
   ]) {
-    await page.getByLabel('Identidade visual').selectOption(identidade)
-    await page.getByLabel('Claro ou escuro').selectOption(modo)
+    await page.getByRole('button', { name: /^Identidade visual/ }).click()
+    await page.getByRole('option', { name: identidade }).click()
+    await page.getByRole('button', { name: /^Claro ou escuro/ }).click()
+    await page.getByRole('option', { name: modo, exact: true }).click()
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-tema', esperado)
   }
@@ -101,7 +106,7 @@ test('quatro temas persistem', async ({ page }) => {
 
 test('criar outra matéria depois de abrir uma não trava em "Carregando"', async ({ page }) => {
   await abrirArea(page, '1ª', 'Listas')
-  await page.getByRole('link', { name: '← Matérias' }).click()
+  await page.getByRole('link', { name: 'STUDIA' }).click()
   await page.getByRole('button', { name: '＋ Nova matéria' }).click()
   await page.getByLabel('Nome').fill('Segunda matéria')
   await page.getByRole('button', { name: 'Criar', exact: true }).click()

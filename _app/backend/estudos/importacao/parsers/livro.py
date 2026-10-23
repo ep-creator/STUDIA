@@ -24,6 +24,11 @@ _PAGINAS_PROCURA_SUMARIO = 30
 _MAX_TOKENS_CODIGO = 4
 _FRACAO_FINAL_GABARITO = 0.7  # o gabarito fica no fim do livro
 CONFIANCA_EMBUTIDO = 1.0
+CONFIANCA_EMBUTIDO_SEM_CODIGO = 0.8  # seções certas, mas o código foi gerado (pode não bater com o impresso)
+_FORA_DO_CONTEUDO = (
+    "capa", "contracapa", "folha de rosto", "ficha catalografica", "sumario", "indice", "prefacio", "apresentacao",
+    "agradecimento", "dedicatoria", "introducao", "bibliografia", "referencia", "lista de", "notacao", "sobre o autor",
+)
 CONFIANCA_PAGINA = 0.7
 
 
@@ -124,6 +129,26 @@ def _do_sumario_embutido(sumario: tuple[EntradaSumario, ...]) -> list[_Entrada]:
     return entradas
 
 
+def _do_sumario_sem_codigo(sumario: tuple[EntradaSumario, ...]) -> list[_Entrada]:
+    """Sumário do PDF sem números de seção (Lima, Santos): os códigos saem da hierarquia (1, 1.1, 1.1.1…).
+    Capa, apresentação, bibliografia e afins não entram na numeração (mas fecham o capítulo anterior); exercícios e
+    respostas ficam como no sumário numerado (fora das seções; as respostas viram o gabarito)."""
+    entradas, contadores = [], []
+    for item in sumario:
+        if item.pagina < 1:
+            continue
+        titulo = item.titulo.strip()
+        n = normalizar(titulo)
+        if n.startswith(_FORA_DO_CONTEUDO + _NAO_SECAO) or _GABARITO.search(n):
+            entradas.append(_Entrada(None, titulo, item.nivel, item.pagina))
+            continue
+        contadores = contadores[: item.nivel] + [0] * max(0, item.nivel - len(contadores))
+        contadores[item.nivel - 1] += 1
+        codigo = ".".join(str(c) for c in contadores)
+        entradas.append(_Entrada(codigo, titulo, item.nivel, item.pagina))
+    return entradas
+
+
 # ---------------- página "Sumário" ----------------
 def _linhas_do_sumario(doc: DocumentoPdf) -> list[str]:
     linhas = []
@@ -191,9 +216,14 @@ def extrair_livro(doc: DocumentoPdf) -> LivroExtraido:
     if livro.offset_pagina is None:
         livro.avisos.append("páginas sem numeração impressa reconhecível: deslocamento desconhecido")
     total = doc.total_paginas
+    sem_codigo = _do_sumario_sem_codigo(doc.sumario)
     if any(_CODIGO_SUMARIO.match(e.titulo.strip()) for e in doc.sumario):
         livro.origem, confianca = "sumario_embutido", CONFIANCA_EMBUTIDO
         entradas = _do_sumario_embutido(doc.sumario)
+    elif any(e.codigo for e in sem_codigo):
+        livro.origem, confianca = "sumario_embutido_sem_codigo", CONFIANCA_EMBUTIDO_SEM_CODIGO
+        entradas = sem_codigo
+        livro.avisos.append("o sumário do PDF não traz números de seção: os códigos (1, 1.1…) seguem a ordem do sumário")
     elif livro.offset_pagina is not None and _linhas_do_sumario(doc):
         livro.origem, confianca = "pagina_sumario", CONFIANCA_PAGINA
         entradas = _da_pagina_sumario(doc, livro.offset_pagina, livro.avisos)
@@ -204,4 +234,6 @@ def extrair_livro(doc: DocumentoPdf) -> LivroExtraido:
     livro.secoes = _fins(entradas, total, livro.gabarito[0] if livro.gabarito else None)
     for s in livro.secoes:
         s.confianca = confianca
+    if not livro.secoes:
+        livro.avisos.append("nenhuma seção reconhecida no sumário")
     return livro

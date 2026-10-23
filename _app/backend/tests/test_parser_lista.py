@@ -1,5 +1,6 @@
 import pytest
 
+from estudos.importacao.idioma import normalizar
 from estudos.importacao.parsers.lista import extrair_listas
 from estudos.importacao.pdf import abrir_pdf
 from pdfs_sinteticos import DISCIPLINA, criar_pdf
@@ -127,3 +128,11 @@ def test_conteudo_com_dois_pontos_no_meio_continua(tmp_path):
     texto = "Lista de exercícios\nConteúdos: Integrais duplas, mudança de\nvariáveis: polares e cilíndricas.\n1. Calcule."
     a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "d.pdf", [texto])), "d.pdf")
     assert a.conteudos == ["Integrais duplas", "mudança de variáveis: polares e cilíndricas"]
+
+
+def test_titulos_de_parte_em_romanos_viram_conteudos(tmp_path):
+    texto = ("Geometria Analítica:\nI. Matrizes, Gauss–Jordan e Determinantes\n1. Resolva o sistema.\n2. Calcule a inversa.\n"
+             "II. Subespaços e bases\n3. Ache uma base.")
+    a = extrair_listas(abrir_pdf(criar_pdf(tmp_path / "romanos.pdf", [texto])), "Lista 2 - GA.pdf")
+    assert [normalizar(c) for c in a.conteudos] == ["matrizes gauss jordan e determinantes", "subespacos e bases"]
+    assert [q.rotulo for q in a.listas[0].questoes] == ["1", "2", "3"]

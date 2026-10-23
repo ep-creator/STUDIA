@@ -55,7 +55,7 @@
   --fundo: #191714;
   --lateral: #201d19;
   --cartao: #221f1a;
-  --borda: rgb(239 230 214 / 65%);
+  --borda: rgb(239 230 214 / 30%);
   --texto: #efe6d6;
   --suave: #b3a994;
   --destaque: #f07a45;
@@ -66,6 +66,33 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Controles nativos (rolagem, campos de data, caixas de marcar) acompanham claro/escuro */
+:root[data-tema$='escuro'] { color-scheme: dark; }
+:root[data-tema$='claro'] { color-scheme: light; }
+
+/* Barras de rolagem finas, na cor do tema (nada de faixa branca no escuro) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--texto) 22%, transparent) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--texto) 20%, transparent); border-radius: 999px;
+  border: 3px solid transparent; background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--destaque) 55%, transparent); }
+
+/* Destaques ao passar o mouse: mesma linguagem no app inteiro (cor de destaque, transição curta) */
+:root { --transicao: 160ms ease; --realce: color-mix(in srgb, var(--destaque) 9%, transparent); }
+a, button { transition: color var(--transicao), background-color var(--transicao), border-color var(--transicao), transform var(--transicao), box-shadow var(--transicao); }
+a:hover { text-decoration-color: var(--destaque); }
+.botao:hover:not(:disabled) { border-color: var(--destaque); color: var(--destaque); }
+.botao.primario:hover:not(:disabled) { background: var(--destaque); border-color: var(--destaque); color: var(--texto-sobre-destaque); }
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque) 70%, transparent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Fórmulas: as em texto Unicode (app antigo) mantêm a diagramação; as do KaTeX rolam só se não couberem */
+.formula-texto { margin: 0.3rem 0; font-family: 'Inter Variable', system-ui, sans-serif; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; }
+.katex-display { margin: 0.35rem 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; }
 
 html, body {
   margin: 0;

@@ -98,7 +98,8 @@
 <style>
   ul { list-style: none; margin: 0; padding: 0; }
   ul ul { padding-left: 1.5rem; }
-  .linha { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; border-top: 1px solid color-mix(in srgb, var(--borda) 25%, transparent); }
+  .linha { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.4rem; border-top: 1px solid color-mix(in srgb, var(--borda) 25%, transparent); transition: background-color var(--transicao); }
+  .linha:hover { background: var(--realce); }
   .titulo { font-weight: 500; }
   .secao { font-size: 0.85rem; color: var(--suave); }
   .acoes { margin-left: auto; display: flex; gap: 0.15rem; opacity: 0.35; }

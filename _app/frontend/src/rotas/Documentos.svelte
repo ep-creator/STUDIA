@@ -1,11 +1,13 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
+  import { consumirDocumento } from '../estado/pedido.svelte'
   import type { DocumentoComCorpo, FonteResumo, Painel } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
   import ListaDocumentos, { type Selecao } from '../componentes/ListaDocumentos.svelte'
   import Markdown from '../componentes/Markdown.svelte'
   import VisualizadorPdf from '../componentes/VisualizadorPdf.svelte'
   import { criarDocumento } from '../documentos'
+  import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
@@ -22,6 +24,18 @@
   let criando = $state(false)
   let novoTitulo = $state('')
   let novoTipo = $state('resumo')
+  let leitor = $state<HTMLElement>()
+  const unidadeAtual = $derived(painel.unidades.find((u) => u.numero === painel.unidade)?.id ?? null)
+
+  // abrir outro documento começa do topo dele (o texto rola dentro do leitor, não na página)
+  $effect(() => {
+    void selecao
+    leitor?.scrollTo?.({ top: 0 })
+  })
+
+  // o painel pode ter pedido um resumo específico ("Ler o resumo" do próximo passo)
+  const pedido = consumirDocumento()
+  if (pedido !== null) selecionar({ tipo: 'documento', id: pedido })
 
   $effect(() => {
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
@@ -73,17 +87,15 @@
     {#if criando}
       <form class="novo" onsubmit={criar}>
         <input aria-label="Título do documento" placeholder="Título" bind:value={novoTitulo} required />
-        <select aria-label="Tipo do documento" bind:value={novoTipo}>
-          <option value="resumo">Resumo</option><option value="anotacao">Anotação</option>
-          <option value="resolucao">Resolução</option><option value="plano">Plano</option>
-        </select>
+        <Seletor rotulo="Tipo do documento" variante="compacto" valor={novoTipo} onmudar={(v) => (novoTipo = v)}
+          opcoes={[{ valor: 'resumo', rotulo: 'Resumo' }, { valor: 'anotacao', rotulo: 'Anotação' }, { valor: 'resolucao', rotulo: 'Resolução' }, { valor: 'plano', rotulo: 'Plano' }]} />
         <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
       </form>
     {/if}
-    <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={selecionar} />
+    <ListaDocumentos documentos={painel.documentos} {fontes} topicos={painel.topicos} {unidadeAtual} {selecao} onselecionar={selecionar} />
   </aside>
 
-  <section class="leitor">
+  <section class="leitor" bind:this={leitor}>
     {#if documento}
       <header>
         <h2>{documento.titulo}</h2>
@@ -94,7 +106,7 @@
           <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => { if (podeSair()) editando = false }} />
         {/key}
       {:else}
-        <Markdown texto={documento.corpo} />
+        <Markdown texto={documento.corpo} contas={documento.tipo === 'resolucao'} />
       {/if}
     {:else if fonte}
       <h2>{fonte.titulo || fonte.caminho.split('/').pop()}</h2>
@@ -106,9 +118,12 @@
 </div>
 
 <style>
-  .documentos { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
-  aside { display: grid; gap: 0.5rem; position: sticky; top: 1rem; }
+  /* As duas colunas rolam por dentro: a lista não é cortada e o texto não arrasta a página junto */
+  .documentos { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; }
+  aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
+  .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
+  @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
   .novo { display: grid; gap: 0.4rem; }
-  .novo input, .novo select { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
+  .novo input { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 </style>
