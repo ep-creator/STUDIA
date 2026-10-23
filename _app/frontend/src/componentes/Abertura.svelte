@@ -13,17 +13,22 @@
 </script>
 
 <script lang="ts">
-  // STUDIA desenhado traço a traço em laranja, preenchido, e depois "voando" para o lugar da marca no topo.
-  // Um clique em qualquer lugar pula direto para o fim.
+  // STUDIA digitado letra a letra, como numa máquina de escrever, com o cursor laranja piscando;
+  // depois a palavra "voa" para o lugar da marca no topo. Um clique em qualquer lugar pula direto para o fim.
   import { onMount } from 'svelte'
 
   let { alvo, onfim }: { alvo: () => HTMLElement | null | undefined; onfim: () => void } = $props()
 
+  const PALAVRA = 'STUDIA'
+  // ritmo de quem digita: nem todas as teclas levam o mesmo tempo
+  const INTERVALOS = [170, 120, 150, 110, 160, 130]
+
   let raiz: HTMLDivElement
-  let texto: SVGTextElement
+  let texto: HTMLSpanElement
   let fundo: HTMLDivElement
-  let traco: HTMLSpanElement
-  let desenhando = $state(false)
+  let digitadas = $state(0)
+  let digitando = $state(false)
+  let cursorFora = $state(false)
   let terminou = false
 
   function terminar() {
@@ -41,60 +46,68 @@
     const escala = parseFloat(getComputedStyle(destino).fontSize) / parseFloat(getComputedStyle(texto).fontSize)
     const dx = para.left - de.left
     const dy = para.top + para.height / 2 - (de.top + de.height / 2)
-    const curva = 'cubic-bezier(0.7, 0, 0.2, 1)'
     texto.animate(
       [{ transform: 'none' }, { transform: `translate(${dx}px, ${dy}px) scale(${escala})` }],
-      { duration: 750, easing: curva, fill: 'forwards' },
+      { duration: 750, easing: 'cubic-bezier(0.7, 0, 0.2, 1)', fill: 'forwards' },
     )
     raiz.style.pointerEvents = 'none'
     fundo.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 600, delay: 250, easing: 'ease-out', fill: 'forwards' }).finished.then(terminar, terminar)
   }
 
   onMount(() => {
-    let espera: ReturnType<typeof setTimeout>
-    const comecar = () => {
-      // o sublinhado acompanha a palavra desenhada (o espaçamento entre letras desloca o centro do texto)
-      const r = texto.getBoundingClientRect()
-      const sobra = parseFloat(getComputedStyle(texto).letterSpacing) || 0
-      Object.assign(traco.style, { left: `${r.left}px`, width: `${r.width - sobra}px`, top: `${r.bottom + 18}px` })
-      desenhando = true
-      espera = setTimeout(voar, 2100)
-    }
-    // espera a fonte do título carregar, senão o desenho começa numa fonte e termina em outra
-    void (document.fonts?.ready ?? Promise.resolve()).then(() => requestAnimationFrame(comecar))
-    return () => clearTimeout(espera)
+    const esperas: ReturnType<typeof setTimeout>[] = []
+    const depois = (ms: number, f: () => void) => esperas.push(setTimeout(f, ms))
+    // espera a fonte do título carregar, senão a palavra muda de fonte no meio da digitação
+    void (document.fonts?.ready ?? Promise.resolve()).then(() => {
+      let t = 650 // o cursor pisca um pouco antes da primeira tecla
+      depois(t, () => (digitando = true))
+      for (let i = 0; i < PALAVRA.length; i++) {
+        t += INTERVALOS[i]
+        depois(t, () => (digitadas = i + 1))
+      }
+      depois(t + 120, () => (digitando = false))
+      depois(t + 900, () => (cursorFora = true))
+      depois(t + 1100, voar)
+    })
+    return () => esperas.forEach(clearTimeout)
   })
 </script>
+
+{#snippet cursor()}<span class="cursor" class:digitando class:fora={cursorFora}></span>{/snippet}
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="abertura" bind:this={raiz} onclick={terminar} aria-hidden="true">
   <div class="fundo" bind:this={fundo}></div>
-  <svg class="palavra" class:desenhando width="1" height="1">
-    <text bind:this={texto} text-anchor="middle" dominant-baseline="central">STUDIA</text>
-  </svg>
-  <span class="traco" class:desenhando bind:this={traco}></span>
+  <div class="linha">
+    <span class="palavra" bind:this={texto}
+      >{#each PALAVRA as letra, i}{#if i === digitadas}{@render cursor()}{/if}<span class="letra" class:visivel={i < digitadas}>{letra}</span>{/each}{#if digitadas === PALAVRA.length}{@render cursor()}{/if}</span
+    >
+  </div>
 </div>
 
 <style>
   .abertura { position: fixed; inset: 0; z-index: 100; cursor: pointer; }
   .fundo { position: absolute; inset: 0; background: var(--fundo); }
-  .palavra { position: absolute; left: 50%; top: 46%; overflow: visible; }
-  text {
-    font-family: var(--fonte-titulo); font-weight: 600; letter-spacing: 0.28em;
-    font-size: clamp(3.2rem, 12vw, 8.5rem);
-    fill: var(--texto); fill-opacity: 0; stroke: var(--destaque); stroke-width: 1.2;
-    stroke-dasharray: 1400; stroke-dashoffset: 1400; transform-box: fill-box; transform-origin: left center;
+  .linha { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); }
+  .palavra {
+    display: inline-block; transform-origin: left center; white-space: nowrap;
+    font-family: var(--fonte-titulo); font-weight: 600; letter-spacing: 0.28em; line-height: 1;
+    font-size: clamp(3.2rem, 12vw, 8.5rem); color: var(--texto);
   }
-  :global(:root[data-tema^='editorial']) text { font-weight: 500; }
-  .desenhando text { animation: desenhar 1.5s cubic-bezier(0.55, 0, 0.3, 1) forwards, preencher 0.6s ease 1.15s forwards; }
-  @keyframes desenhar { to { stroke-dashoffset: 0; } }
-  @keyframes preencher { to { fill-opacity: 1; stroke-opacity: 0; } }
+  :global(:root[data-tema^='editorial']) .palavra { font-weight: 500; }
 
-  /* sublinhado laranja que corre por baixo enquanto a palavra é desenhada, e some antes do voo */
-  .traco {
-    position: absolute; height: 2px; background: var(--destaque); transform: scaleX(0); transform-origin: left;
+  /* A palavra inteira já ocupa o lugar (fica centrada desde o início); cada tecla só revela a sua letra */
+  .letra { display: inline-block; opacity: 0; }
+  .letra.visivel { opacity: 1; animation: tecla 160ms ease-out; }
+  @keyframes tecla { from { opacity: 0.2; transform: translateY(0.04em); } }
+
+  /* O cursor fica logo depois da última letra digitada: pisca parado, fica firme enquanto digita e some antes do voo */
+  .cursor { display: inline-block; position: relative; width: 0; height: 1em; vertical-align: top; }
+  .cursor::after {
+    content: ''; position: absolute; left: -0.06em; top: 0.02em; width: 0.08em; height: 0.96em;
+    background: var(--destaque); border-radius: 1px; animation: piscar 1s steps(1) infinite;
   }
-  .traco.desenhando { animation: correr 1.3s cubic-bezier(0.55, 0, 0.3, 1) 0.2s forwards, apagar 0.4s ease 1.7s forwards; }
-  @keyframes correr { to { transform: scaleX(1); } }
-  @keyframes apagar { to { opacity: 0; } }
+  .cursor.digitando::after { animation: none; }
+  .cursor.fora::after { opacity: 0; animation: none; transition: opacity 200ms ease; }
+  @keyframes piscar { 50% { opacity: 0; } }
 </style>
