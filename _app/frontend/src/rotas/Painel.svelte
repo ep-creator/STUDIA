@@ -26,7 +26,7 @@
   />
 {:else}
   <div class="grade">
-    <ContagemProva {prova} {hoje} />
+    <ContagemProva {prova} {hoje} {hrefImportar} />
     <ProgressoTopicos
       topicos={painel.topicos}
       hrefTopicos={montarHash({ tela: 'materia', uid, unidade: unidade.numero, area: 'topicos' })}

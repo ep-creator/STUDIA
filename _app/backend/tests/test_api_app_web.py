@@ -34,3 +34,9 @@ def test_caminho_fora_do_dist_nao_vaza(tmp_path):
 def test_sem_build_mostra_instrucao(tmp_path):
     r = _cliente(tmp_path, com_dist=False).get("/")
     assert r.status_code == 200 and "Frontend ainda não compilado" in r.text
+
+
+def test_api_sem_barra_nao_vira_a_pagina_do_app(tmp_path):
+    c = _cliente(tmp_path, com_dist=True)
+    r = c.get("/api")
+    assert r.status_code == 404 and '<div id="app">' not in r.text

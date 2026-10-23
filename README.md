@@ -1,4 +1,4 @@
-# 📚 Plataforma Multi-Disciplinas de Estudos (Desktop Local)
+# 📚 STUDIA — Plataforma Multi-Disciplinas de Estudos (Desktop Local)
 
 Plataforma web local (`127.0.0.1`), 100% *data-driven* (orientada a JSON e Markdown), projetada para gerenciar disciplinas universitárias com **custo zero de tokens em tarefas operacionais** e **Agente de IA local com RAG Estruturado em 2 níveis** para tarefas intelectuais (resumos de aulas, tutoria progressiva de exercícios sem gabarito e revisão de provas).
 

@@ -26,3 +26,10 @@ test('renderizarLatex em bloco e em linha', () => {
   expect(renderizarLatex('a^2', true)).toContain('katex-display')
   expect(renderizarLatex('a^2')).not.toContain('katex-display')
 })
+
+test('cifrão de dinheiro e código não viram fórmula', () => {
+  expect(renderizarMarkdown('Custa R$ 10 e R$ 20 por mês')).not.toContain('katex')
+  expect(renderizarMarkdown('Use `$x$` no código')).not.toContain('katex')
+  expect(renderizarMarkdown('```\n$a$ e $b$\n```')).not.toContain('katex')
+  expect(renderizarMarkdown('E a fórmula $x^2$ continua')).toContain('katex')
+})

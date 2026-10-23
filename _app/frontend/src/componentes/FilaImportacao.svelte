@@ -1,6 +1,7 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
   import { NOME_TIPO } from '../api/proposta'
+  import { compararNomes } from '../apresentacao'
   import type { FonteResumo, ImportacaoSaida, ResumoImportacao } from '../api/tipos'
   import { avisar, erro } from '../estado/avisos.svelte'
   import AreaSoltar from './AreaSoltar.svelte'
@@ -24,7 +25,7 @@
   const ORDEM_TIPO = ['programa', 'calendario', 'turma', 'livro', 'lista', 'prova', 'slides', 'anotacao', 'outro']
   const ordenados = $derived([...pendentes].sort((a, b) =>
     Number(b.pendencias > 0) - Number(a.pendencias > 0) || ORDEM_TIPO.indexOf(a.tipo) - ORDEM_TIPO.indexOf(b.tipo)
-    || (nomes[a.fonte_id] ?? '').localeCompare(nomes[b.fonte_id] ?? '')))
+    || compararNomes(nomes[a.fonte_id] ?? '', nomes[b.fonte_id] ?? '')))
 
   async function carregar() {
     try {

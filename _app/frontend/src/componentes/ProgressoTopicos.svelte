@@ -18,6 +18,6 @@
 </section>
 
 <style>
-  .barra { height: 6px; background: var(--borda); border-radius: 3px; margin: 0.5rem 0; opacity: 0.6; }
+  .barra { height: 6px; background: color-mix(in srgb, var(--borda) 18%, transparent); border-radius: 3px; margin: 0.5rem 0; }
   .barra div { height: 100%; background: var(--destaque); border-radius: 3px; }
 </style>

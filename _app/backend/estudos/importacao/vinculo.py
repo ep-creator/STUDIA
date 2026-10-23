@@ -42,6 +42,12 @@ def similaridade(a: str, b: str, idf: dict[str, float]) -> float:
     return peso(ta & tb) / peso(ta | tb)
 
 
+def _profundidade(c: Candidato) -> int:
+    """Nível do código da seção na chave ('14.3' → 1); chaves sem código contam 0."""
+    codigo = c.chave[-1] if isinstance(c.chave, tuple) else c.chave
+    return codigo.count(".") if isinstance(codigo, str) else 0
+
+
 def pontuar(
     texto: str, candidatos: list[Candidato], limiar: float, idf: dict[str, float] | None = None
 ) -> list[tuple[float, Candidato]]:
@@ -49,8 +55,10 @@ def pontuar(
     candidatos passa o `idf` pronto (construir_idf dos títulos) para não recalculá-lo a cada chamada."""
     if idf is None:
         idf = construir_idf([c.titulo for c in candidatos])
+    # Empate de nota: fica a mais específica (seção 14.3 antes do capítulo 14 de mesmo título)
     pontuados = sorted(
-        ((similaridade(texto, c.titulo, idf), c) for c in candidatos), key=lambda par: par[0], reverse=True
+        ((similaridade(texto, c.titulo, idf), c) for c in candidatos),
+        key=lambda par: (par[0], _profundidade(par[1])), reverse=True,
     )
     return [(s, c) for s, c in pontuados if s >= limiar]
 
@@ -62,7 +70,8 @@ def melhores(
     vinculos = []
     for i, (score, c) in enumerate(pontuados[:maximo]):
         # Escolha única entre candidatos igualmente parecidos é um chute: a confiança cai pela metade
-        empate = maximo == 1 and i == 0 and len(pontuados) > 1 and math.isclose(pontuados[1][0], score)
+        empate = (maximo == 1 and i == 0 and len(pontuados) > 1 and math.isclose(pontuados[1][0], score)
+                  and _profundidade(pontuados[1][1]) == _profundidade(c))
         vinculos.append(Vinculo(c.chave, c.titulo, round(score / 2 if empate else score, 4)))
     return vinculos
 

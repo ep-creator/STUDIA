@@ -34,7 +34,7 @@ async def _erro_validacao(_request: Request, exc: RequestValidationError) -> JSO
 
 
 def create_app(settings: Settings) -> FastAPI:
-    app = FastAPI(title="Plataforma de Estudos", version="2.0.0")
+    app = FastAPI(title="STUDIA", version="2.0.0")
     app.state.settings = settings
     app.add_middleware(OrigemLocalMiddleware, porta=settings.porta)
     app.add_exception_handler(NaoEncontrado, _erro(404))

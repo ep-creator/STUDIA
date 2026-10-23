@@ -24,6 +24,7 @@ _CONTEUDOS = re.compile(r"^conte[úu]dos?\s*:\s*(.*)$", re.I)
 _FIM_CONTEUDOS = re.compile(r":\s*$|@|^prof(?:\.|essor)", re.I)  # cabeçalho ("Equipe:"), e-mail, "Prof. Fulano"
 _NUMERO_SOLTO = re.compile(r"^\d+$")  # resto de fração/expoente ("x^{1/2}" vira "1" numa linha e "2." na outra)
 _JANELA_REPETICAO = 4  # linhas entre a falsa questão e a repetição do número
+_PARTE_ROMANA = re.compile(r"^[IVX]{1,4}\.\s+(\S.+)$")  # "II. Subespaços e bases": título de parte da lista
 
 
 @dataclass
@@ -148,6 +149,8 @@ def _numerada(linhas: list[tuple[int, str]], arquivo: ArquivoListas, nome_arquiv
             anterior = (pagina, linha)
             continue
         anterior = (pagina, linha)
+        if _PARTE_ROMANA.match(linha):
+            continue  # título de parte não é texto de questão
         if m and int(m.group(1)) == 1 and lista.questoes:
             reiniciou, suspeita = True, None
             arquivo.avisos.append(
@@ -169,7 +172,9 @@ def extrair_listas(doc: DocumentoPdf, nome_arquivo: str = "") -> ArquivoListas:
     unidade = ordinal_para_int(m.group(1)) if m else None
     referencia = next((l for _, l in linhas if l.count(",") >= 2 and re.match(r"^[A-Z]\.\s*[A-Z]", l)), None)
     formato = "por_secao" if any(_SECAO.match(l) for _, l in linhas) else "numerada"
-    arquivo = ArquivoListas(formato, titulo, unidade, referencia, _conteudos(linhas))
+    # Sem linha de "Conteúdos:", os títulos de parte em romanos ("I. Matrizes…") fazem o papel de conteúdos
+    conteudos = _conteudos(linhas) or [m.group(1).strip() for _, l in linhas if (m := _PARTE_ROMANA.match(l))]
+    arquivo = ArquivoListas(formato, titulo, unidade, referencia, conteudos)
     if formato == "por_secao":
         _por_secao(linhas, arquivo)
     else:

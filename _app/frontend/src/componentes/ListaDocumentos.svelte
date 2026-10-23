@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Documento, FonteResumo } from '../api/tipos'
+  import { compararNomes } from '../apresentacao'
 
   export type Selecao = { tipo: 'documento' | 'fonte'; id: number } | null
 
@@ -14,13 +15,16 @@
     ['resumo', 'Resumos'], ['resolucao', 'Resoluções'], ['anotacao', 'Anotações'], ['plano', 'Planos'], ['contexto', 'Contexto'],
   ]
   const GRUPOS_FONTE: [string, string][] = [['livro', 'Livros'], ['lista', 'Listas (PDF)'], ['slides', 'Slides'], ['prova', 'Provas']]
-  const outrasFontes = $derived(fontes.filter((f) => !GRUPOS_FONTE.some(([t]) => t === f.tipo)))
+  const nomeFonte = (f: FonteResumo) => f.titulo || (f.caminho.split('/').pop() ?? '')
+  const ordenadas = $derived([...fontes].sort((a, b) => compararNomes(nomeFonte(a), nomeFonte(b))))
+  const docsOrdenados = $derived([...documentos].sort((a, b) => compararNomes(a.titulo, b.titulo)))
+  const outrasFontes = $derived(ordenadas.filter((f) => !GRUPOS_FONTE.some(([t]) => t === f.tipo)))
   const ativo = (tipo: 'documento' | 'fonte', id: number) => selecao?.tipo === tipo && selecao.id === id
 </script>
 
 <nav class="lista" aria-label="Documentos e arquivos">
   {#each GRUPOS_DOC as [tipo, nome] (tipo)}
-    {@const itens = documentos.filter((d) => d.tipo === tipo)}
+    {@const itens = docsOrdenados.filter((d) => d.tipo === tipo)}
     {#if itens.length}
       <div class="rotulo">{nome}</div>
       <ul>
@@ -31,7 +35,7 @@
     {/if}
   {/each}
   {#each [...GRUPOS_FONTE, ['outro', 'Outros PDFs'] as [string, string]] as [tipo, nome] (tipo)}
-    {@const itens = tipo === 'outro' ? outrasFontes : fontes.filter((f) => f.tipo === tipo)}
+    {@const itens = tipo === 'outro' ? outrasFontes : ordenadas.filter((f) => f.tipo === tipo)}
     {#if itens.length}
       <div class="rotulo">{nome}</div>
       <ul>

@@ -70,3 +70,8 @@ def test_um_vinculo_fraco_nao_vira_certeza():
     numero, confianca = unidade_majoritaria([(2, 0.4)])
     assert numero == 2 and confianca == pytest.approx(0.4)
     assert unidade_majoritaria([(1, 0.9), (1, 0.8), (2, 0.4)])[0] == 1
+
+
+def test_empate_entre_capitulo_e_secao_fica_com_a_secao_mais_especifica():
+    candidatos = [Candidato("14", "14 Derivadas Parciais"), Candidato("14.3", "14.3 Derivadas Parciais")]
+    assert melhores("Derivadas parciais", candidatos, 0.35)[0].chave == "14.3"

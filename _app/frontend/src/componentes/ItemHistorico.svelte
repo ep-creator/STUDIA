@@ -28,7 +28,7 @@
   <div class="linha">
     <span class="quando"><b>{hora}</b> <span class="suave">{dia}</span></span>
     <span class="descricao">{ehDesfazer ? `↩ ${grupo.descricao}` : grupo.descricao}{#if grupo.desfeito_em}<span class="suave"> · desfeito</span>{/if}</span>
-    <button class="botao" onclick={verDiferenca} aria-expanded={aberto}>{aberto ? 'Fechar' : 'Ver diferença'}</button>
+    <button class="botao" onclick={verDiferenca} aria-expanded={aberto}>{aberto ? 'Fechar' : 'Detalhes'}</button>
     {#if ultimo}<button class="botao primario" onclick={ondesfazer}>↩ Desfazer</button>{/if}
   </div>
   {#if aberto && detalhe}

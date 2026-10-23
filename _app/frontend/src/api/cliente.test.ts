@@ -44,3 +44,8 @@ test('urlArquivo com página', () => {
   expect(urlArquivo('ab', 'fontes/livros/s t.pdf', 433)).toBe('/arquivos/ab/fontes/livros/s%20t.pdf#page=433')
   expect(urlArquivo('ab', 'fontes/a.pdf')).toBe('/arquivos/ab/fontes/a.pdf')
 })
+
+test('erro do motor que não é JSON vira mensagem legível', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('Internal Server Error', { status: 500, statusText: 'Internal Server Error', headers: { 'content-type': 'text/plain' } })))
+  await expect(requisitar('GET', '/api/materias')).rejects.toMatchObject({ status: 500, message: 'Erro no motor (500): Internal Server Error' })
+})

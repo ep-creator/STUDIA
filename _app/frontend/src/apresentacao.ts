@@ -45,3 +45,18 @@ export function rotuloStatus(status: string): string {
 export function isoDe(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+/** Linha curta da prova no topo: "Prova em 12 dias", "Prova hoje", "Prova já foi (seg 14/09)", "Sem data de prova". */
+export function textoTopoProva(prova: { data: string; hora_inicio: string | null } | null, hoje: Date): string {
+  if (!prova) return 'Sem data de prova'
+  const dias = diasAte(prova.data, hoje)
+  if (dias < 0) return `Prova já foi (${dataCurta(prova.data)})`
+  if (dias === 0) return 'Prova hoje'
+  if (dias === 1) return 'Prova amanhã'
+  return `Prova em ${dias} dias`
+}
+
+/** Ordem natural ("Aula 2" antes de "Aula 10"), sem diferenciar acento e maiúscula. */
+export function compararNomes(a: string, b: string): number {
+  return a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' })
+}

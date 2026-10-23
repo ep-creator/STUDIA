@@ -3,6 +3,8 @@
   import type { MateriaCriada, ResumoMateria } from '../api/tipos'
   import CartaoMateria from '../componentes/CartaoMateria.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
+  import Marca from '../componentes/Marca.svelte'
+  import SeletorTema from '../componentes/SeletorTema.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { montarHash } from './rota'
 
@@ -23,6 +25,7 @@
 </script>
 
 <div class="materias">
+  <div class="topo"><Marca tamanho="grande" /></div>
   <header>
     <h1>Suas matérias</h1>
     <button class="botao primario" onclick={() => (criando = true)}>＋ Nova matéria</button>
@@ -43,10 +46,13 @@
   <div class="grade">
     {#each materias as m (m.uid)}<CartaoMateria materia={m} />{/each}
   </div>
+  <footer class="rodape"><SeletorTema /></footer>
 </div>
 
 <style>
   .materias { max-width: 60rem; margin: 0 auto; padding: 2rem 1.5rem; }
+  .topo { margin-bottom: 1.5rem; }
+  .rodape { margin-top: 3rem; max-width: 14rem; }
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
   .nova { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; }
   .nova input { margin-left: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo); }

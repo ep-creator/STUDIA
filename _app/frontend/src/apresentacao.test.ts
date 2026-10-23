@@ -26,3 +26,18 @@ test('diasAte ignora a hora do dia', () => {
 test('rótulos dos status do banco', () => {
   expect(['pendente', 'proxima', 'visto'].map(rotuloStatus)).toEqual(['pendente', 'próxima', 'visto'])
 })
+
+test('texto da prova no topo', async () => {
+  const { textoTopoProva } = await import('./apresentacao')
+  const hoje = new Date(2026, 9, 22)
+  expect(textoTopoProva({ data: '2026-11-03', hora_inicio: '14:30' }, hoje)).toBe('Prova em 12 dias')
+  expect(textoTopoProva({ data: '2026-10-22', hora_inicio: null }, hoje)).toBe('Prova hoje')
+  expect(textoTopoProva({ data: '2026-10-23', hora_inicio: null }, hoje)).toBe('Prova amanhã')
+  expect(textoTopoProva({ data: '2026-09-14', hora_inicio: null }, hoje)).toBe('Prova já foi (seg 14/09)')
+  expect(textoTopoProva(null, hoje)).toBe('Sem data de prova')
+})
+
+test('ordem natural de nomes', async () => {
+  const { compararNomes } = await import('./apresentacao')
+  expect(['Aula 10', 'Aula 2', 'Aula 1'].sort(compararNomes)).toEqual(['Aula 1', 'Aula 2', 'Aula 10'])
+})

@@ -15,7 +15,7 @@ APP_DIR_PADRAO = Path(__file__).resolve().parents[2]  # .../_app
 
 
 def main(argv: list[str] | None = None, app_dir: Path | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="estudos", description="Plataforma de Estudos — motor local")
+    parser = argparse.ArgumentParser(prog="estudos", description="STUDIA — motor local")
     parser.add_argument("--porta", type=int, help="porta HTTP (padrão: config.toml)")
     parser.add_argument("--sem-navegador", action="store_true", help="não abrir o navegador")
     args = parser.parse_args(argv)

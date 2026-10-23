@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Plataforma de Estudos - Motor novo
+title STUDIA
 cd /d "%~dp0backend"
 
 if not exist ".venv\Scripts\python.exe" (

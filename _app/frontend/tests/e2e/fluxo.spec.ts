@@ -82,7 +82,7 @@ test('editar resumo e ver a diferença', async ({ page }) => {
   await expect(page.locator('.leitor .katex')).toHaveCount(1)
 
   await page.getByRole('link', { name: 'Histórico', exact: true }).click()
-  await page.getByRole('button', { name: 'Ver diferença' }).first().click()
+  await page.getByRole('button', { name: 'Detalhes' }).first().click()
   await expect(page.getByText('+ Primeira linha com $x^2$')).toBeVisible()
 })
 
@@ -101,7 +101,7 @@ test('quatro temas persistem', async ({ page }) => {
 
 test('criar outra matéria depois de abrir uma não trava em "Carregando"', async ({ page }) => {
   await abrirArea(page, '1ª', 'Listas')
-  await page.getByRole('link', { name: '← Matérias' }).click()
+  await page.getByRole('link', { name: 'STUDIA' }).click()
   await page.getByRole('button', { name: '＋ Nova matéria' }).click()
   await page.getByLabel('Nome').fill('Segunda matéria')
   await page.getByRole('button', { name: 'Criar', exact: true }).click()

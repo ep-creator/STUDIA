@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ResumoMateria } from '../api/tipos'
   import { montarHash, type Area, type Rota } from '../rotas/rota'
+  import Marca from './Marca.svelte'
   import SeletorTema from './SeletorTema.svelte'
 
   let { rota, materias, unidade, pendencias }: {
@@ -18,7 +19,7 @@
 </script>
 
 <nav class="lateral nao-imprimir" aria-label="Áreas da matéria">
-  <a class="inicio" href="#/">← Matérias</a>
+  <a class="inicio" href="#/" title="Todas as matérias"><Marca /></a>
   <select
     aria-label="Matéria"
     value={rota.uid}
@@ -52,8 +53,8 @@
 </nav>
 
 <style>
-  .lateral { width: 13rem; flex: none; background: var(--lateral); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; min-height: 100vh; position: sticky; top: 0; }
-  .inicio { font-size: 0.85rem; color: var(--suave); text-decoration: none; }
+  .lateral { width: 13rem; flex: none; background: var(--lateral); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+  .inicio { text-decoration: none; padding: 0.1rem 0.5rem 0.4rem; }
   select { font-family: var(--fonte-titulo); font-weight: 600; background: transparent; border: 0; font-size: 1.05rem; padding: 0; }
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }
