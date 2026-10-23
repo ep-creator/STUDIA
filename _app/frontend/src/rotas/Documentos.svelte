@@ -101,7 +101,7 @@
           <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => { if (podeSair()) editando = false }} />
         {/key}
       {:else}
-        <Markdown texto={documento.corpo} />
+        <Markdown texto={documento.corpo} contas={documento.tipo === 'resolucao'} />
       {/if}
     {:else if fonte}
       <h2>{fonte.titulo || fonte.caminho.split('/').pop()}</h2>

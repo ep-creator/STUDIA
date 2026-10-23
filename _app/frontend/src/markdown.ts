@@ -14,12 +14,18 @@ export function renderizarLatex(tex: string, bloco = false): string {
   return katex.renderToString(tex, { displayMode: bloco, throwOnError: false, output: 'html' })
 }
 
-export function renderizarMarkdown(texto: string): string {
+/** contasEmCodigo: textos do app antigo escreviam as contas em blocos ``` (sem linguagem) com matemática em Unicode;
+ *  nesse modo esses blocos viram fórmulas do KaTeX, como no Formulário. Bloco com linguagem continua sendo código. */
+export function renderizarMarkdown(texto: string, { contasEmCodigo = false }: { contasEmCodigo?: boolean } = {}): string {
   // As fórmulas saem do texto antes do markdown (que estragaria _ e * dentro delas) e voltam já renderizadas.
   // Código fica de fora (pode ter $ de verdade) e volta intacto antes do markdown
   const codigos: string[] = []
-  const semCodigo = (texto ?? '').replace(CODIGO, (m) => `@@CODIGO${codigos.push(m) - 1}@@`)
   const formulas: string[] = []
+  const semCodigo = (texto ?? '').replace(CODIGO, (m) => {
+    const conta = contasEmCodigo ? /^```[ \t]*\r?\n([\s\S]*?)\r?\n?```$/.exec(m) : null
+    if (conta) return `\n\n@@FORMULA${formulas.push(renderizarFormula(conta[1])) - 1}@@\n\n`
+    return `@@CODIGO${codigos.push(m) - 1}@@`
+  })
   const semFormulas = semCodigo.replace(FORMULA, (_m, bloco: string | undefined, linha: string | undefined) => {
     formulas.push(bloco !== undefined ? renderizarLatex(bloco, true) : renderizarLatex(linha!, false))
     return `@@FORMULA${formulas.length - 1}@@`

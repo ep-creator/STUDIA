@@ -2,6 +2,7 @@
   import { tick } from 'svelte'
   import type { ListaComQuestoes, Questao } from '../api/tipos'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import { recolhidos } from '../estado/recolhidos.svelte'
 
   let { listas, marcacoes, selecionada, onmarcar, onselecionar }: {
     listas: ListaComQuestoes[]
@@ -13,7 +14,9 @@
 
   const TECLAS: Record<string, Marca> = { '1': 'ok', '2': 'err', '3': 'dub', '0': null, Backspace: null }
 
-  const todas = $derived(listas.flatMap((l) => l.questoes))
+  // cada assunto (lista) abre e fecha pela setinha; as setas do teclado só andam pelos abertos
+  const grupos = recolhidos('studia.listas.fechadas')
+  const todas = $derived(listas.filter((l) => grupos.aberto(String(l.id))).flatMap((l) => l.questoes))
   let focada = $state<number | null>(null)
   let botoes: Record<number, HTMLButtonElement> = {}
 
@@ -64,11 +67,16 @@
 
 <div class="grade">
   {#each listas as l (l.id)}
+    {@const aberto = grupos.aberto(String(l.id))}
     <section class="lista">
       <header>
-        <h3>{l.titulo}</h3>
-        <span class="suave">{placar(l)}</span>
+        <button class="assunto" aria-expanded={aberto} onclick={() => grupos.alternar(String(l.id))}>
+          <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
+          <h3>{l.titulo}</h3>
+        </button>
+        <span class="suave placar">{placar(l)}</span>
       </header>
+      {#if aberto}
       {#each linhas(l) as [titulo, questoes] (titulo)}
         {#if titulo}<div class="rotulo">{titulo}</div>{/if}
         <div class="questoes">
@@ -88,13 +96,20 @@
           {/each}
         </div>
       {/each}
+      {/if}
     </section>
   {/each}
 </div>
 
 <style>
-  .grade { display: grid; gap: 1.25rem; }
-  header { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .grade { display: grid; gap: 1rem; }
+  header { display: flex; align-items: center; gap: 0.4rem 1rem; flex-wrap: wrap; }
+  .assunto { display: flex; align-items: center; gap: 0.45rem; background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-align: left; }
+  .assunto:hover h3, .assunto:hover .seta { color: var(--destaque); }
+  .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
+  .seta.aberto { transform: rotate(90deg); }
+  h3 { transition: color var(--transicao); }
+  .placar { font-size: 0.9rem; }
   h3 { font-size: 1.05rem; margin: 0; }
   .rotulo { margin: 0.4rem 0 0.2rem; }
   .questoes { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }

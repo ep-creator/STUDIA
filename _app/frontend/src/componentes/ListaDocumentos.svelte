@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Documento, FonteResumo, Topico } from '../api/tipos'
   import { compararNomes, ordenarPeloAssunto } from '../apresentacao'
+  import { recolhidos } from '../estado/recolhidos.svelte'
 
   export type Selecao = { tipo: 'documento' | 'fonte'; id: number } | null
 
@@ -54,16 +55,7 @@
     return [...grupos, { chave: 'pdf-outro', nome: 'Outros PDFs', itens: outros.map(daFonte) }].filter((g) => g.itens.length)
   })
 
-  // Grupos fechados ficam lembrados neste navegador (só conveniência: sem armazenamento, tudo abre)
-  const CHAVE = 'studia.documentos.fechados'
-  function lerFechados(): string[] {
-    try { return JSON.parse(localStorage.getItem(CHAVE) ?? '[]') } catch { return [] }
-  }
-  let fechados = $state<string[]>(lerFechados())
-  function alternar(chave: string) {
-    fechados = fechados.includes(chave) ? fechados.filter((c) => c !== chave) : [...fechados, chave]
-    try { localStorage.setItem(CHAVE, JSON.stringify(fechados)) } catch { /* segue sem lembrar */ }
-  }
+  const recolhiveis = recolhidos('studia.documentos.fechados')
 
   const ativo = (i: Item) => selecao?.tipo === i.tipo && selecao.id === i.id
 </script>
@@ -73,8 +65,8 @@
     <section class="secao" aria-label={titulo}>
       <h3>{titulo}</h3>
       {#each grupos as g (g.chave)}
-        {@const aberto = !fechados.includes(g.chave)}
-        <button class="grupo" aria-expanded={aberto} onclick={() => alternar(g.chave)}>
+        {@const aberto = recolhiveis.aberto(g.chave)}
+        <button class="grupo" aria-expanded={aberto} onclick={() => recolhiveis.alternar(g.chave)}>
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
           <span class="rotulo">{g.nome}</span>
           <span class="conta">{g.itens.length}</span>

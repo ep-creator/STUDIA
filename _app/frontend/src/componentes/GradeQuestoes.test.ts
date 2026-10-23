@@ -33,3 +33,15 @@ test('lista por seção separa linha 1 e linha 2, com placar', () => {
   expect(screen.getByText('Linha 2')).toBeInTheDocument()
   expect(screen.getByText(/1 ✓ · 1 ✗ · 0 \? · 1 por fazer/)).toBeInTheDocument()
 })
+
+test('cada assunto abre e fecha pela setinha, com as linhas 1 e 2 dentro dele', async () => {
+  localStorage.clear()
+  render(GradeQuestoes, { listas: [lista154], marcacoes: {}, selecionada: null, onmarcar: vi.fn(), onselecionar: vi.fn() })
+  const assunto = screen.getByRole('button', { name: /Lista 15\.4/ })
+  expect(assunto).toHaveAttribute('aria-expanded', 'true')
+  await userEvent.click(assunto)
+  expect(assunto).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('button', { name: /Questão 15\.4 #7/ })).toBeNull()
+  expect(screen.queryByText('Linha 2')).toBeNull()
+  expect(screen.getByText(/0 ✓ · 0 ✗ · 0 \? · 3 por fazer/)).toBeInTheDocument() // o placar continua à vista
+})

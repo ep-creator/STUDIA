@@ -57,3 +57,14 @@ test('fórmula Unicode com % ou chaves quebradas não some nem mostra erro', asy
   expect(quebrada).not.toContain('katex-error')
   expect(quebrada).toContain('f(x} = 1')
 })
+
+test('modo "contas em código": bloco ``` sem linguagem vira fórmula do KaTeX; com linguagem continua código', async () => {
+  const { renderizarMarkdown } = await import('./markdown')
+  const texto = 'Elevando ao quadrado:\n\n```\nz² = 4x² + y²,  z ≥ 0\n```\n\n```python\nprint(1)\n```'
+  const html = renderizarMarkdown(texto, { contasEmCodigo: true })
+  expect(html).toContain('katex-display')
+  expect(html).toContain('print(1)')
+  expect(html.match(/<pre/g)).toHaveLength(1)
+  // sem o modo, nada muda
+  expect(renderizarMarkdown(texto)).not.toContain('katex')
+})

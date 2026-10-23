@@ -68,7 +68,7 @@
         {verResolucao ? 'Esconder resolução' : 'Ver resolução'}
       </button>
       {#if verResolucao}
-        {#if corpo === null}<p class="suave">Carregando…</p>{:else}<div class="texto"><Markdown texto={corpo} /></div>{/if}
+        {#if corpo === null}<p class="suave">Carregando…</p>{:else}<div class="texto"><Markdown texto={corpo} contas /></div>{/if}
       {/if}
     </section>
   {/if}
@@ -77,10 +77,10 @@
 </aside>
 
 <style>
-  .detalhe { display: grid; gap: 0.75rem; align-content: start; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+  .detalhe { display: grid; gap: 0.75rem; align-content: start; }
   .resolucao { display: grid; gap: 0.6rem; }
   .resolucao .botao { justify-self: start; }
-  .texto { border-top: 1px solid color-mix(in srgb, var(--borda) 60%, transparent); padding-top: 0.6rem; font-size: 0.95rem; }
+  .texto { border-top: 1px solid color-mix(in srgb, var(--borda) 60%, transparent); padding-top: 0.8rem; line-height: 1.6; }
   h3, p { margin: 0; }
   .marcas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .botao[aria-pressed='true'].ok { background: var(--ok); color: #fff; border-color: var(--ok); }
