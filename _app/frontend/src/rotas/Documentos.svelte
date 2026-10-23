@@ -24,6 +24,7 @@
   let novoTitulo = $state('')
   let novoTipo = $state('resumo')
   let leitor = $state<HTMLElement>()
+  const unidadeAtual = $derived(painel.unidades.find((u) => u.numero === painel.unidade)?.id ?? null)
 
   // abrir outro documento começa do topo dele (o texto rola dentro do leitor, não na página)
   $effect(() => {
@@ -86,7 +87,7 @@
         <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
       </form>
     {/if}
-    <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={selecionar} />
+    <ListaDocumentos documentos={painel.documentos} {fontes} topicos={painel.topicos} {unidadeAtual} {selecao} onselecionar={selecionar} />
   </aside>
 
   <section class="leitor" bind:this={leitor}>
