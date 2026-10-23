@@ -35,7 +35,8 @@ test('matéria nova só com cliques', async ({ page }) => {
 
   // Revisão: a L1 vai para a 1ª unidade (escolha do usuário)
   await fila.getByText('Lista1_2026-1.pdf').click()
-  await page.getByLabel('Unidade da lista L1').selectOption('1')
+  await page.getByRole('button', { name: /^Unidade da lista L1/ }).click()
+  await page.getByRole('option', { name: '1ª unidade' }).click()
 
   // Primeiro o que não tem pendência (o programa); com os tópicos no banco, o motor recalcula a unidade da L3
   await page.getByRole('button', { name: /Confirmar todos sem pendências/ }).click()
@@ -89,11 +90,13 @@ test('editar resumo e ver a diferença', async ({ page }) => {
 test('quatro temas persistem', async ({ page }) => {
   await page.goto(inicioMateria)
   for (const [identidade, modo, esperado] of [
-    ['padrao', 'claro', 'padrao-claro'], ['padrao', 'escuro', 'padrao-escuro'],
-    ['editorial', 'claro', 'editorial-claro'], ['editorial', 'escuro', 'editorial-escuro'],
+    ['Padrão', 'Claro', 'padrao-claro'], ['Padrão', 'Escuro', 'padrao-escuro'],
+    ['Editorial', 'Claro', 'editorial-claro'], ['Editorial', 'Escuro', 'editorial-escuro'],
   ]) {
-    await page.getByLabel('Identidade visual').selectOption(identidade)
-    await page.getByLabel('Claro ou escuro').selectOption(modo)
+    await page.getByRole('button', { name: /^Identidade visual/ }).click()
+    await page.getByRole('option', { name: identidade }).click()
+    await page.getByRole('button', { name: /^Claro ou escuro/ }).click()
+    await page.getByRole('option', { name: modo, exact: true }).click()
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-tema', esperado)
   }

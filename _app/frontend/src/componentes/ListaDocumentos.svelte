@@ -53,5 +53,6 @@
   ul { list-style: none; margin: 0; padding: 0; }
   button { background: none; border: 0; text-align: left; width: 100%; padding: 0.2rem 0.4rem; border-radius: 6px; cursor: pointer; }
   button.ativo { background: var(--cartao); font-weight: 600; }
+  button:hover:not(.ativo) { background: var(--realce); color: var(--destaque); }
   :global(:root[data-tema^='editorial']) button.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
 </style>

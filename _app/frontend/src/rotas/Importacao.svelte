@@ -10,6 +10,7 @@
   import PropostaProgramaView from '../componentes/PropostaPrograma.svelte'
   import PropostaTurmaView from '../componentes/PropostaTurma.svelte'
   import SeloConfianca from '../componentes/SeloConfianca.svelte'
+  import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { recarregar } from '../estado/materia.svelte'
@@ -124,12 +125,11 @@
       <header>
         <h3>{NOME_TIPO[imp.tipo] ?? imp.tipo}</h3>
         <SeloConfianca item={p.classificacao} porque="Pelo texto do arquivo (datas, unidades, sumário, questões…), este é o tipo mais provável. Se estiver errado, troque ao lado." />
-        <label class="tipo">
-          Tipo errado?
-          <select value={imp.tipo} onchange={(e) => trocarTipo(e.currentTarget.value)}>
-            {#each TIPOS_ARQUIVO as t (t)}<option value={t}>{NOME_TIPO[t]}</option>{/each}
-          </select>
-        </label>
+        <div class="tipo">
+          <span>Tipo errado?</span>
+          <Seletor rotulo="Tipo errado?" variante="compacto" valor={imp.tipo} onmudar={trocarTipo}
+            opcoes={TIPOS_ARQUIVO.map((t) => ({ valor: t, rotulo: NOME_TIPO[t] }))} />
+        </div>
       </header>
 
       {#if imp.tipo === 'lista'}
@@ -163,7 +163,6 @@
   .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
   .proposta header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
   .proposta h3 { margin: 0; }
-  .tipo { margin-left: auto; font-size: 0.85rem; color: var(--suave); }
+  .tipo { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--suave); min-width: 14rem; }
   footer { display: flex; gap: 0.5rem; align-items: center; margin-top: 1.25rem; }
-  select { background: var(--cartao); border: 1px solid var(--borda); border-radius: 6px; }
 </style>

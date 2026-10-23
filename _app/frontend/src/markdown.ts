@@ -27,3 +27,20 @@ export function renderizarMarkdown(texto: string): string {
   const html = md.render(semFormulas.replace(/@@CODIGO(\d+)@@/g, (_m, i: string) => codigos[Number(i)])).replace(/@@FORMULA(\d+)@@/g, (_m, i: string) => formulas[Number(i)])
   return DOMPurify.sanitize(html)
 }
+
+const COMANDO_LATEX = /\\[a-zA-Z]+/
+
+function escaparHtml(texto: string): string {
+  return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/** Corpo de uma fórmula do Formulário. Com comandos LaTeX: uma equação por linha (o KaTeX ignora quebras soltas).
+ *  Sem LaTeX (fórmulas diagramadas em Unicode, vindas do app antigo): texto pré-formatado, com " | " virando linha. */
+export function renderizarFormula(corpo: string): string {
+  if (COMANDO_LATEX.test(corpo)) {
+    const linhas = corpo.split('\n').map((l) => l.trim()).filter(Boolean)
+    return DOMPurify.sanitize(linhas.map((l) => renderizarLatex(l, true)).join(''))
+  }
+  const texto = corpo.replace(/\s+\|\s+/g, '\n').replace(/^\n+|\n+$/g, '')
+  return DOMPurify.sanitize(`<pre class="formula-texto">${escaparHtml(texto)}</pre>`)
+}

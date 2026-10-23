@@ -6,6 +6,7 @@
   import Markdown from '../componentes/Markdown.svelte'
   import VisualizadorPdf from '../componentes/VisualizadorPdf.svelte'
   import { criarDocumento } from '../documentos'
+  import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
@@ -73,10 +74,8 @@
     {#if criando}
       <form class="novo" onsubmit={criar}>
         <input aria-label="Título do documento" placeholder="Título" bind:value={novoTitulo} required />
-        <select aria-label="Tipo do documento" bind:value={novoTipo}>
-          <option value="resumo">Resumo</option><option value="anotacao">Anotação</option>
-          <option value="resolucao">Resolução</option><option value="plano">Plano</option>
-        </select>
+        <Seletor rotulo="Tipo do documento" variante="compacto" valor={novoTipo} onmudar={(v) => (novoTipo = v)}
+          opcoes={[{ valor: 'resumo', rotulo: 'Resumo' }, { valor: 'anotacao', rotulo: 'Anotação' }, { valor: 'resolucao', rotulo: 'Resolução' }, { valor: 'plano', rotulo: 'Plano' }]} />
         <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
       </form>
     {/if}
@@ -109,6 +108,6 @@
   .documentos { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
   aside { display: grid; gap: 0.5rem; position: sticky; top: 1rem; }
   .novo { display: grid; gap: 0.4rem; }
-  .novo input, .novo select { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
+  .novo input { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 </style>

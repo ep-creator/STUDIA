@@ -91,6 +91,8 @@
   .rotulo { margin: 0.4rem 0 0.2rem; }
   .questoes { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
   .questao { min-width: 2.6rem; padding: 0.2rem 0.55rem; border: 1.5px solid var(--borda); border-radius: 6px; background: var(--cartao); cursor: pointer; }
+  .questao:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgb(0 0 0 / 14%); }
+  .questao:not(.ok, .err, .dub):hover { border-color: var(--destaque); color: var(--destaque); }
   .questao.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
   .questao.err { background: var(--err); border-color: var(--err); color: #fff; }
   .questao.dub { background: var(--dub); border-color: var(--dub); color: #000; }

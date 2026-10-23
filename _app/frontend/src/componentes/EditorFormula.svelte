@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Formula } from '../api/tipos'
-  import { renderizarLatex } from '../markdown'
+  import { renderizarFormula } from '../markdown'
 
   let { formula, onsalvar, oncancelar }: {
     formula: Partial<Formula> | null
@@ -14,7 +14,7 @@
   let corpo = $state(formula?.corpo_tex ?? '')
   // svelte-ignore state_referenced_locally
   let notas = $state(formula?.notas_md ?? '')
-  const previa = $derived(corpo.trim() ? renderizarLatex(corpo, true) : '')
+  const previa = $derived(corpo.trim() ? renderizarFormula(corpo) : '')
 </script>
 
 <form class="cartao editor" onsubmit={(e) => { e.preventDefault(); onsalvar({ titulo: titulo.trim(), corpo_tex: corpo, notas_md: notas }) }}>

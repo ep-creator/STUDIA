@@ -33,3 +33,17 @@ test('cifrão de dinheiro e código não viram fórmula', () => {
   expect(renderizarMarkdown('```\n$a$ e $b$\n```')).not.toContain('katex')
   expect(renderizarMarkdown('E a fórmula $x^2$ continua')).toContain('katex')
 })
+
+test('fórmula em LaTeX: uma equação por linha', async () => {
+  const { renderizarFormula } = await import('./markdown')
+  const html = renderizarFormula(String.raw`x = r\cos\theta` + '\n' + String.raw`y = r\sin\theta`)
+  expect(html.match(/katex-display/g)).toHaveLength(2)
+})
+
+test('fórmula em texto Unicode do app antigo fica pré-formatada, sem virar KaTeX', async () => {
+  const { renderizarFormula } = await import('./markdown')
+  const html = renderizarFormula('D = f_xx·f_yy − (f_xy)²\n\nD>0, f_xx>0 → mínimo local  |  D<0 → sela')
+  expect(html).not.toContain('katex')
+  expect(html).toContain('<pre class="formula-texto">')
+  expect(html).toContain('mínimo local\nD&lt;0 → sela')
+})

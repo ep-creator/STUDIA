@@ -116,6 +116,7 @@
   ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; max-height: 55vh; overflow-y: auto; }
   li button { width: 100%; display: flex; gap: 0.5rem; align-items: center; text-align: left; background: none; border: 1px solid transparent; border-radius: 6px; padding: 0.35rem 0.5rem; cursor: pointer; }
   li button.ativa { border-color: var(--destaque); background: var(--cartao); }
+  li button:hover:not(.ativa) { background: var(--realce); border-color: color-mix(in srgb, var(--destaque) 35%, transparent); }
   .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tipo { font-size: 0.8rem; color: var(--suave); }
   .pend { font-size: 0.75rem; border-radius: 999px; padding: 0 0.45rem; }

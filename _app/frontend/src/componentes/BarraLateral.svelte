@@ -2,6 +2,7 @@
   import type { ResumoMateria } from '../api/tipos'
   import { montarHash, type Area, type Rota } from '../rotas/rota'
   import Marca from './Marca.svelte'
+  import Seletor from './Seletor.svelte'
   import SeletorTema from './SeletorTema.svelte'
 
   let { rota, materias, unidade, pendencias }: {
@@ -20,13 +21,13 @@
 
 <nav class="lateral nao-imprimir" aria-label="Áreas da matéria">
   <a class="inicio" href="#/" title="Todas as matérias"><Marca /></a>
-  <select
-    aria-label="Matéria"
-    value={rota.uid}
-    onchange={(e) => (location.hash = montarHash({ tela: 'materia', uid: e.currentTarget.value, unidade: null, area: 'painel' }))}
-  >
-    {#each materias as m (m.uid)}<option value={m.uid}>{m.nome}</option>{/each}
-  </select>
+  <Seletor
+    rotulo="Matéria"
+    variante="titulo"
+    opcoes={materias.map((m) => ({ valor: m.uid, rotulo: m.nome }))}
+    valor={rota.uid}
+    onmudar={(uid) => (location.hash = montarHash({ tela: 'materia', uid, unidade: null, area: 'painel' }))}
+  />
 
   <ul>
     {#each AREAS as [area, nome] (area)}
@@ -55,10 +56,12 @@
 <style>
   .lateral { width: 13rem; flex: none; background: var(--lateral); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
   .inicio { text-decoration: none; padding: 0.1rem 0.5rem 0.4rem; }
-  select { font-family: var(--fonte-titulo); font-weight: 600; background: transparent; border: 0; font-size: 1.05rem; padding: 0; }
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }
   a.ativa { background: var(--cartao); font-weight: 600; }
+  ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque); }
+  :global(:root[data-tema^='editorial']) ul a { border-left: 2px solid transparent; border-radius: 0; }
+  :global(:root[data-tema^='editorial']) ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   :global(:root[data-tema^='editorial']) a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   hr { border: 0; border-top: 1px solid var(--borda); opacity: 0.4; width: 100%; }
   .selo { background: var(--dub); color: #000; border-radius: 999px; padding: 0 0.45rem; font-size: 0.75rem; margin-left: 0.25rem; }
