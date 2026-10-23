@@ -130,11 +130,21 @@ Para detalhes técnicos de manutenção e fluxo de versionamento, consulte a pas
 
 O motor novo (`_app/backend`, FastAPI + SQLite por matéria) está sendo construído **ao lado** do app atual, seguindo
 [`docs/superpowers/specs/2026-10-20-refatoracao-plataforma-design.md`](./docs/superpowers/specs/2026-10-20-refatoracao-plataforma-design.md).
-Enquanto a interface nova não fica pronta (Fase 5), o app atual (`abrir.bat`, porta 8780) continua sendo o de uso diário.
+A interface nova (Fase 5) já cobre o uso diário; o app antigo (`abrir.bat`, porta 8780) continua disponível por causa do agente de IA, que é refeito na Fase 6.
 
-- **Iniciar o motor novo:** dois cliques em `_app/abrir-novo.bat` (cria o ambiente Python na primeira vez). Sobe em
-  `http://127.0.0.1:8790` e abre a documentação interativa da API em `/docs`.
-- **Rodar os testes:** dentro de `_app/backend`, `.venv/Scripts/python -m pytest`.
+- **Abrir o app novo:** dois cliques em `_app/abrir-novo.bat`. Na primeira vez ele cria o ambiente Python e instala a
+  interface (precisa do [Node.js](https://nodejs.org)); depois só recompila a interface quando o código muda. Abre em
+  `http://127.0.0.1:8790/` (a API fica em `/api` e a documentação dela em `/docs`). Funciona offline.
+- **Interface (`_app/frontend`, Svelte 5 + Vite + TypeScript):**
+  - barra lateral com Painel, Tópicos, Listas, Cronograma, Documentos e Formulário por unidade, mais Importar e Histórico;
+  - Ctrl+Z desfaz a última ação em qualquer tela;
+  - quatro temas: Editorial e Padrão, cada um claro e escuro (o padrão é o Editorial seguindo o tema do Windows);
+  - para desenvolver: `npm run dev` em `_app/frontend` (porta 5173, repassa `/api` ao motor na 8790);
+  - tipos da API: `npm run tipos` com o motor rodando (gera `src/api/tipos.gerados.ts` a partir do OpenAPI).
+- **Rodar os testes:**
+  - motor, em `_app/backend`: `.venv/Scripts/python -m pytest`;
+  - interface, em `_app/frontend`: `npm test` (Vitest), `npm run check` (tipos) e `npm run e2e` (Playwright, com o motor
+    real e os PDFs de Cálculo 2).
 - **Configuração:** `_app/config.toml` (porta, limiares de confiança da importação, tamanho do histórico de desfazer).
 - **Importar materiais (sem IA):** `POST /api/materias/{uid}/importacoes` com o PDF (programa, calendário, informações
   da turma, livro, lista de exercícios, slides, prova). A plataforma classifica o arquivo, extrai unidades, datas de

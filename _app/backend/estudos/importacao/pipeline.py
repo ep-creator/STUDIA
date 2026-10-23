@@ -100,6 +100,8 @@ def _mesclar(novos: list[dict], anteriores, chave) -> list[dict]:
         anterior = antigos.get(chave(v))
         if anterior is not None and anterior.get("aceito") is False:
             v["aceito"] = False
+        if anterior is not None and anterior.get("revisar") is False:
+            v["revisar"] = False  # já conferido (na revisão ou num cálculo anterior): não volta a pedir revisão
     return novos + [v for k, v in antigos.items() if v.get("manual") and k not in vistos]
 
 
@@ -363,8 +365,12 @@ def _marcar_decisoes(tipo: str, antes: dict, depois: dict) -> None:
             a = anteriores.get(item.get("codigo")) if isinstance(item, dict) else None
             if a is None:
                 continue
-            unidade = item.get("unidade")
-            if isinstance(unidade, dict) and unidade.get("numero") != (a.get("unidade") or {}).get("numero"):
+            unidade, antiga = item.get("unidade"), a.get("unidade") or {}
+            # Escolher outra unidade ou confirmar a sugerida (tirar o "revisar") é decisão do usuário
+            if isinstance(unidade, dict) and (
+                unidade.get("numero") != antiga.get("numero")
+                or (unidade.get("revisar") is False and antiga.get("revisar") is True)
+            ):
                 unidade["manual"] = True
             if item.get("secao_id") != a.get("secao_id"):
                 item["secao_manual"] = True

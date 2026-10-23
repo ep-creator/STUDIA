@@ -24,8 +24,7 @@ def main(argv: list[str] | None = None, app_dir: Path | None = None) -> None:
     if args.porta:
         settings = dataclasses.replace(settings, porta=args.porta)
     if not args.sem_navegador:
-        # Até a Fase 5 não há interface nova: abre a documentação interativa da API.
-        url = f"http://{settings.host}:{settings.porta}/docs"
+        url = f"http://{settings.host}:{settings.porta}/"
         threading.Timer(1.0, webbrowser.open, args=(url,)).start()
     uvicorn.run(create_app(settings), host=settings.host, port=settings.porta)
 

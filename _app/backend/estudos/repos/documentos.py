@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import sqlite3
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
@@ -18,7 +19,9 @@ PASTA_POR_TIPO = {
 }
 
 
-def _caminho(tipo: str, nome_arquivo: str) -> str:
+def caminho_documento(tipo: str, nome_arquivo: str) -> str:
+    """Caminho relativo do .md de um documento (pasta pelo tipo + nome sem diretórios)."""
+    exigir_opcao(tipo, TIPOS_DOCUMENTO, "tipo de documento")
     nome = nome_arquivo.strip()
     if nome != PureWindowsPath(nome).name or nome != PurePosixPath(nome).name or nome in ("", ".", ".."):
         raise CaminhoInvalido(f"Nome de arquivo inválido: {nome_arquivo!r}")
@@ -54,7 +57,7 @@ def salvar(
     """Grava o .md (frontmatter gerado a partir dos dados; corpo intacto) e faz upsert da linha pelo caminho."""
     exigir_opcao(tipo, TIPOS_DOCUMENTO, "tipo de documento")
     exigir_opcao(origem, ORIGENS, "origem")
-    caminho = _caminho(tipo, nome_arquivo)
+    caminho = caminho_documento(tipo, nome_arquivo)
     meta = _frontmatter(op.con, tipo, titulo, unidade_id, secao_id, questao_id, origem)
     escrever_md(op, caminho, DocumentoMd(meta, corpo))
     valores = {
@@ -94,6 +97,12 @@ def obter(con: sqlite3.Connection, documento_id: int) -> Documento:
     if linha is None:
         raise NaoEncontrado(f"Documento {documento_id} não encontrado")
     return Documento(**dict(linha))
+
+
+def versao(raiz: Path, caminho_rel: str) -> str | None:
+    """sha256 dos bytes atuais do .md (None se não existe): muda com qualquer edição, inclusive por fora do app."""
+    alvo = caminho_seguro(raiz, caminho_rel)
+    return hashlib.sha256(alvo.read_bytes()).hexdigest() if alvo.is_file() else None
 
 
 def ler_corpo(raiz: Path, documento: Documento) -> str:
