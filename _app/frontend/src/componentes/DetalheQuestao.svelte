@@ -1,21 +1,42 @@
 <script lang="ts">
-  import { urlArquivo } from '../api/cliente'
-  import type { ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
+  import { requisitar, urlArquivo } from '../api/cliente'
+  import type { Documento, DocumentoComCorpo, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
+  import { erro } from '../estado/avisos.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import EspacoIA from './EspacoIA.svelte'
   import Markdown from './Markdown.svelte'
 
-  let { uid, lista, questao, marca, secao, onmarcar }: {
+  let { uid, lista, questao, marca, secao, resolucao = null, onmarcar }: {
     uid: string
     lista: ListaComQuestoes
     questao: Questao
     marca: Marca
     secao: SecaoVinculada | null
+    resolucao?: Documento | null
     onmarcar: (questaoId: number, marca: Marca) => void
   } = $props()
 
   const NOMES: Record<string, string> = { ok: 'Acertei', err: 'Errei', dub: 'Dúvida' }
   const pagina = $derived(questao.pagina_pdf ?? secao?.pagina_pdf_ini ?? null)
+
+  // A resolução fica escondida (para não estragar a tentativa) até pedir; trocar de questão esconde de novo
+  let verResolucao = $state(false)
+  let corpo = $state<string | null>(null)
+  $effect(() => {
+    void questao.id
+    verResolucao = false
+    corpo = null
+  })
+  async function mostrarResolucao() {
+    verResolucao = !verResolucao
+    if (!verResolucao || corpo !== null || !resolucao) return
+    try {
+      corpo = (await requisitar<DocumentoComCorpo>('GET', `/api/materias/${uid}/documentos/${resolucao.id}`)).corpo
+    } catch (e) {
+      verResolucao = false
+      erro(e)
+    }
+  }
 </script>
 
 <aside class="detalhe cartao" aria-label="Questão selecionada">
@@ -41,11 +62,25 @@
     <a class="botao" href={urlArquivo(uid, secao.caminho, pagina)} target="_blank" rel="noopener">📖 Abrir o livro na p. {pagina}</a>
   {/if}
 
+  {#if resolucao}
+    <section class="resolucao">
+      <button class="botao" aria-expanded={verResolucao} onclick={() => void mostrarResolucao()}>
+        {verResolucao ? 'Esconder resolução' : 'Ver resolução'}
+      </button>
+      {#if verResolucao}
+        {#if corpo === null}<p class="suave">Carregando…</p>{:else}<div class="texto"><Markdown texto={corpo} /></div>{/if}
+      {/if}
+    </section>
+  {/if}
+
   <EspacoIA contexto="tutor" />
 </aside>
 
 <style>
-  .detalhe { display: grid; gap: 0.75rem; align-content: start; position: sticky; top: 1rem; }
+  .detalhe { display: grid; gap: 0.75rem; align-content: start; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
+  .resolucao { display: grid; gap: 0.6rem; }
+  .resolucao .botao { justify-self: start; }
+  .texto { border-top: 1px solid color-mix(in srgb, var(--borda) 60%, transparent); padding-top: 0.6rem; font-size: 0.95rem; }
   h3, p { margin: 0; }
   .marcas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .botao[aria-pressed='true'].ok { background: var(--ok); color: #fff; border-color: var(--ok); }

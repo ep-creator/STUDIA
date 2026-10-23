@@ -59,9 +59,11 @@ test('matéria nova só com cliques', async ({ page }) => {
 test('marcar e desfazer', async ({ page }) => {
   await abrirArea(page, '1ª', 'Listas')
   const q1 = page.getByRole('button', { name: /^Questão L1 #1( |$)/ })
-  await q1.click()
-  await q1.click()   // vazio → ✓ → ✗
+  await q1.click()   // clicar só abre a questão no menu ao lado
+  await expect(page.getByRole('button', { name: 'Questão L1 #1', exact: true })).toBeVisible()
+  await page.getByRole('group', { name: 'Marcar questão' }).getByRole('button', { name: /Errei/ }).click()
   await expect(page.getByRole('button', { name: 'Questão L1 #1 (✗)' })).toBeVisible()
+  await page.getByRole('button', { name: 'Questão L1 #1 (✗)' }).focus()
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('3')
   await expect(page.getByRole('button', { name: 'Questão L1 #2 (?)' })).toBeVisible()

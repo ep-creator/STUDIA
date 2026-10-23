@@ -18,13 +18,13 @@ test('teclado: setas navegam e 1/2/3 marcam', async () => {
   expect(onmarcar).toHaveBeenLastCalledWith(12, 'dub')
 })
 
-test('clique alterna a marca e seleciona a questão', async () => {
+test('clique só seleciona a questão, sem mexer na marca', async () => {
   const onmarcar = vi.fn()
   const onselecionar = vi.fn()
   render(GradeQuestoes, { listas: [lista154], marcacoes: { '11': 'ok' }, selecionada: null, onmarcar, onselecionar })
   await userEvent.click(screen.getByRole('button', { name: /Questão 15\.4 #7/ }))
-  expect(onmarcar).toHaveBeenCalledWith(11, 'err')
   expect(onselecionar).toHaveBeenCalledWith(11)
+  expect(onmarcar).not.toHaveBeenCalled()
 })
 
 test('lista por seção separa linha 1 e linha 2, com placar', () => {

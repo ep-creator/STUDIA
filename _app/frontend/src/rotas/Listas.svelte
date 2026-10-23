@@ -43,15 +43,16 @@
         questao={achada.questao}
         marca={marcaDe(achada.questao.id)}
         secao={painel.vinculos.listas[String(achada.lista.id)]?.secao ?? null}
+        resolucao={painel.documentos.find((d) => d.tipo === 'resolucao' && d.questao_id === achada.questao.id) ?? null}
         onmarcar={aoMarcar}
       />
     {:else}
-      <p class="suave dica">Clique numa questão para marcar (✓ → ✗ → ? → vazio) e ver os detalhes. No teclado: setas para andar, 1 ✓, 2 ✗, 3 ?, 0 limpa.</p>
+      <p class="suave dica">Clique numa questão para abrir os detalhes, marcar e ver a resolução (quando houver). No teclado: setas para andar, 1 ✓, 2 ✗, 3 ?, 0 limpa.</p>
     {/if}
   </div>
 {/if}
 
 <style>
-  .listas { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
+  .listas { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: 1.5rem; align-items: start; }
   .dica { position: sticky; top: 1rem; }
 </style>

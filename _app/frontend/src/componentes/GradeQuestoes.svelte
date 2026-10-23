@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte'
   import type { ListaComQuestoes, Questao } from '../api/tipos'
-  import { proximaMarca, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
 
   let { listas, marcacoes, selecionada, onmarcar, onselecionar }: {
     listas: ListaComQuestoes[]
@@ -31,6 +31,7 @@
     return `${conta('ok')} ✓ · ${conta('err')} ✗ · ${conta('dub')} ? · ${l.questoes.length - feitas} por fazer`
   }
 
+  // Clicar só abre a questão no menu ao lado (marcar é lá, ou pelas teclas 1/2/3/0).
   // O contorno laranja só confirma o clique: aparece e some sozinho, a cada clique (o foco do teclado continua visível)
   function confirmar(id: number) {
     const el = botoes[id]
@@ -42,7 +43,6 @@
     confirmar(q.id)
     focada = q.id
     onselecionar(q.id)
-    onmarcar(q.id, proximaMarca(marca(q)))
   }
 
   async function mover(delta: number) {
