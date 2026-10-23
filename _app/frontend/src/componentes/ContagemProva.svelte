@@ -11,7 +11,7 @@
   const futura = $derived(prova !== null && diasAte(prova.data, hoje) >= 0)
 </script>
 
-<section class="cartao">
+<section class="cartao" aria-label="Prova">
   <div class="rotulo">Prova</div>
   {#if futura}
     <div class="numero-grande">{textoContagem(prova, hoje)}</div>

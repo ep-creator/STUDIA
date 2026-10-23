@@ -52,7 +52,7 @@ test('matéria nova só com cliques', async ({ page }) => {
   await expect(page.getByText('Nenhum arquivo esperando revisão.')).toBeVisible()
 
   await page.getByRole('link', { name: 'Painel', exact: true }).click()
-  await expect(page.getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Prova' }).getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
   await expect(page.getByText('Tópicos vistos')).toBeVisible()
 })
 
