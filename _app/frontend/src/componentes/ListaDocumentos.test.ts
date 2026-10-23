@@ -48,10 +48,3 @@ test('documento criado pela IA ganha o selo IA', () => {
   expect(screen.getByRole('button', { name: /14.3 Derivadas/ }).textContent).toContain('IA')
   expect(screen.getByRole('button', { name: /14.1 Funções/ }).textContent).not.toContain('IA')
 })
-
-test('PDF antigo marcado como "outro" vai para o grupo do nome', () => {
-  render(ListaDocumentos, { ...props(), fontes: [fonte(1, 'outro', 'Programa'), fonte(2, 'outro', 'Lista1_2026-1'), fonte(3, 'outro', 'info_S3')] })
-  expect(screen.getByRole('button', { name: /Programa\s*1/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /^Listas/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Outros PDFs\s*1/ })).toBeInTheDocument()
-})

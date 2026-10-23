@@ -31,17 +31,10 @@ Refatoração Site Estudos/
 │   ├── materia.db            # unidades, tópicos, listas, marcações, cronograma, histórico
 │   ├── conteudo/             # resumos, resoluções, anotações e planos em Markdown
 │   ├── fontes/               # PDFs: documentos da turma, listas e livros
-│   ├── figuras/              # imagens usadas pelos textos
-│   └── .migracao/            # relatório da migração do app antigo (Fase 2)
-├── docs/
-│   ├── superpowers/          # specs e planos de cada fase da refatoração
-│   └── legado/               # documentação do app antigo
-└── _legado/                  # o app antigo, guardado só para consulta
-    ├── abrir-antigo.bat      # ainda abre o app antigo (porta 8780)
-    └── Calculo 2/            # app antigo e Cálculo 2 no formato antigo (sem os PDFs)
+│   └── figuras/              # imagens usadas pelos textos
+└── docs/
+    └── superpowers/          # specs e planos de cada fase da refatoração
 ```
-
-Os PDFs do formato antigo eram idênticos aos de `Calculo 2/fontes/` e saíram do `_legado/`; o histórico do Git guarda a versão completa, se for preciso refazer a migração.
 
 ## Desenvolvimento
 

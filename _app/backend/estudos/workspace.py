@@ -85,7 +85,7 @@ def criar_materia(workspace: Path, nome: str, periodo: str | None = None) -> Mat
 
 
 def inicializar_materia(pasta: Path, nome: str, periodo: str | None = None, uid: str | None = None) -> MateriaRef:
-    """Transforma `pasta` (nova ou com conteúdo legado) numa matéria, sem tocar no que já existe nela."""
+    """Transforma `pasta` (nova ou já com arquivos) numa matéria, sem tocar no que já existe nela."""
     if (pasta / ARQUIVO_DB).exists():
         raise DadoInvalido(f"'{pasta.name}' já é uma matéria.")
     for sub in SUBPASTAS:

@@ -14,7 +14,7 @@ export function renderizarLatex(tex: string, bloco = false): string {
   return katex.renderToString(tex, { displayMode: bloco, throwOnError: false, output: 'html' })
 }
 
-/** contasEmCodigo: textos do app antigo escreviam as contas em blocos ``` (sem linguagem) com matemática em Unicode;
+/** contasEmCodigo: para textos que escrevem as contas em blocos ``` (sem linguagem), com matemática em Unicode;
  *  nesse modo esses blocos viram fórmulas do KaTeX, como no Formulário. Bloco com linguagem continua sendo código. */
 export function renderizarMarkdown(texto: string, { contasEmCodigo = false }: { contasEmCodigo?: boolean } = {}): string {
   // As fórmulas saem do texto antes do markdown (que estragaria _ e * dentro delas) e voltam já renderizadas.
@@ -42,7 +42,7 @@ function escaparHtml(texto: string): string {
 
 const FUNCOES = /\b(sen|sin|cos|tg|tan|cotg|sec|cossec|csc|ln|log|exp|arcsen|arccos|arctg|senh|cosh|tgh)\b\s*/g
 
-/** Linha em Unicode (app antigo) → TeX que o KaTeX diagrama com a mesma cara das fórmulas em LaTeX:
+/** Linha escrita em Unicode (√, ∬, θ, x²…) → TeX que o KaTeX diagrama com a mesma cara das fórmulas em LaTeX:
  *  palavras acentuadas viram texto, funções viram operadores e os espaços do texto viram espaços de verdade. */
 function unicodeParaTex(linha: string): string {
   return linha
