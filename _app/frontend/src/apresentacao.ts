@@ -60,3 +60,21 @@ export function textoTopoProva(prova: { data: string; hora_inicio: string | null
 export function compararNomes(a: string, b: string): number {
   return a.localeCompare(b, 'pt-BR', { numeric: true, sensitivity: 'base' })
 }
+
+export function saudacao(agora: Date): string {
+  const h = agora.getHours()
+  if (h >= 5 && h < 12) return 'Bom dia'
+  if (h >= 12 && h < 18) return 'Boa tarde'
+  return 'Boa noite'
+}
+
+export function dataPorExtenso(agora: Date): string {
+  return agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/** A prova mais próxima (de hoje em diante) entre todas as matérias, para o resumo da tela inicial. */
+export function proximaProvaGeral<M extends { proxima_prova: { data: string; hora_inicio: string | null } | null }>(materias: M[], hoje: Date): M | null {
+  const futuras = materias.filter((m) => m.proxima_prova && diasAte(m.proxima_prova.data, hoje) >= 0)
+  futuras.sort((a, b) => a.proxima_prova!.data.localeCompare(b.proxima_prova!.data))
+  return futuras[0] ?? null
+}

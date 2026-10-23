@@ -40,10 +40,20 @@ test('fórmula em LaTeX: uma equação por linha', async () => {
   expect(html.match(/katex-display/g)).toHaveLength(2)
 })
 
-test('fórmula em texto Unicode do app antigo fica pré-formatada, sem virar KaTeX', async () => {
+test('fórmula em texto Unicode do app antigo vira KaTeX, uma linha por vez (" | " também quebra)', async () => {
   const { renderizarFormula } = await import('./markdown')
-  const html = renderizarFormula('D = f_xx·f_yy − (f_xy)²\n\nD>0, f_xx>0 → mínimo local  |  D<0 → sela')
-  expect(html).not.toContain('katex')
-  expect(html).toContain('<pre class="formula-texto">')
-  expect(html).toContain('mínimo local\nD&lt;0 → sela')
+  const html = renderizarFormula('x = r cos θ,  y = r sen θ\n\nD<0 → sela  |  dA = r dr dθ')
+  expect(html.match(/katex-display/g)).toHaveLength(3)
+  expect(html).not.toContain('katex-error')
+  expect(html).toContain('sen')
+})
+
+test('fórmula Unicode com % ou chaves quebradas não some nem mostra erro', async () => {
+  const { renderizarFormula } = await import('./markdown')
+  const porcento = renderizarFormula('juros = 5% ao mês')
+  expect(porcento).not.toContain('katex-error')
+  expect(porcento.replace(/<[^>]+>/g, '')).toContain('5%ao') // o % não vira comentário e engole o resto
+  const quebrada = renderizarFormula('f(x} = 1')
+  expect(quebrada).not.toContain('katex-error')
+  expect(quebrada).toContain('f(x} = 1')
 })

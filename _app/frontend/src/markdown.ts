@@ -34,13 +34,28 @@ function escaparHtml(texto: string): string {
   return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-/** Corpo de uma fórmula do Formulário. Com comandos LaTeX: uma equação por linha (o KaTeX ignora quebras soltas).
- *  Sem LaTeX (fórmulas diagramadas em Unicode, vindas do app antigo): texto pré-formatado, com " | " virando linha. */
+const FUNCOES = /\b(sen|sin|cos|tg|tan|cotg|sec|cossec|csc|ln|log|exp|arcsen|arccos|arctg|senh|cosh|tgh)\b\s*/g
+
+/** Linha em Unicode (app antigo) → TeX que o KaTeX diagrama com a mesma cara das fórmulas em LaTeX:
+ *  palavras acentuadas viram texto, funções viram operadores e os espaços do texto viram espaços de verdade. */
+function unicodeParaTex(linha: string): string {
+  return linha
+    .replace(/[%#&$]/g, (c) => `\\${c}`)
+    .replace(/\s{2,}/g, '\\quad{}')
+    .replace(/[\p{L}]*[À-ÖØ-öø-ÿ][\p{L}]*/gu, (p) => `\\text{${p}}`)
+    .replace(FUNCOES, (_m, f: string) => `\\operatorname{${f}}`)
+    .replace(/(?<=[\p{L}\p{N})\]}])\s(?!\\operatorname)(?=[\p{L}\p{N}(\\√∫∬∭∮])/gu, '\\,') // o operador já traz o próprio espaço
+}
+
+/** Corpo de uma fórmula do Formulário: uma equação por linha (o KaTeX ignora quebras soltas).
+ *  As diagramadas em Unicode também passam pelo KaTeX ("  |  " separa linhas); se alguma não for TeX válido, sai como texto. */
 export function renderizarFormula(corpo: string): string {
-  if (COMANDO_LATEX.test(corpo)) {
-    const linhas = corpo.split('\n').map((l) => l.trim()).filter(Boolean)
-    return DOMPurify.sanitize(linhas.map((l) => renderizarLatex(l, true)).join(''))
-  }
-  const texto = corpo.replace(/\s+\|\s+/g, '\n').replace(/^\n+|\n+$/g, '')
-  return DOMPurify.sanitize(`<pre class="formula-texto">${escaparHtml(texto)}</pre>`)
+  const latex = COMANDO_LATEX.test(corpo)
+  const linhas = (latex ? corpo : corpo.replace(/\s+\|\s+/g, '\n')).split('\n').map((l) => l.trim()).filter(Boolean)
+  const html = linhas.map((l) => {
+    if (latex) return renderizarLatex(l, true)
+    const saida = katex.renderToString(unicodeParaTex(l), { displayMode: true, throwOnError: false, strict: 'ignore', output: 'html' })
+    return saida.includes('katex-error') ? `<pre class="formula-texto">${escaparHtml(l)}</pre>` : saida
+  })
+  return DOMPurify.sanitize(html.join(''))
 }
