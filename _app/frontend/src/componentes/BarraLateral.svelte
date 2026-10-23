@@ -54,7 +54,7 @@
 </nav>
 
 <style>
-  .lateral { width: 13rem; flex: none; background: var(--lateral); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+  .lateral { width: 13rem; flex: none; background: var(--lateral); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; height: 100vh; position: sticky; top: 0; overflow-y: auto; overflow-x: hidden; }
   .inicio { text-decoration: none; padding: 0.1rem 0.5rem 0.4rem; }
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }

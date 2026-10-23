@@ -102,7 +102,7 @@
 </div>
 
 <style>
-  .seletor { position: relative; display: grid; gap: 0.2rem; }
+  .seletor { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.2rem; min-width: 0; }
   .gatilho {
     display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%;
     background: var(--cartao); color: var(--texto); border: 1px solid color-mix(in srgb, var(--borda) 60%, transparent);
@@ -111,13 +111,17 @@
   }
   .gatilho:hover, .gatilho[aria-expanded='true'] { border-color: var(--destaque); }
   .gatilho:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--destaque) 30%, transparent); }
-  .texto { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vazio { color: var(--suave); }
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; transition: transform 150ms ease; }
   .gatilho[aria-expanded='true'] .seta { transform: rotate(180deg); }
 
   .titulo .gatilho { background: transparent; border-color: transparent; padding: 0.2rem 0.4rem; font-family: var(--fonte-titulo); font-weight: 600; font-size: 1.05rem; }
   .titulo .gatilho:hover, .titulo .gatilho[aria-expanded='true'] { background: color-mix(in srgb, var(--destaque) 8%, transparent); border-color: transparent; }
+  /* nome longo de matéria quebra em duas linhas em vez de empurrar a barra lateral para o lado */
+  .titulo .texto { white-space: normal; line-height: 1.25; }
+  .titulo .opcoes { max-width: 100%; }
+  .titulo li { white-space: normal; }
   .compacto .gatilho { padding: 0.15rem 0.5rem; font-size: 0.9rem; }
 
   .opcoes {

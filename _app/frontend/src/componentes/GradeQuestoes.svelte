@@ -31,7 +31,15 @@
     return `${conta('ok')} ✓ · ${conta('err')} ✗ · ${conta('dub')} ? · ${l.questoes.length - feitas} por fazer`
   }
 
+  // O contorno laranja só confirma o clique: aparece e some sozinho, a cada clique (o foco do teclado continua visível)
+  function confirmar(id: number) {
+    const el = botoes[id]
+    const cor = el && getComputedStyle(el).getPropertyValue('--destaque').trim()
+    el?.animate?.([{ outlineColor: cor }, { outlineColor: cor, offset: 0.35 }, { outlineColor: 'transparent' }], { duration: 1100, easing: 'ease-out' })
+  }
+
   function clicar(q: Questao) {
+    confirmar(q.id)
     focada = q.id
     onselecionar(q.id)
     onmarcar(q.id, proximaMarca(marca(q)))
@@ -96,5 +104,5 @@
   .questao.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
   .questao.err { background: var(--err); border-color: var(--err); color: #fff; }
   .questao.dub { background: var(--dub); border-color: var(--dub); color: #000; }
-  .questao.selecionada { outline: 2px solid var(--destaque); outline-offset: 2px; }
+  .questao { outline: 2px solid transparent; outline-offset: 2px; }
 </style>
