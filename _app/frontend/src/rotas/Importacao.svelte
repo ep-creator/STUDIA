@@ -158,7 +158,9 @@
 </div>
 
 <style>
-  .importacao { display: grid; grid-template-columns: 20rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .importacao { display: grid; grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .importacao > :global(*) { min-width: 0; }
+  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
   .proposta header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
   .proposta h3 { margin: 0; }
   .tipo { margin-left: auto; font-size: 0.85rem; color: var(--suave); }

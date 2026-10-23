@@ -90,3 +90,32 @@ def test_pagina_com_ocr_no_numero(tmp_path):
     livro = extrair_livro(abrir_pdf(criar_pdf(tmp_path / "o.pdf", paginas, rotulos=rotulos)))
     assert [(s.codigo, s.titulo, s.pagina_pdf_ini) for s in livro.secoes] == [
         ("5", "Equações", 73), ("6", "Os espaços", 103), ("6.1", "Introdução", 103), ("6.2", "Vetores", 114)]
+
+
+def test_sumario_embutido_sem_numeros_gera_codigos_pela_ordem(tmp_path):
+    """Lima/Santos: o PDF traz o sumário, mas os títulos não têm número de seção."""
+    paginas = [f"página {i}" for i in range(1, 41)]
+    sumario = [
+        [1, "Capa", 1], [1, "Apresentação", 3], [1, "Matrizes e Sistemas Lineares", 5], [2, "Matrizes", 5],
+        [3, "Operações com Matrizes", 6], [2, "Exercícios", 9], [2, "Sistemas Lineares", 10],
+        [1, "Inversão de Matrizes e Determinantes", 15], [2, "Matriz Inversa", 15], [1, "Bibliografia", 30],
+        [1, "Respostas dos Exercícios", 32],
+    ]
+    livro = extrair_livro(abrir_pdf(criar_pdf(tmp_path / "semnum.pdf", paginas, sumario=sumario)))
+    assert livro.origem == "sumario_embutido_sem_codigo"
+    assert [(s.codigo, s.titulo) for s in livro.secoes] == [
+        ("1", "Matrizes e Sistemas Lineares"), ("1.1", "Matrizes"), ("1.1.1", "Operações com Matrizes"),
+        ("1.2", "Sistemas Lineares"), ("2", "Inversão de Matrizes e Determinantes"), ("2.1", "Matriz Inversa"),
+    ]
+    secoes = {s.codigo: s for s in livro.secoes}
+    assert (secoes["1"].pagina_pdf_ini, secoes["1"].pagina_pdf_fim) == (5, 14)
+    assert secoes["2"].pagina_pdf_fim == 29          # a bibliografia fecha o capítulo
+    assert livro.gabarito == (32, 40)
+    assert any("não traz números" in a for a in livro.avisos)
+
+
+def test_sumario_sem_secao_reconhecida_avisa(tmp_path):
+    paginas = ["capa"] + [f"texto {i}" for i in range(2, 8)]
+    sumario = [[1, "Capa", 1], [1, "Prefácio", 2]]
+    livro = extrair_livro(abrir_pdf(criar_pdf(tmp_path / "vazio.pdf", paginas, sumario=sumario)))
+    assert livro.secoes == [] and any("nenhuma seção" in a or "nenhum sumário" in a for a in livro.avisos)

@@ -62,3 +62,18 @@ test('confirmar todos só confirma os sem pendências', async () => {
   await userEvent.click(await screen.findByRole('button', { name: /Confirmar todos sem pendências \(2\)/ }))
   await waitFor(() => expect(confirmados).toEqual(['1', '3']))
 })
+
+test('fila mostra primeiro o que pede revisão, depois por tipo', async () => {
+  const fontesVarias: Rota = (url) => (url.endsWith('/fontes') ? [200, [
+    { id: 1, tipo: 'slides', titulo: '', caminho: 'fontes/slides/Aula 1.pdf', paginas: 3 },
+    { id: 2, tipo: 'livro', titulo: '', caminho: 'fontes/livros/Boulos.pdf', paginas: 300 },
+    { id: 3, tipo: 'programa', titulo: '', caminho: 'fontes/documentos/Programa.pdf', paginas: 2 },
+    { id: 4, tipo: 'lista', titulo: '', caminho: 'fontes/listas/Lista 1.pdf', paginas: 2 },
+  ]] : undefined)
+  motor(fontesVarias, (url, init) => (url.includes('/importacoes?') && (init.method ?? 'GET') === 'GET'
+    ? [200, [imp(10, 1, 0, 'slides'), imp(11, 2, 1, 'livro'), imp(12, 3, 0, 'programa'), imp(13, 4, 1, 'lista')]] : undefined))
+  render(FilaImportacao, { uid: 'ab', selecionada: null, onselecionar: vi.fn(), versao: 0 })
+  const lista = await screen.findByRole('list', { name: 'Arquivos esperando revisão' })
+  await waitFor(() => expect(lista.querySelectorAll('button')).toHaveLength(4))
+  expect([...lista.querySelectorAll('.nome')].map((n) => n.textContent)).toEqual(['Boulos.pdf', 'Lista 1.pdf', 'Programa.pdf', 'Aula 1.pdf'])
+})

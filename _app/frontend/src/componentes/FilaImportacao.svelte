@@ -20,6 +20,11 @@
 
   const base = $derived(`/api/materias/${uid}/importacoes`)
   const prontas = $derived(pendentes.filter((i) => i.pendencias === 0))
+  // O que pede revisão vem primeiro; depois por tipo (programa, calendário… slides) e nome
+  const ORDEM_TIPO = ['programa', 'calendario', 'turma', 'livro', 'lista', 'prova', 'slides', 'anotacao', 'outro']
+  const ordenados = $derived([...pendentes].sort((a, b) =>
+    Number(b.pendencias > 0) - Number(a.pendencias > 0) || ORDEM_TIPO.indexOf(a.tipo) - ORDEM_TIPO.indexOf(b.tipo)
+    || (nomes[a.fonte_id] ?? '').localeCompare(nomes[b.fonte_id] ?? '')))
 
   async function carregar() {
     try {
@@ -83,7 +88,7 @@
 
   {#if pendentes.length}
     <ul aria-label="Arquivos esperando revisão">
-      {#each pendentes as imp (imp.id)}
+      {#each ordenados as imp (imp.id)}
         <li>
           <button class:ativa={imp.id === selecionada} aria-current={imp.id === selecionada ? 'true' : undefined} onclick={() => onselecionar(imp.id)}>
             <span class="nome">{nomes[imp.fonte_id] ?? `Arquivo ${imp.fonte_id}`}</span>
@@ -106,11 +111,11 @@
 </div>
 
 <style>
-  .fila { display: grid; gap: 0.75rem; align-content: start; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; align-content: start; min-width: 0; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; max-height: 55vh; overflow-y: auto; }
   li button { width: 100%; display: flex; gap: 0.5rem; align-items: center; text-align: left; background: none; border: 1px solid transparent; border-radius: 6px; padding: 0.35rem 0.5rem; cursor: pointer; }
   li button.ativa { border-color: var(--destaque); background: var(--cartao); }
-  .nome { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tipo { font-size: 0.8rem; color: var(--suave); }
   .pend { font-size: 0.75rem; border-radius: 999px; padding: 0 0.45rem; }
   .pend.revisar { background: var(--dub); color: #000; }

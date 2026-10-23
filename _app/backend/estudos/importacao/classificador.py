@@ -17,6 +17,8 @@ _NUMERADA = re.compile(r"^\d{1,3}\s*[.)]")
 _SECAO = re.compile(r"^secao \d+ \d+")
 _TITULO_PROVA = re.compile(r"\b(prova|exame|avaliacao)\b")
 _SUMARIO_NUMERADO = re.compile(r"^\d+(\.\d+)*\s*[-–.]?\s+\S")
+_QUESTAO_PROVA = re.compile(r"^\d+\s*[oa]?\s*(problema|questao)\b")
+_PONTUACAO = re.compile(r"\(\s*\d+(?:[.,]\d+)?\s*pts?\s*\)")
 
 
 @dataclass(frozen=True)
@@ -70,8 +72,12 @@ def _pontuar(doc: DocumentoPdf) -> dict[str, float]:
     if doc.paginas and sum(1 for p in doc.paginas if p.largura > p.altura) / len(doc.paginas) >= 0.8:
         pontos["slides"] += 4
 
-    if any(_TITULO_PROVA.search(n) for n in norm[:5]) and numeradas >= 3 and total < 10:
+    # Prova: título no topo, poucas páginas e questões (numeradas, "1º problema", itens com pontuação "(1,0 pt)")
+    questoes = numeradas + sum(1 for n in norm if _QUESTAO_PROVA.match(n)) + len(_PONTUACAO.findall(texto))
+    if any(_TITULO_PROVA.search(n) for n in norm[:8]) and questoes >= 3 and total < 10:
         pontos["prova"] += 3
+        if "gabarito" in unidas or "solucao" in unidas:
+            pontos["prova"] += 1
     return pontos
 
 
