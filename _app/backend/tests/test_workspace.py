@@ -56,14 +56,14 @@ def test_banco_corrompido_e_ignorado(tmp_path):
     assert [m.nome for m in descobrir_materias(tmp_path)] == ["Boa"]
 
 
-def test_inicializar_em_pasta_com_conteudo_legado(tmp_path):
+def test_inicializar_em_pasta_com_arquivos_nao_mexe_neles(tmp_path):
     from estudos.workspace import inicializar_materia
 
     pasta = tmp_path / "Calculo 2"
     (pasta / "resumos").mkdir(parents=True)
-    (pasta / "resumos" / "x.md").write_text("legado", encoding="utf-8")
+    (pasta / "resumos" / "x.md").write_text("já existia", encoding="utf-8")
     ref = inicializar_materia(pasta, "Cálculo 2", "2026.2")
-    assert (pasta / "resumos" / "x.md").read_text(encoding="utf-8") == "legado"
+    assert (pasta / "resumos" / "x.md").read_text(encoding="utf-8") == "já existia"
     assert (pasta / "materia.db").exists() and all((pasta / p).is_dir() for p in SUBPASTAS)
     assert [m.uid for m in descobrir_materias(tmp_path)] == [ref.uid]
 

@@ -3,11 +3,11 @@ import pytest
 from estudos.importacao.idioma import normalizar
 from estudos.importacao.parsers.lista import extrair_listas
 from estudos.importacao.pdf import abrir_pdf
-from pdfs_sinteticos import DISCIPLINA, criar_pdf
+from pdfs_sinteticos import criar_pdf, pdf_real
 
 
 def _arquivo(rel):
-    caminho = DISCIPLINA / rel
+    caminho = pdf_real(rel)
     if not caminho.is_file():
         pytest.skip("arquivo real ausente")
     return extrair_listas(abrir_pdf(caminho), caminho.name)
@@ -32,7 +32,7 @@ def test_lista_por_secao_rotulo_composto():
 
 
 def test_lista_numerada_real():
-    a = _arquivo("listas-2026-1/Lista5_2026-1.pdf")
+    a = _arquivo("Lista5_2026-1.pdf")
     assert (a.formato, a.unidade) == ("numerada", None)
     [lista] = a.listas
     assert lista.codigo == "L5" and lista.titulo.startswith("Quinta Lista de Exercícios")
@@ -45,7 +45,7 @@ def test_lista_numerada_real():
 
 @pytest.mark.parametrize("n", range(1, 7))
 def test_todas_as_listas_ufpe_numeradas_sem_buracos(n):
-    a = _arquivo(f"listas-2026-1/Lista{n}_2026-1.pdf")
+    a = _arquivo(f"Lista{n}_2026-1.pdf")
     rotulos = [int(q.rotulo) for q in a.listas[0].questoes]
     assert a.listas[0].codigo == f"L{n}" and rotulos == list(range(1, len(rotulos) + 1)) and len(rotulos) >= 5
 
@@ -72,7 +72,7 @@ def test_numeracao_fora_de_sequencia_e_ignorada(tmp_path):
 
 @pytest.mark.parametrize("n", [3, 6])
 def test_conteudos_que_quebram_linha(n):
-    a = _arquivo(f"listas-2026-1/Lista{n}_2026-1.pdf")
+    a = _arquivo(f"Lista{n}_2026-1.pdf")
     assert len(a.conteudos) >= 2 and not any(c.split()[-1] in ("e", "em", "de") for c in a.conteudos)
 
 
@@ -108,7 +108,7 @@ def test_numero_repetido_sem_numero_solto_nao_mexe(tmp_path):
 
 
 def test_lista1_real_conteudos_e_questoes():
-    a = _arquivo("listas-2026-1/Lista1_2026-1.pdf")
+    a = _arquivo("Lista1_2026-1.pdf")
     assert a.conteudos == ["Funções de duas variáveis", "Limite e continuidade"]
     q = a.listas[0].questoes
     assert "Desenhe-o" in q[0].enunciado_md and q[1].enunciado_md.startswith("Para cada uma das funções")

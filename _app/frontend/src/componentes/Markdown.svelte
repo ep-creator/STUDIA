@@ -1,7 +1,7 @@
 <script lang="ts">
   import { renderizarMarkdown } from '../markdown'
 
-  // contas: texto de matemática do app antigo (blocos ``` viram fórmulas; `trechos` e tabelas ganham cara de conta)
+  // contas: texto de matemática (blocos ``` sem linguagem viram fórmulas; `trechos` e tabelas ganham cara de conta)
   let { texto, contas = false }: { texto: string; contas?: boolean } = $props()
   const html = $derived(renderizarMarkdown(texto, { contasEmCodigo: contas }))
 </script>

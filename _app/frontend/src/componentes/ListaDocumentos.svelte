@@ -26,15 +26,6 @@
   ]
 
   const nomeFonte = (f: FonteResumo) => f.titulo || (f.caminho.split('/').pop() ?? '')
-  // PDFs que vieram do app antigo como "outro" ainda caem no grupo certo pelo nome (Programa, Calendario, Lista1…)
-  function tipoAparente(f: FonteResumo): string {
-    if (f.tipo !== 'outro') return f.tipo
-    const nome = nomeFonte(f).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-    if (/^programa/.test(nome)) return 'programa'
-    if (/^calendario/.test(nome)) return 'calendario'
-    if (/^(lista|exercicios)/.test(nome)) return 'lista'
-    return 'outro'
-  }
   const doDoc = (d: Documento): Item => ({ tipo: 'documento', id: d.id, titulo: d.titulo, ia: d.origem === 'agente' })
   const daFonte = (f: FonteResumo): Item => ({ tipo: 'fonte', id: f.id, titulo: nomeFonte(f), ia: false })
 
@@ -50,8 +41,8 @@
 
   const disciplina = $derived.by((): Grupo[] => {
     const ordenadas = [...fontes].sort((a, b) => compararNomes(nomeFonte(a), nomeFonte(b)))
-    const grupos = GRUPOS_FONTE.map(([tipo, nome]) => ({ chave: `pdf-${tipo}`, nome, itens: ordenadas.filter((f) => tipoAparente(f) === tipo).map(daFonte) }))
-    const outros = ordenadas.filter((f) => !GRUPOS_FONTE.some(([t]) => t === tipoAparente(f)))
+    const grupos = GRUPOS_FONTE.map(([tipo, nome]) => ({ chave: `pdf-${tipo}`, nome, itens: ordenadas.filter((f) => f.tipo === tipo).map(daFonte) }))
+    const outros = ordenadas.filter((f) => !GRUPOS_FONTE.some(([t]) => t === f.tipo))
     return [...grupos, { chave: 'pdf-outro', nome: 'Outros PDFs', itens: outros.map(daFonte) }].filter((g) => g.itens.length)
   })
 

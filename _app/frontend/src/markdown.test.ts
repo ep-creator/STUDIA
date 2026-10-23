@@ -40,7 +40,7 @@ test('fórmula em LaTeX: uma equação por linha', async () => {
   expect(html.match(/katex-display/g)).toHaveLength(2)
 })
 
-test('fórmula em texto Unicode do app antigo vira KaTeX, uma linha por vez (" | " também quebra)', async () => {
+test('fórmula em texto Unicode vira KaTeX, uma linha por vez (" | " também quebra)', async () => {
   const { renderizarFormula } = await import('./markdown')
   const html = renderizarFormula('x = r cos θ,  y = r sen θ\n\nD<0 → sela  |  dA = r dr dθ')
   expect(html.match(/katex-display/g)).toHaveLength(3)

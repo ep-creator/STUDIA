@@ -90,7 +90,7 @@ a:hover { text-decoration-color: var(--destaque); }
 :focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque) 70%, transparent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-/* Fórmulas: as em texto Unicode (app antigo) mantêm a diagramação; as do KaTeX rolam só se não couberem */
+/* Fórmulas: as em texto Unicode mantêm a diagramação; as do KaTeX rolam só se não couberem */
 .formula-texto { margin: 0.3rem 0; font-family: 'Inter Variable', system-ui, sans-serif; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; }
 .katex-display { margin: 0.35rem 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 2px; }
 

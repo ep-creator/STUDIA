@@ -16,12 +16,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Pilha temporária de Undo e histórico local de telemetria da interface
-.historico_undo.json
-**/.historico_undo.json
-.historico_telemetria.json
-**/.historico_telemetria.json
-
 # Arquivos temporários de lock/journal do SQLite
 *.db-journal
 *.db-wal
