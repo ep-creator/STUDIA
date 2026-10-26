@@ -173,6 +173,7 @@ class ResumoImportacao(TypedDict):
 class ResultadoBusca(TypedDict):
     resultados: list[Resultado]
     sincronizacao: ResumoSincronizacao
+    modo: str          # modo efetivamente usado ("texto" quando não há embeddings)
 
 
 class TextoSecao(TypedDict):

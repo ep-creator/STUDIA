@@ -161,20 +161,24 @@ def sincronizar(
         trava.release()
 
 
-def agendar_sincronizacao(raiz: Path, arquivo_banco: Path) -> threading.Thread:
-    """Sincroniza numa thread própria (com sua própria conexão), sem segurar quem pediu."""
+def agendar_sincronizacao(raiz: Path, arquivo_banco: Path, embeddings: Embeddings | None = None) -> threading.Thread | None:
+    """Sincroniza numa thread própria (com sua própria conexão), sem segurar quem pediu. Já havendo uma agendada para a
+    mesma matéria, não agenda outra (devolve None)."""
+    chave = str(raiz.resolve())
+    if any(t.name == f"indexacao-{chave}" and t.is_alive() for t in list(_pendentes)):
+        return None
 
     def rodar() -> None:
         con = conectar(arquivo_banco)
         try:
-            sincronizar(con, raiz)
+            sincronizar(con, raiz, embeddings=embeddings)
         except Exception:  # índice é derivável; a próxima busca tenta de novo
             pass
         finally:
             con.close()
             _pendentes.discard(threading.current_thread())
 
-    tarefa = threading.Thread(target=rodar, name=f"indexacao-{raiz.name}", daemon=True)
+    tarefa = threading.Thread(target=rodar, name=f"indexacao-{chave}", daemon=True)
     _pendentes.add(tarefa)
     tarefa.start()
     return tarefa

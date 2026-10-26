@@ -83,3 +83,12 @@ def test_avaliar_vinculos_conta_acertos_erros_confiantes_e_revisao(con, materia,
     assert linhas["listas"].acertos == 1
     assert linhas["documentos"].total == 1
     assert linhas["total"].total == 5
+
+
+def test_avaliar_modos_vetor_e_hibrida_com_provedor_injetado(con, materia, cenario_busca, tmp_path):
+    from estudos.ia.embeddings import EmbeddingsFalso
+    perguntas = [PerguntaBusca("coordenadas polares", "exata", ("secao:1.1",), None)]
+    configs = [Configuracao("vetor:falso", "vetor", "falso"), Configuracao("hibrida:falso", "hibrida", "falso")]
+    linhas = avaliar(con, materia.pasta, perguntas, configs, tmp_path / "t", provedores={"falso": EmbeddingsFalso()})
+    assert [l.nome for l in linhas] == ["vetor:falso", "hibrida:falso"]
+    assert all(l.acerto5 == 1 for l in linhas)

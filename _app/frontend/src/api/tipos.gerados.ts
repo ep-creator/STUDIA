@@ -571,7 +571,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Busca */
+        /**
+         * Busca
+         * @description modo: "texto", "vetor" ou "hibrida" (padrão: o do config). Sem embeddings disponíveis, a busca é por texto e a
+         *     resposta diz o modo efetivamente usado.
+         */
         get: operations["busca_api_materias__materia_uid__busca_get"];
         put?: never;
         post?: never;
@@ -1140,12 +1144,19 @@ export interface components {
             documento_id: number | null;
             /** Score */
             score: number;
+            /**
+             * Por
+             * @default texto
+             */
+            por: string;
         };
         /** ResultadoBusca */
         ResultadoBusca: {
             /** Resultados */
             resultados: components["schemas"]["Resultado"][];
             sincronizacao: components["schemas"]["ResumoSincronizacao"];
+            /** Modo */
+            modo: string;
         };
         /** ResumoImportacao */
         ResumoImportacao: {
@@ -2854,6 +2865,7 @@ export interface operations {
                 secao_id?: number | null;
                 tipo?: string[] | null;
                 limite?: number;
+                modo?: string | null;
             };
             header?: never;
             path: {

@@ -162,7 +162,10 @@
             onclick={() => abrir(r)}
             onkeydown={teclar}
           >
-            <div class="titulo">{r.titulo}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}</div>
+            <div class="titulo">
+              {r.titulo}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}
+              {#if r.por === 'sentido'}<span class="sentido" title="Achado pelo sentido, sem palavras em comum com a busca">pelo sentido</span>{/if}
+            </div>
             <div class="trecho">{@html destacar(r.trecho)}</div>
           </div>
         {/each}
@@ -197,6 +200,10 @@
   .item { padding: 0.45rem 0.6rem; border-radius: 6px; cursor: pointer; border-left: 2px solid transparent; }
   .item.ativo { background: var(--realce); border-left-color: var(--destaque); }
   .titulo { font-weight: 600; font-size: 0.95rem; }
+  .sentido {
+    margin-left: 0.4rem; padding: 0 0.35rem; border-radius: 4px; vertical-align: 0.1em; font-size: 0.66rem; font-weight: 600;
+    letter-spacing: 0.04em; color: var(--destaque); border: 1px solid color-mix(in srgb, var(--destaque) 50%, transparent);
+  }
   .item.ativo .titulo { color: var(--destaque); }
   .trecho { font-size: 0.85rem; color: var(--suave); margin-top: 0.15rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .trecho :global(mark) { background: none; color: var(--texto); font-weight: 600; }

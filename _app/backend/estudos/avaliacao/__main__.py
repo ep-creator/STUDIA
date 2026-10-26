@@ -22,7 +22,14 @@ from estudos.workspace import ARQUIVO_DB
 APP_DIR = Path(__file__).resolve().parents[3]          # _app/
 WORKSPACE = APP_DIR.parent
 GABARITOS = Path(__file__).resolve().parent / "gabaritos"
-CONFIGS_BUSCA = {"texto": Configuracao("texto", "texto", None)}
+SMALL, BASE = "intfloat/multilingual-e5-small", "intfloat/multilingual-e5-base"
+CONFIGS_BUSCA = {
+    "texto": Configuracao("texto", "texto", None),
+    "vetor:small": Configuracao("vetor:small", "vetor", SMALL),
+    "vetor:base": Configuracao("vetor:base", "vetor", BASE),
+    "hibrida:small": Configuracao("hibrida:small", "hibrida", SMALL),
+    "hibrida:base": Configuracao("hibrida:base", "hibrida", BASE),
+}
 CONFIGS_VINCULOS = {"regra": ConfigVinculo("regra")}
 
 

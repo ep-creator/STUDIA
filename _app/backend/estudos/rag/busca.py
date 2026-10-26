@@ -1,9 +1,11 @@
-"""Busca no índice: BM25 do FTS5 com filtros exatos de unidade, seção e tipo.
+"""Busca no índice: BM25 do FTS5 (modo "texto"), cosseno dos embeddings ("vetor") ou os dois fundidos por RRF ("hibrida"),
+sempre com os mesmos filtros exatos de unidade, seção e tipo.
 
 A unidade é resolvida na hora pelo banco da matéria (anexado como "m"): seção ligada a tópico da unidade, fonte de
 lista da unidade, ou documento da unidade (ou global, ou com a unidade como extra).
 """
 
+import dataclasses
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -29,6 +31,7 @@ class Resultado:
     fonte_id: int | None
     documento_id: int | None
     score: float
+    por: str = "texto"     # de onde veio: "texto", "sentido" ou "ambos" (modo híbrido)
 
 
 def montar_consulta(texto: str) -> str | None:
@@ -58,16 +61,7 @@ _FILTRO_UNIDADE = """
 """
 
 
-def buscar(
-    indice: sqlite3.Connection,
-    consulta: str = "",
-    unidade: int | None = None,
-    secao_id: int | None = None,
-    tipos: list[str] | None = None,
-    limite: int = 8,
-) -> list[Resultado]:
-    fts = montar_consulta(consulta)
-    params: dict = {"limite": max(1, min(int(limite), 50))}
+def _filtros(unidade: int | None, secao_id: int | None, tipos: list[str] | None, params: dict) -> list[str]:
     filtros = []
     if unidade is not None:
         filtros.append(_FILTRO_UNIDADE)
@@ -79,6 +73,20 @@ def buscar(
         nomes = [f"tipo{i}" for i in range(len(tipos))]
         filtros.append(f"t.tipo IN ({', '.join(':' + n for n in nomes)})")
         params.update(zip(nomes, tipos))
+    return filtros
+
+
+def buscar(
+    indice: sqlite3.Connection,
+    consulta: str = "",
+    unidade: int | None = None,
+    secao_id: int | None = None,
+    tipos: list[str] | None = None,
+    limite: int = 8,
+) -> list[Resultado]:
+    fts = montar_consulta(consulta)
+    params: dict = {"limite": max(1, min(int(limite), 50))}
+    filtros = _filtros(unidade, secao_id, tipos, params)
     if fts:
         params["fts"] = fts
         sql = (
@@ -115,3 +123,83 @@ def secao_completa(indice: sqlite3.Connection, secao_id: int) -> str:
         "SELECT texto FROM trecho WHERE secao_id = ? AND fonte_id IS NOT NULL ORDER BY id", (secao_id,)
     ).fetchall()
     return "\n\n".join(l["texto"] for l in linhas)
+
+
+# ---- modos "vetor" e "hibrida" (peça B da Fase 6) ------------------------------------------------------------------
+
+_K_RRF = 60          # constante padrão da Reciprocal Rank Fusion (fixa: não é ajustada no gabarito)
+_TOPO_FUSAO = 50     # quantos de cada ranking entram na fusão
+_RESUMO_VETOR = 240  # caracteres do trecho mostrados quando o resultado veio só pelo sentido
+
+
+def fundir_rrf(rankings: list[list[int]], k: int = _K_RRF) -> list[tuple[int, float]]:
+    """Ids ordenados pela soma de 1/(k + posição) em cada ranking (posição 1-based); empate fica na ordem de chegada."""
+    notas: dict[int, float] = {}
+    for ranking in rankings:
+        for posicao, i in enumerate(ranking, start=1):
+            notas[i] = notas.get(i, 0.0) + 1 / (k + posicao)
+    return sorted(notas.items(), key=lambda par: par[1], reverse=True)
+
+
+def _por_sentido(indice, consulta, unidade, secao_id, tipos, limite, embeddings) -> list[Resultado]:
+    from estudos.ia.embeddings import vetores_do_indice
+
+    matriz, ids = vetores_do_indice(indice)
+    if not ids:
+        return []
+    params: dict = {}
+    filtros = _filtros(unidade, secao_id, tipos, params)
+    sql = "SELECT t.id FROM trecho t WHERE t.vetor IS NOT NULL" + "".join(f" AND {f}" for f in filtros)
+    permitidos = {r[0] for r in indice.execute(sql, params)}
+    notas = matriz @ embeddings.de_consulta(consulta)
+    ordem = [ids[i] for i in notas.argsort()[::-1] if ids[i] in permitidos][:limite]
+    if not ordem:
+        return []
+    nota = dict(zip(ids, notas.tolist()))
+    marcas = ", ".join("?" * len(ordem))
+    linhas = {l["id"]: l for l in indice.execute(
+        f"SELECT t.*, s.codigo AS secao_codigo FROM trecho t LEFT JOIN m.secao_livro s ON s.id = t.secao_id "
+        f"WHERE t.id IN ({marcas})", ordem)}
+    return [
+        Resultado(
+            trecho_id=i, origem=l["origem"], tipo=l["tipo"], titulo=l["titulo"], trecho=l["texto"][:_RESUMO_VETOR],
+            pagina=l["pagina"], secao_id=l["secao_id"], secao_codigo=l["secao_codigo"], fonte_id=l["fonte_id"],
+            documento_id=l["documento_id"], score=round(nota[i], 4), por="sentido",
+        )
+        for i in ordem for l in [linhas[i]]
+    ]
+
+
+def buscar_modo(
+    indice: sqlite3.Connection,
+    consulta: str = "",
+    unidade: int | None = None,
+    secao_id: int | None = None,
+    tipos: list[str] | None = None,
+    limite: int = 8,
+    modo: str = "texto",
+    embeddings=None,
+) -> tuple[str, list[Resultado]]:
+    """Busca no modo pedido e devolve (modo efetivo, resultados). Sem embeddings ou sem vetores no índice, cai para
+    "texto". Pergunta sem nenhuma palavra que conte (vazia, só pontuação ou só palavras vazias) não traz nada."""
+    limite = max(1, min(int(limite), 50))
+    if modo not in ("vetor", "hibrida") or embeddings is None:
+        modo = "texto"
+    if montar_consulta(consulta) is None:
+        return modo, []
+    if modo == "texto":
+        return "texto", buscar(indice, consulta, unidade, secao_id, tipos, limite)
+    sentido = _por_sentido(indice, consulta, unidade, secao_id, tipos, _TOPO_FUSAO, embeddings)
+    if not sentido:
+        return "texto", buscar(indice, consulta, unidade, secao_id, tipos, limite)
+    if modo == "vetor":
+        return "vetor", sentido[:limite]
+    texto = buscar(indice, consulta, unidade, secao_id, tipos, _TOPO_FUSAO)
+    por_id = {r.trecho_id: r for r in sentido} | {r.trecho_id: r for r in texto}  # texto tem o trecho destacado
+    em_texto, em_sentido = {r.trecho_id for r in texto}, {r.trecho_id for r in sentido}
+    fundido = fundir_rrf([[r.trecho_id for r in texto], [r.trecho_id for r in sentido]])[:limite]
+    return "hibrida", [
+        dataclasses.replace(por_id[i], score=round(nota, 5),
+                            por="ambos" if i in em_texto and i in em_sentido else ("texto" if i in em_texto else "sentido"))
+        for i, nota in fundido
+    ]

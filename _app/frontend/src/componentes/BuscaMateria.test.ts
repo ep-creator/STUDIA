@@ -106,3 +106,12 @@ test('Esc fecha', async () => {
   await userEvent.keyboard('{Escape}')
   expect(onfechar).toHaveBeenCalled()
 })
+
+test('resultado que veio só pelo sentido ganha a etiqueta "pelo sentido"', async () => {
+  motor([livro({ por: 'sentido', trecho: 'Momentos e centros de massa de lâminas' }), resumo])
+  abrir()
+  await userEvent.type(screen.getByRole('combobox', { name: /Buscar na matéria/ }), 'placa com densidade')
+  await screen.findByText('Livros', { selector: '.grupo' })
+  const etiquetas = screen.getAllByText('pelo sentido')
+  expect(etiquetas).toHaveLength(1)
+})

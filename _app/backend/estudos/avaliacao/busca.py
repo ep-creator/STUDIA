@@ -4,16 +4,19 @@ import sqlite3
 import statistics
 import time
 import tracemalloc
+from types import SimpleNamespace
 from dataclasses import dataclass
 from pathlib import Path
 
 from estudos.avaliacao.gabarito import PerguntaBusca
 from estudos.avaliacao.metricas import acerto_em, mrr
-from estudos.rag.busca import Resultado, buscar
+from estudos.ia.embeddings import Embeddings, obter_embeddings
+from estudos.rag.busca import Resultado, buscar_modo
 from estudos.rag.indexador import sincronizar
 from estudos.rag.indice import abrir_indice, descartar_indice
 
 _LIMITE = 10
+_APP_DIR = Path(__file__).resolve().parents[3]   # _app/ (cache dos modelos em _app/.modelos/)
 
 
 @dataclass(frozen=True)
@@ -53,20 +56,33 @@ def _posicao(con: sqlite3.Connection, resultados: list[Resultado], aceitas: tupl
     return None
 
 
-def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path) -> LinhaBusca:
-    if config.modo != "texto":
-        raise ValueError(f"modo {config.modo!r} ainda não disponível na avaliação")
+def _provedor(modelo: str | None, provedores: dict[str, Embeddings]) -> Embeddings | None:
+    if modelo is None:
+        return None
+    if modelo in provedores:
+        return provedores[modelo]
+    e = obter_embeddings(SimpleNamespace(embeddings=True, modelo=modelo, app_dir=_APP_DIR))
+    if e is None:
+        raise ValueError(f"modelo de embeddings {modelo!r} indisponível")
+    return e
+
+
+def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path, provedores) -> LinhaBusca:
+    embeddings = _provedor(config.modelo, provedores)
     descartar_indice(raiz, caminho)
     tracemalloc.start()
     inicio = time.perf_counter()
-    sincronizar(con, raiz, caminho_indice_=caminho)
+    sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings)
     indexacao = time.perf_counter() - inicio
     indice = abrir_indice(raiz, caminho)
     posicoes, tempos = [], []
     try:
         for p in perguntas:
             t0 = time.perf_counter()
-            resultados = buscar(indice, p.texto, unidade=p.unidade, limite=_LIMITE)
+            efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_LIMITE, modo=config.modo,
+                                              embeddings=embeddings)
+            if efetivo != config.modo:
+                raise ValueError(f"{config.nome}: a busca caiu para {efetivo!r} (sem vetores no índice?)")
             tempos.append((time.perf_counter() - t0) * 1000)
             posicoes.append(_posicao(con, resultados, p.aceitas))
     finally:
@@ -89,7 +105,10 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
 
 
 def avaliar(
-    con: sqlite3.Connection, raiz: Path, perguntas: list[PerguntaBusca], configuracoes: list[Configuracao], pasta_temp: Path
+    con: sqlite3.Connection, raiz: Path, perguntas: list[PerguntaBusca], configuracoes: list[Configuracao], pasta_temp: Path,
+    provedores: dict[str, Embeddings] | None = None,
 ) -> list[LinhaBusca]:
+    """`provedores` (nome → Embeddings) substitui os modelos reais, para os testes."""
     pasta_temp.mkdir(parents=True, exist_ok=True)
-    return [_medir(con, raiz, perguntas, c, pasta_temp / f"{c.nome}.db") for c in configuracoes]
+    return [_medir(con, raiz, perguntas, c, pasta_temp / f"{c.nome.replace(':', '-')}.db", provedores or {})
+            for c in configuracoes]
