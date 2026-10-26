@@ -138,3 +138,12 @@ def test_listar_traz_codigo_e_posicao_na_ordem_do_livro(con, materia, dois_livro
     # livro principal primeiro, na ordem das páginas; depois o complementar; sem seção → None
     assert por_id[b.id].secao_posicao < por_id[a.id].secao_posicao < por_id[c.id].secao_posicao
     assert por_id[d.id].secao_posicao is None
+
+
+def test_documento_sem_codigo_pelo_sentido(con, materia, dois_livros):
+    from test_importacao_vinculo import SentidoFixo
+    doc = _doc(con, materia, "resumo", "Extremos")
+    assert secao_do_documento(con, doc, LIMIAR) is None
+    sentido = SentidoFixo({"Valores Máximo e Mínimo": 0.95}, padrao=0.3)
+    s = secao_do_documento(con, doc, LIMIAR, semantica=sentido, peso=0.5)
+    assert s.secao_id == dois_livros["secoes"]["14.7"] and s.por == "sentido"

@@ -21,7 +21,7 @@ from estudos.importacao.parsers.lista import extrair_listas
 from estudos.importacao.parsers.programa import TopicoExtraido, extrair_programa
 from estudos.importacao.parsers.turma import extrair_turma
 from estudos.importacao.pdf import DocumentoPdf, abrir_pdf
-from estudos.importacao.vinculo import Candidato, construir_idf, melhores, pontuar, unidade_majoritaria
+from estudos.importacao.vinculo import Candidato, construir_idf, melhores, pontuar_com_motivo, semantica_de, unidade_majoritaria
 from estudos.modelos import Importacao, QuestaoEntrada
 from estudos.rag.indexador import agendar_sincronizacao
 from estudos.workspace import ARQUIVO_DB
@@ -117,21 +117,29 @@ def _propor_programa(doc: DocumentoPdf) -> dict:
     return {"unidades": propostas, "revisar": not propostas}
 
 
-def _derivar_topico(item: dict, secoes: list, existentes: dict[str, int], settings: Settings) -> None:
+def _sentido(settings: Settings) -> dict:
+    """Parâmetros de sentido dos vínculos (embeddings), vazios quando desligados: aí a nota é só a regra, como antes."""
+    semantica = semantica_de(settings)
+    return {"semantica": semantica, "peso": settings.peso_sentido_vinculo} if semantica is not None else {}
+
+
+def _derivar_topico(item: dict, secoes: list, existentes: dict[str, int], settings: Settings, sentido: dict | None = None) -> None:
+    sentido = _sentido(settings) if sentido is None else sentido
     vinculos = []
     for titulo_livro, candidatos, idf in secoes:
-        for v in melhores(item["titulo"], candidatos, settings.limiar_vinculo, idf=idf):
+        for v in melhores(item["titulo"], candidatos, settings.limiar_vinculo, idf=idf, **sentido):
             secao_id, codigo = v.chave
             vinculos.append({"secao_id": secao_id, "codigo": codigo, "livro": titulo_livro, "confianca": v.confianca,
-                             "aceito": True, "revisar": _revisar(v.confianca, settings)})
+                             "por": v.por, "aceito": True, "revisar": _revisar(v.confianca, settings)})
     item["existente_id"] = existentes.get(normalizar(item["titulo"]))
     item["secoes"] = _mesclar(vinculos, item.get("secoes"), lambda v: v["secao_id"])
     for filho in item.get("filhos", []):
-        _derivar_topico(filho, secoes, existentes, settings)
+        _derivar_topico(filho, secoes, existentes, settings, sentido)
 
 
 def _derivar_programa(con, proposta: dict, settings: Settings) -> None:
     secoes = _secoes_por_livro(con)
+    sentido = _sentido(settings)
     por_numero = _unidade_por_numero(con)
     for u in proposta.get("unidades", []):
         existentes = {}
@@ -139,7 +147,7 @@ def _derivar_programa(con, proposta: dict, settings: Settings) -> None:
             existentes = {normalizar(t.titulo): t.id for t in topicos.listar(con, por_numero[u["numero"]])}
         u["existente_id"] = por_numero.get(u["numero"])
         for t in u.get("topicos", []):
-            _derivar_topico(t, secoes, existentes, settings)
+            _derivar_topico(t, secoes, existentes, settings, sentido)
 
 
 def _propor_calendario(con, doc: DocumentoPdf) -> dict:
@@ -168,13 +176,14 @@ def _propor_turma(doc: DocumentoPdf) -> dict:
 
 
 def _derivar_turma(con, proposta: dict, settings: Settings) -> None:
+    sentido = _sentido(settings)
     cadastrados = _livros_cadastrados(con)
     idf = construir_idf([c.titulo for c in cadastrados])
     for r in proposta.get("referencias", []):
         if r.get("manual"):
             continue
-        [v] = melhores(r["texto"], cadastrados, settings.limiar_vinculo, idf=idf) or [None]
-        r.update(fonte_id=v.chave if v else None, confianca=v.confianca if v else 0.0,
+        [v] = melhores(r["texto"], cadastrados, settings.limiar_vinculo, idf=idf, **sentido) or [None]
+        r.update(fonte_id=v.chave if v else None, confianca=v.confianca if v else 0.0, por=v.por if v else None,
                  revisar=bool(v) and _revisar(v.confianca, settings))
 
 
@@ -193,6 +202,7 @@ def _propor_livro(doc: DocumentoPdf, settings: Settings, nome: str) -> dict:
 
 
 def _derivar_livro(con, proposta: dict, settings: Settings, fonte_id: int) -> None:
+    sentido = _sentido(settings)
     principal = livros.principal(con)
     outro = principal if principal is not None and principal.fonte_id != fonte_id else None
     if not proposta.get("papel_manual"):
@@ -202,9 +212,9 @@ def _derivar_livro(con, proposta: dict, settings: Settings, fonte_id: int) -> No
         candidatos = [Candidato((s.id, s.codigo), f"{s.codigo} {s.titulo}") for s in livros.listar_secoes(con, outro.fonte_id)]
         idf = construir_idf([c.titulo for c in candidatos])
         for s in proposta.get("secoes", []):
-            for v in melhores(s["titulo"], candidatos, settings.limiar_vinculo, idf=idf):
+            for v in melhores(s["titulo"], candidatos, settings.limiar_vinculo, idf=idf, **sentido):
                 equivalencias.append({"codigo": s["codigo"], "equivalente_id": v.chave[0], "equivalente_codigo": v.chave[1],
-                                      "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
+                                      "confianca": v.confianca, "por": v.por, "aceito": True, "revisar": _revisar(v.confianca, settings)})
     proposta["equivalencias"] = _mesclar(equivalencias, proposta.get("equivalencias"),
                                          lambda e: (e["codigo"], e["equivalente_id"]))
     # Tópicos que já existem (programa importado antes do livro) ganham a seção mais parecida deste livro
@@ -212,9 +222,9 @@ def _derivar_livro(con, proposta: dict, settings: Settings, fonte_id: int) -> No
     idf = construir_idf([c.titulo for c in candidatos_secao])
     vinculos = []
     for t, numero in _todos_topicos(con):
-        for v in melhores(t.titulo, candidatos_secao, settings.limiar_vinculo, idf=idf):
+        for v in melhores(t.titulo, candidatos_secao, settings.limiar_vinculo, idf=idf, **sentido):
             vinculos.append({"topico_id": t.id, "titulo": t.titulo, "unidade": numero, "codigo": v.chave,
-                             "confianca": v.confianca, "aceito": True, "revisar": _revisar(v.confianca, settings)})
+                             "confianca": v.confianca, "por": v.por, "aceito": True, "revisar": _revisar(v.confianca, settings)})
     proposta["topicos"] = _mesclar(vinculos, proposta.get("topicos"), lambda t: (t["topico_id"], t["codigo"]))
 
 
@@ -239,6 +249,7 @@ def _propor_lista(doc: DocumentoPdf, nome: str) -> dict:
 
 
 def _derivar_lista(con, proposta: dict, settings: Settings) -> None:
+    sentido = _sentido(settings)
     principal = livros.principal(con)
     candidatos_topico = [Candidato((t.id, numero), t.titulo) for t, numero in _todos_topicos(con)]
     idf = construir_idf([c.titulo for c in candidatos_topico])
@@ -247,17 +258,17 @@ def _derivar_lista(con, proposta: dict, settings: Settings) -> None:
     # Para votar basta metade do limiar (é evidência somada); para virar vínculo vale o limiar inteiro.
     vinculos_topicos, votos_conteudos = [], []
     for conteudo in proposta.get("conteudos", []):
-        pontuados = pontuar(conteudo, candidatos_topico, settings.limiar_vinculo / 2, idf=idf)
+        pontuados = pontuar_com_motivo(conteudo, candidatos_topico, settings.limiar_vinculo / 2, idf=idf, **sentido)
         por_unidade: dict[int, float] = {}
-        for score, c in pontuados:
+        for score, c, _ in pontuados:
             por_unidade[c.chave[1]] = max(por_unidade.get(c.chave[1], 0.0), score)
         votos_conteudos += por_unidade.items()
-        fortes = [(s, c) for s, c in pontuados if s >= settings.limiar_vinculo][:_MAX_TOPICOS_POR_CONTEUDO]
-        for score, c in fortes:
+        fortes = [(s, c, por) for s, c, por in pontuados if s >= settings.limiar_vinculo][:_MAX_TOPICOS_POR_CONTEUDO]
+        for score, c, por in fortes:
             topico_id, numero = c.chave
             confianca = round(score, 4)
             vinculos_topicos.append({"topico_id": topico_id, "titulo": c.titulo, "unidade": numero,
-                                     "confianca": confianca, "aceito": True, "revisar": _revisar(confianca, settings)})
+                                     "confianca": confianca, "por": por, "aceito": True, "revisar": _revisar(confianca, settings)})
     explicita = (proposta.get("unidade") or {}).get("numero")
     por_secao = proposta.get("formato") == "por_secao"
     for item in proposta.get("listas", []):

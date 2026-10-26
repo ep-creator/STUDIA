@@ -1,6 +1,7 @@
 """Vínculos por similaridade de texto: tópico do programa ↔ seção do livro ↔ conteúdo de lista.
 
 Similaridade = Jaccard ponderado pelo IDF dos tokens (palavras raras pesam mais que "integral" ou "função").
+Com `semantica` (embeddings, opcional), a nota vira (1 − peso) · regra + peso · sentido; sem ela, nada muda.
 """
 
 import math
@@ -23,6 +24,42 @@ class Vinculo:
     chave: object
     titulo: str
     confianca: float
+    por: str = "palavras"    # motivo: "palavras", "sentido" (nenhuma palavra em comum) ou "ambos"
+
+
+_SENTIDO_FORTE = 0.6   # abaixo disso o sentido não conta como motivo do vínculo
+
+
+class Semantica:
+    """Semelhança de sentido entre um texto e títulos, por embeddings, em 0..1 ((1 + cosseno) / 2). Guarda os vetores
+    dos títulos de cada lista de candidatos (a importação compara muitos textos com os mesmos candidatos)."""
+
+    def __init__(self, embeddings):
+        self._e = embeddings
+        self._titulos: dict[tuple[str, ...], object] = {}
+
+    def similaridades(self, texto: str, titulos: list[str]) -> list[float]:
+        chave = tuple(titulos)
+        if chave not in self._titulos:
+            self._titulos[chave] = self._e.de_trechos(list(titulos))
+        cos = self._titulos[chave] @ self._e.de_consulta(texto)
+        return [max(0.0, min(1.0, (1 + float(c)) / 2)) for c in cos]
+
+
+def semantica_de(settings) -> "Semantica | None":
+    """A semântica dos vínculos, se ligada no config e com o modelo disponível."""
+    if not getattr(settings, "vinculos_com_embeddings", False):
+        return None
+    from estudos.ia.embeddings import obter_embeddings
+
+    e = obter_embeddings(settings)
+    return Semantica(e) if e is not None else None
+
+
+def motivo(regra: float, sentido: float | None) -> str:
+    if sentido is None or sentido < _SENTIDO_FORTE:
+        return "palavras"
+    return "sentido" if regra == 0 else "ambos"
 
 
 def construir_idf(titulos: list[str]) -> dict[str, float]:
@@ -50,31 +87,44 @@ def _profundidade(c: Candidato) -> int:
     return codigo.count(".") if isinstance(codigo, str) else 0
 
 
-def pontuar(
-    texto: str, candidatos: list[Candidato], limiar: float, idf: dict[str, float] | None = None
-) -> list[tuple[float, Candidato]]:
-    """Candidatos com similaridade ≥ limiar, do mais parecido para o menos. Quem compara muitos textos com os mesmos
-    candidatos passa o `idf` pronto (construir_idf dos títulos) para não recalculá-lo a cada chamada."""
+def pontuar_com_motivo(
+    texto: str, candidatos: list[Candidato], limiar: float, idf: dict[str, float] | None = None,
+    semantica=None, peso: float = 0.5,
+) -> list[tuple[float, Candidato, str]]:
+    """Como `pontuar`, com o motivo de cada nota ("palavras", "sentido" ou "ambos")."""
     if idf is None:
         idf = construir_idf([c.titulo for c in candidatos])
+    regras = [similaridade(texto, c.titulo, idf) for c in candidatos]
+    sentidos = semantica.similaridades(texto, [c.titulo for c in candidatos]) if semantica is not None else None
+    notas = regras if sentidos is None else [(1 - peso) * r + peso * s for r, s in zip(regras, sentidos)]
     # Empate de nota: fica a mais específica (seção 14.3 antes do capítulo 14 de mesmo título)
     pontuados = sorted(
-        ((similaridade(texto, c.titulo, idf), c) for c in candidatos),
-        key=lambda par: (par[0], _profundidade(par[1])), reverse=True,
+        ((n, c, motivo(r, None if sentidos is None else sentidos[i])) for i, (n, r, c) in enumerate(zip(notas, regras, candidatos))),
+        key=lambda trio: (trio[0], _profundidade(trio[1])), reverse=True,
     )
-    return [(s, c) for s, c in pontuados if s >= limiar]
+    return [t for t in pontuados if t[0] >= limiar]
+
+
+def pontuar(
+    texto: str, candidatos: list[Candidato], limiar: float, idf: dict[str, float] | None = None,
+    semantica=None, peso: float = 0.5,
+) -> list[tuple[float, Candidato]]:
+    """Candidatos com nota ≥ limiar, do mais parecido para o menos. Quem compara muitos textos com os mesmos
+    candidatos passa o `idf` pronto (construir_idf dos títulos) para não recalculá-lo a cada chamada."""
+    return [(n, c) for n, c, _ in pontuar_com_motivo(texto, candidatos, limiar, idf, semantica, peso)]
 
 
 def melhores(
-    texto: str, candidatos: list[Candidato], limiar: float, maximo: int = 1, idf: dict[str, float] | None = None
+    texto: str, candidatos: list[Candidato], limiar: float, maximo: int = 1, idf: dict[str, float] | None = None,
+    semantica=None, peso: float = 0.5,
 ) -> list[Vinculo]:
-    pontuados = pontuar(texto, candidatos, limiar, idf)
+    pontuados = pontuar_com_motivo(texto, candidatos, limiar, idf, semantica, peso)
     vinculos = []
-    for i, (score, c) in enumerate(pontuados[:maximo]):
+    for i, (score, c, por) in enumerate(pontuados[:maximo]):
         # Escolha única entre candidatos igualmente parecidos é um chute: a confiança cai pela metade
         empate = (maximo == 1 and i == 0 and len(pontuados) > 1 and math.isclose(pontuados[1][0], score)
                   and _profundidade(pontuados[1][1]) == _profundidade(c))
-        vinculos.append(Vinculo(c.chave, c.titulo, round(score / 2 if empate else score, 4)))
+        vinculos.append(Vinculo(c.chave, c.titulo, round(score / 2 if empate else score, 4), por))
     return vinculos
 
 
@@ -116,7 +166,9 @@ def _secoes(con: sqlite3.Connection) -> list[sqlite3.Row]:
     ).fetchall()
 
 
-def secao_do_documento(con: sqlite3.Connection, documento, limiar: float) -> SugestaoSecao | None:
+def secao_do_documento(
+    con: sqlite3.Connection, documento, limiar: float, semantica=None, peso: float = 0.5
+) -> SugestaoSecao | None:
     """Seção do livro que o documento cobre, com confiança; None se não há candidato (ou o tipo não tem seção).
 
     1. resolução de questão → seção da lista da questão (certeza);
@@ -142,14 +194,20 @@ def secao_do_documento(con: sqlite3.Connection, documento, limiar: float) -> Sug
         resto = documento.titulo.replace(codigo, " ", 1)
         com_codigo = [s for s in secoes if s["codigo"] == codigo]
         if com_codigo:
-            melhor = max(com_codigo, key=lambda s: (s["principal"], similaridade(resto, s["titulo"], idf)))
-            confianca = 0.5 + 0.5 * similaridade(resto, melhor["titulo"], idf)
+            def confere(s) -> float:  # o título confere com o da seção (regra, ou regra + sentido)
+                regra = similaridade(resto, s["titulo"], idf)
+                if semantica is None:
+                    return regra
+                return (1 - peso) * regra + peso * semantica.similaridades(resto, [s["titulo"]])[0]
+
+            melhor = max(com_codigo, key=lambda s: (s["principal"], confere(s)))
+            confianca = 0.5 + 0.5 * confere(melhor)
             if not melhor["principal"]:
                 confianca *= _FATOR_COMPLEMENTAR
             return SugestaoSecao(melhor["id"], melhor["codigo"], melhor["titulo"], round(confianca, 4), "codigo")
     candidatos = [Candidato(s["id"], s["titulo"]) for s in secoes]
-    [vinculo] = melhores(documento.titulo, candidatos, limiar, idf=idf) or [None]
+    [vinculo] = melhores(documento.titulo, candidatos, limiar, idf=idf, semantica=semantica, peso=peso) or [None]
     if vinculo is None:
         return None
     secao = next(s for s in secoes if s["id"] == vinculo.chave)
-    return SugestaoSecao(secao["id"], secao["codigo"], secao["titulo"], vinculo.confianca, "palavras")
+    return SugestaoSecao(secao["id"], secao["codigo"], secao["titulo"], vinculo.confianca, vinculo.por)

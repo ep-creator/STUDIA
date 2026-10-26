@@ -16,6 +16,9 @@ from estudos.avaliacao.gabarito import ler_busca, ler_vinculos
 from estudos.avaliacao.relatorio import gravar, tabela_busca, tabela_vinculos
 from estudos.avaliacao.vinculos import ConfigVinculo, avaliar as avaliar_vinculos
 from estudos.config import carregar_settings
+from estudos.ia.embeddings import obter_embeddings
+from estudos.importacao.vinculo import Semantica
+from types import SimpleNamespace
 from estudos.db.conexao import conectar
 from estudos.workspace import ARQUIVO_DB
 
@@ -30,7 +33,21 @@ CONFIGS_BUSCA = {
     "hibrida:small": Configuracao("hibrida:small", "hibrida", SMALL),
     "hibrida:base": Configuracao("hibrida:base", "hibrida", BASE),
 }
-CONFIGS_VINCULOS = {"regra": ConfigVinculo("regra")}
+MODELOS = {"small": SMALL, "base": BASE}
+
+
+def _config_vinculo(nome: str) -> ConfigVinculo:
+    """"regra" ou "sentido:<small|base>@<peso>" (ex.: sentido:small@0.5); o modelo só é carregado quando pedido."""
+    if nome == "regra":
+        return ConfigVinculo("regra")
+    tipo, _, resto = nome.partition(":")
+    modelo, _, peso = resto.partition("@")
+    if tipo != "sentido" or modelo not in MODELOS:
+        raise KeyError(nome)
+    e = obter_embeddings(SimpleNamespace(embeddings=True, modelo=MODELOS[modelo], app_dir=APP_DIR))
+    if e is None:
+        raise KeyError(f"{nome} (modelo indisponível)")
+    return ConfigVinculo(nome, Semantica(e), float(peso or 0.5))
 
 
 def _arquivo_gabarito(materia: str, tipo: str) -> Path:
@@ -55,10 +72,10 @@ def main(argv: list[str] | None = None) -> int:
     if not arquivo.is_file():
         print(f"gabarito não encontrado: {arquivo}", file=sys.stderr)
         return 2
-    catalogo = CONFIGS_BUSCA if args.tipo == "busca" else CONFIGS_VINCULOS
     padrao = "texto" if args.tipo == "busca" else "regra"
     try:
-        configs = [catalogo[n.strip()] for n in (args.configs or padrao).split(",") if n.strip()]
+        nomes = [n.strip() for n in (args.configs or padrao).split(",") if n.strip()]
+        configs = [CONFIGS_BUSCA[n] for n in nomes] if args.tipo == "busca" else [_config_vinculo(n) for n in nomes]
     except KeyError as e:
         print(f"configuração desconhecida: {e}", file=sys.stderr)
         return 2

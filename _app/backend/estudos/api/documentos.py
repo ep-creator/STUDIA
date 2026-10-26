@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from estudos.api.deps import Contexto, contexto_dep, materia_dep
 from estudos.api.esquemas import DocumentoSalvar, SecaoEscolhida
 from estudos.api.respostas import Criado, Documento, DocumentoComCorpo, Ligados, Ok
-from estudos.importacao.vinculo import SugestaoSecao, secao_do_documento
+from estudos.importacao.vinculo import SugestaoSecao, secao_do_documento, semantica_de
 from estudos.erros import Conflito, NaoEncontrado
 from estudos.repos import documentos
 from estudos.seguranca import caminho_seguro
@@ -43,7 +43,8 @@ def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> Cri
     with ctx.acao(f"Salvar {corpo.tipo} '{corpo.titulo}'") as op:
         did = documentos.salvar(op, **dados)
         # documento novo ou ainda sem seção: liga sozinho se a seção do livro for certa (senão fica a sugestão)
-        documentos.tentar_ligar(op, ctx.materia.pasta, did, ctx.settings.limiar_vinculo, ctx.settings.limiar_confianca)
+        documentos.tentar_ligar(op, ctx.materia.pasta, did, ctx.settings.limiar_vinculo, ctx.settings.limiar_confianca,
+                                semantica_de(ctx.settings), ctx.settings.peso_sentido_vinculo)
         return {"id": did}
 
 
@@ -51,12 +52,14 @@ def salvar(corpo: DocumentoSalvar, ctx: Contexto = Depends(contexto_dep)) -> Cri
 def ligar_secoes(ctx: Contexto = Depends(contexto_dep)) -> Ligados:
     """Liga às seções do livro os documentos ainda sem seção cuja sugestão é confiante (os demais ficam como sugestão)."""
     with ctx.acao("Ligar documentos às seções do livro") as op:
-        return {"ligados": documentos.ligar_sem_secao(op, ctx.materia.pasta, ctx.settings.limiar_vinculo, ctx.settings.limiar_confianca)}
+        return {"ligados": documentos.ligar_sem_secao(op, ctx.materia.pasta, ctx.settings.limiar_vinculo, ctx.settings.limiar_confianca,
+                                                      semantica_de(ctx.settings), ctx.settings.peso_sentido_vinculo)}
 
 
 @router.get(_PREFIXO + "/{documento_id}/sugestao-secao")
 def sugestao_secao(documento_id: int, ctx: Contexto = Depends(contexto_dep)) -> SugestaoSecao | None:
-    return secao_do_documento(ctx.con, documentos.obter(ctx.con, documento_id), ctx.settings.limiar_vinculo)
+    return secao_do_documento(ctx.con, documentos.obter(ctx.con, documento_id), ctx.settings.limiar_vinculo,
+                              semantica=semantica_de(ctx.settings), peso=ctx.settings.peso_sentido_vinculo)
 
 
 @router.put(_PREFIXO + "/{documento_id}/secao")

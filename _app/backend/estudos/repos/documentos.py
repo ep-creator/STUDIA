@@ -148,25 +148,29 @@ def ligar_secao(op: Operacao, raiz: Path, documento_id: int, secao_id: int | Non
     _base.atualizar(op, "documento", {"id": documento_id}, {"secao_decidida": 1})
 
 
-def tentar_ligar(op: Operacao, raiz: Path, documento_id: int, limiar_vinculo: float, limiar_gravar: float) -> bool:
+def tentar_ligar(
+    op: Operacao, raiz: Path, documento_id: int, limiar_vinculo: float, limiar_gravar: float, semantica=None, peso: float = 0.5
+) -> bool:
     """Liga à seção sugerida só se a confiança alcança `limiar_gravar`; abaixo disso nada é gravado (vira sugestão)."""
     from estudos.importacao.vinculo import secao_do_documento  # vínculo usa este repositório na leitura
 
     doc = obter(op.con, documento_id)
     if doc.tipo not in TIPOS_COM_SECAO or doc.secao_id is not None or doc.secao_decidida:
         return False
-    sugestao = secao_do_documento(op.con, doc, limiar_vinculo)
+    sugestao = secao_do_documento(op.con, doc, limiar_vinculo, semantica=semantica, peso=peso)
     if sugestao is None or sugestao.confianca < limiar_gravar:
         return False
     _regravar_secao(op, raiz, documento_id, sugestao.secao_id)
     return True
 
 
-def ligar_sem_secao(op: Operacao, raiz: Path, limiar_vinculo: float, limiar_gravar: float) -> int:
+def ligar_sem_secao(
+    op: Operacao, raiz: Path, limiar_vinculo: float, limiar_gravar: float, semantica=None, peso: float = 0.5
+) -> int:
     """Liga os documentos ainda sem seção (e sem decisão do usuário) cuja sugestão é confiante; devolve quantos."""
     ids = [
         r["id"] for r in op.con.execute(
             f"SELECT id FROM documento WHERE secao_id IS NULL AND secao_decidida = 0 "
             f"AND tipo IN ({', '.join('?' * len(TIPOS_COM_SECAO))}) ORDER BY id", TIPOS_COM_SECAO)
     ]
-    return sum(tentar_ligar(op, raiz, i, limiar_vinculo, limiar_gravar) for i in ids)
+    return sum(tentar_ligar(op, raiz, i, limiar_vinculo, limiar_gravar, semantica, peso) for i in ids)

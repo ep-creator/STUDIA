@@ -48,8 +48,10 @@ def _avaliar_um(con, gabarito: GabaritoVinculos, config: ConfigVinculo, limiar_v
     cand_topicos = [Candidato(numero, titulo) for titulo, numero in topicos]
     idf_topicos = construir_idf([c.titulo for c in cand_topicos])
 
+    sentido = {"semantica": config.semantica, "peso": config.peso} if config.semantica is not None else {}
+
     def um(texto, candidatos, idf):
-        [v] = melhores(texto, candidatos, limiar_vinculo, idf=idf) or [None]
+        [v] = melhores(texto, candidatos, limiar_vinculo, idf=idf, **sentido) or [None]
         return (v.chave, v.confianca) if v else (None, 0.0)
 
     res_topicos = []
@@ -67,7 +69,7 @@ def _avaliar_um(con, gabarito: GabaritoVinculos, config: ConfigVinculo, limiar_v
         if doc is None:
             raise ValueError(f"documento do gabarito não existe na matéria: {item.titulo!r}")
         # a avaliação vê o documento como se ainda não tivesse seção (mede a regra, não a ligação já gravada)
-        s = secao_do_documento(con, doc, limiar_vinculo)
+        s = secao_do_documento(con, doc, limiar_vinculo, **sentido)
         escolha, conf = (s.codigo, s.confianca) if s else (None, 0.0)
         res_docs.append(((escolha in item.secoes) if escolha else not item.secoes, escolha, conf))
     linhas = [
