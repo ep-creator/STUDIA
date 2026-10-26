@@ -13,6 +13,16 @@ limiar_vinculo = 0.35
 # Tamanho máximo de um arquivo enviado (MB).
 limite_upload_mb = 200
 
+[inteligencia]
+# Embeddings locais (modelo baixado uma vez para _app/.modelos/; depois funciona offline). false = só regras e busca por texto.
+embeddings = false
+modelo = "intfloat/multilingual-e5-small"
+# "texto" (BM25), "vetor" ou "hibrida".
+busca = "texto"
+vinculos_com_embeddings = false
+# Peso do sentido na nota dos vínculos (calibrado pela avaliação).
+peso_sentido_vinculo = 0.5
+
 [historico]
 # Quantidade de ações guardadas para desfazer.
 max_grupos = 500

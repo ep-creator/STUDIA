@@ -13,6 +13,8 @@ dependencies = [
     "pydantic>=2.9",
     "pymupdf>=1.24",
     "python-multipart>=0.0.12",
+    "numpy>=2.0",
+    "fastembed>=0.5",
 ]
 
 [project.optional-dependencies]
@@ -27,3 +29,6 @@ estudos = ["db/migracoes/*.sql"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
+# Testes com o modelo real (baixa ~470 MB): fora da suíte padrão e do CI. Rodar com: pytest -m modelo
+addopts = "-m 'not modelo'"
+markers = ["modelo: usa o modelo de embeddings real (download)"]

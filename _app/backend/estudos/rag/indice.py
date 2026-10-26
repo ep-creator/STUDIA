@@ -9,7 +9,7 @@ from pathlib import Path
 
 from estudos.workspace import ARQUIVO_DB
 
-VERSAO_INDICE = 1
+VERSAO_INDICE = 2   # 2: trecho.vetor e tabela meta (modelo e dimensão dos vetores)
 PASTA_INDICE = ".indice"
 _ARQUIVO = "indice.db"
 
@@ -29,7 +29,12 @@ CREATE TABLE IF NOT EXISTS trecho (
     titulo TEXT NOT NULL,
     texto TEXT NOT NULL,
     pagina INTEGER,
-    ordem INTEGER NOT NULL
+    ordem INTEGER NOT NULL,
+    vetor BLOB                 -- embedding normalizado (float32); NULL sem embeddings
+);
+CREATE TABLE IF NOT EXISTS meta (
+    chave TEXT PRIMARY KEY,    -- "modelo" e "dimensao" dos vetores gravados
+    valor TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_trecho_origem ON trecho (origem);
 CREATE INDEX IF NOT EXISTS idx_trecho_secao ON trecho (secao_id);

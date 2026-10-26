@@ -12,6 +12,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from estudos.ia.embeddings import Embeddings, avisos_pendentes, invalidar_vetores
 from estudos.importacao.pdf import DocumentoPdf, PdfInvalido, abrir_pdf
 from estudos.db.conexao import conectar
 from estudos.rag.indice import abrir_indice, caminho_indice, descartar_indice, eh_corrupcao
@@ -137,7 +138,8 @@ def _trava(caminho: Path) -> threading.Lock:
 
 
 def sincronizar(
-    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path | None = None, esperar: bool = True
+    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path | None = None, esperar: bool = True,
+    embeddings: Embeddings | None = None,
 ) -> ResumoSincronizacao:
     """Uma sincronização por índice de cada vez. Com esperar=False, quem chega durante outra sincronização não espera:
     devolve um aviso e quem chamou segue buscando no índice como ele está."""
@@ -147,12 +149,12 @@ def sincronizar(
         return ResumoSincronizacao(avisos=["sincronização em andamento; resultados podem ainda não incluir tudo"])
     try:
         try:
-            return _sincronizar(con, raiz, caminho)
+            return _sincronizar(con, raiz, caminho, embeddings)
         except sqlite3.DatabaseError as erro:
             if not eh_corrupcao(erro):
                 raise
             descartar_indice(raiz, caminho)
-            resumo = _sincronizar(con, raiz, caminho)
+            resumo = _sincronizar(con, raiz, caminho, embeddings)
             resumo.avisos.insert(0, "índice de busca estava corrompido e foi reconstruído")
             return resumo
     finally:
@@ -186,7 +188,29 @@ def aguardar_sincronizacoes(timeout: float | None = None) -> bool:
     return not any(t.is_alive() for t in list(_pendentes))
 
 
-def _sincronizar(con: sqlite3.Connection, raiz: Path, caminho_indice_: Path) -> ResumoSincronizacao:
+def _vetorizar(indice: sqlite3.Connection, embeddings: Embeddings) -> None:
+    """Vetores dos trechos que ainda não têm; outro modelo (ou outra dimensão) apaga os antigos e refaz."""
+    meta = dict(indice.execute("SELECT chave, valor FROM meta").fetchall())
+    if meta.get("modelo") != embeddings.nome or meta.get("dimensao") != str(embeddings.dimensao):
+        indice.execute("BEGIN")
+        indice.execute("UPDATE trecho SET vetor = NULL")
+        indice.execute("INSERT OR REPLACE INTO meta (chave, valor) VALUES ('modelo', ?), ('dimensao', ?)",
+                       (embeddings.nome, str(embeddings.dimensao)))
+        indice.execute("COMMIT")
+    while True:
+        lote = indice.execute("SELECT id, titulo, texto FROM trecho WHERE vetor IS NULL ORDER BY id LIMIT 64").fetchall()
+        if not lote:
+            return
+        vetores = embeddings.de_trechos([f"{l['titulo']}\n{l['texto']}" for l in lote])
+        indice.execute("BEGIN")
+        indice.executemany("UPDATE trecho SET vetor = ? WHERE id = ?",
+                           [(v.astype("float32").tobytes(), l["id"]) for v, l in zip(vetores, lote)])
+        indice.execute("COMMIT")
+
+
+def _sincronizar(
+    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path, embeddings: Embeddings | None = None
+) -> ResumoSincronizacao:
     inicio = time.perf_counter()
     resumo = ResumoSincronizacao()
     atuais = {f"fonte:{r['id']}": assinatura_fonte(con, r["id"]) for r in con.execute("SELECT id FROM fonte")}
@@ -220,6 +244,8 @@ def _sincronizar(con: sqlite3.Connection, raiz: Path, caminho_indice_: Path) -> 
                 )
                 resumo.indexadas += 1
             indice.execute("COMMIT")
+        if embeddings is not None:
+            _vetorizar(indice, embeddings)
         resumo.trechos = indice.execute("SELECT count(*) FROM trecho").fetchone()[0]
     except BaseException:
         if indice.in_transaction:
@@ -227,5 +253,7 @@ def _sincronizar(con: sqlite3.Connection, raiz: Path, caminho_indice_: Path) -> 
         raise
     finally:
         indice.close()
+        invalidar_vetores(caminho_indice_)
+    resumo.avisos += avisos_pendentes()
     resumo.tempo_ms = round((time.perf_counter() - inicio) * 1000)
     return resumo
