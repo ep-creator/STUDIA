@@ -13,6 +13,7 @@ from pathlib import Path
 
 from estudos.avaliacao.busca import Configuracao, avaliar
 from estudos.avaliacao.gabarito import ler_busca, ler_vinculos
+from estudos.avaliacao.gerar import perguntas_das_questoes
 from estudos.avaliacao.relatorio import gravar, slug as _slug, tabela_busca, tabela_vinculos
 from estudos.avaliacao.vinculos import ConfigVinculo, avaliar as avaliar_vinculos
 from estudos.config import carregar_settings
@@ -61,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gabarito", type=Path, help="arquivo TOML (padrão: gabaritos/<matéria>_<tipo>.toml)")
     parser.add_argument("--configs", default=None, help="separadas por vírgula (busca: texto…; vínculos: regra…)")
     parser.add_argument("--gravar", action="store_true", help="grava a tabela em docs/avaliacoes/")
+    parser.add_argument("--geradas", action="store_true",
+                        help="busca: acrescenta perguntas geradas dos enunciados das questões (resposta = seção da lista)")
     args = parser.parse_args(argv)
     sys.stdout.reconfigure(encoding="utf-8")
     pasta = WORKSPACE / args.materia
@@ -82,6 +85,8 @@ def main(argv: list[str] | None = None) -> int:
         return _vinculos(args, pasta, arquivo, configs)
     perguntas = ler_busca(arquivo)
     with closing(conectar(pasta / ARQUIVO_DB)) as con, tempfile.TemporaryDirectory() as temp:
+        if args.geradas:
+            perguntas += perguntas_das_questoes(con)
         linhas = avaliar(con, pasta, perguntas, configs, Path(temp))
     tabela = tabela_busca(linhas)
     print(f"{len(perguntas)} perguntas · {arquivo.name}\n\n{tabela}")
