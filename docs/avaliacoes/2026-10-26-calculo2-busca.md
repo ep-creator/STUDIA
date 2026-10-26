@@ -25,3 +25,19 @@ Linha de base (`texto`): acerto@5 em paráfrase 65%, nas exatas 95%.
 - **base no lugar do small** exigiria ≥ 5 pontos a mais de acerto@5 geral: 88% × 85% = +3 ❌ (e ainda reprova no tempo de indexação).
 - `vetor` sozinho fica abaixo do texto com o small (75% × 80%): só entra fundido.
 - Observação: a coluna de memória das configurações que reaproveitam o índice (0,6 MB) mede só as buscas; o pico com indexação é ~80 MB.
+
+
+---
+
+## Versão 2 do gabarito (uso real: questões, slides/listas, trecho e links)
+
+
+Gabarito: `calculo2_busca.toml` (161 perguntas)
+
+| configuração | acerto@5 | exata | parafrase | questao | de claude | de gerada | trecho | links | MRR@10 | indexação (s) | busca p95 (ms) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| texto | 91% | 100% | 65% | 94% | 82% | 94% | — | 56% (n=12) | 0.81 | 27.89 | 13.0 |
+| vetor:small | 63% | 95% | 70% | 57% | 82% | 57% | — | 55% (n=12) | 0.47 | 248.49 | 71.0 |
+| hibrida:small | 84% | 100% | 75% | 83% | 88% | 83% | — | 68% (n=12) | 0.68 | 248.49 | 97.6 |
+| vetor:base | 78% | 100% | 75% | 75% | 88% | 75% | — | 60% (n=12) | 0.59 | 863.24 | 66.9 |
+| hibrida:base | 89% | 100% | 80% | 89% | 90% | 89% | — | 68% (n=12) | 0.75 | 863.24 | 84.3 |
