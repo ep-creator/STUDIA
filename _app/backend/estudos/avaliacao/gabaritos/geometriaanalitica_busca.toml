@@ -1,183 +1,348 @@
-# Gabarito de busca da Geometria Analítica (Fase 6, peça B). Rascunho do Claude, sem revisão do usuário: conferência.
-# Seções do Lima (capítulos 7–48) e do Santos (1.1, 3.3.1…); os capítulos 1–6 existem nos dois livros e ficaram de fora.
-# O Boulos (principal) não tem seções cadastradas, e os slides não contam como acerto: os números saem pessimistas para todos.
+# Gabarito de busca da Geometria Analítica (Fase 6, peça B) - versão 2, pelo uso real.
+# O material principal são os slides das aulas e as listas: as respostas aceitas são as aulas (slide + resolvidos).
+# Os livros Lima e Santos também valem onde tratam do assunto (o Boulos ainda não tem seções cadastradas).
+# estilo: exata | parafrase | questao (enunciado de questão das listas, o que a IA vê). origem: claude (este rascunho).
+
+# --- SUAS PERGUNTAS -------------------------------------------------------------------------------
+# Escreva aqui as dúvidas que você realmente teve (do jeito que perguntaria). Copie o modelo e tire os #:
+#
+# [[pergunta]]
+# texto = "sua pergunta aqui"
+# estilo = "parafrase"        # ou "exata" (palavras do material) ou "questao" (enunciado de questão)
+# origem = "usuario"
+# aceitas = ["fonte:Aula 3 - Retas e planos"]   # onde está a resposta; vale mais de uma
+#
+# Formatos de resposta: secao:15.4 | documento:<título>#<bloco> | fonte:<arquivo>#p5-7 (página opcional)
 
 [[pergunta]]
-texto = "equação da circunferência"
+texto = "vetores e translações"
 estilo = "exata"
-aceitas = ["secao:12", "secao:13"]
+origem = "claude"
+aceitas = ["fonte:Aula 1 - Vetores e translacoes", "fonte:Aula 1 - resolvidos e propostos"]
 
 [[pergunta]]
-texto = "como sei se uma equação x² + y² + Dx + Ey + F = 0 representa um círculo"
-estilo = "parafrase"
-aceitas = ["secao:13", "secao:12"]
-
-[[pergunta]]
-texto = "distância de um ponto a uma reta"
+texto = "coordenadas e distância entre pontos"
 estilo = "exata"
-aceitas = ["secao:9", "secao:4.3.2"]
+origem = "claude"
+aceitas = ["fonte:Aula 2 - Coordenadas e distancia", "fonte:Aula 2 - resolvidos e propostos", "secao:26"]
 
 [[pergunta]]
-texto = "qual a menor distância entre um ponto e uma linha"
-estilo = "parafrase"
-aceitas = ["secao:9", "secao:4.3.2"]
-
-[[pergunta]]
-texto = "ângulo entre duas retas"
+texto = "equações paramétricas e cartesianas de retas e planos"
 estilo = "exata"
-aceitas = ["secao:8", "secao:4.3.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 3 - Retas e planos", "fonte:Aula 3 - resolvidos e propostos", "secao:25", "secao:29", "secao:4.1", "secao:4.2"]
 
 [[pergunta]]
-texto = "equação do plano"
+texto = "escalonamento de matrizes"
 estilo = "exata"
-aceitas = ["secao:29", "secao:4.1", "secao:4.1.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 4 - Rn, matrizes e escalonamento", "fonte:Aula 5 - Sistemas lineares", "fonte:Aula 4 - resolvidos e propostos", "fonte:Aula 5 - resolvidos e propostos", "secao:33", "secao:1.2.1"]
 
 [[pergunta]]
-texto = "achar o plano que passa por três pontos dados"
-estilo = "parafrase"
-aceitas = ["secao:29", "secao:4.1.1", "secao:4.1.2"]
-
-[[pergunta]]
-texto = "equações paramétricas da reta"
+texto = "sistemas lineares"
 estilo = "exata"
-aceitas = ["secao:25", "secao:4.2.1", "secao:7"]
+origem = "claude"
+aceitas = ["fonte:Aula 5 - Sistemas lineares", "fonte:Aula 5 - resolvidos e propostos", "secao:1.2"]
 
 [[pergunta]]
-texto = "descrever uma reta no espaço usando um parâmetro t"
-estilo = "parafrase"
-aceitas = ["secao:25", "secao:4.2.1"]
-
-[[pergunta]]
-texto = "produto vetorial"
+texto = "produto de matrizes"
 estilo = "exata"
-aceitas = ["secao:40", "secao:3.3.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 6 - Produto de matrizes", "fonte:Aula 6 - Netflix, resolvido e propostos", "secao:34", "secao:1.1.1"]
 
 [[pergunta]]
-texto = "vetor perpendicular a dois vetores dados"
-estilo = "parafrase"
-aceitas = ["secao:40", "secao:3.3.1"]
-
-[[pergunta]]
-texto = "produto misto e volume do paralelepípedo"
+texto = "Gauss-Jordan e matriz inversa"
 estilo = "exata"
-aceitas = ["secao:3.3.2", "secao:38"]
-
-[[pergunta]]
-texto = "calcular o volume do sólido gerado por três vetores"
-estilo = "parafrase"
-aceitas = ["secao:38", "secao:3.3.2"]
-
-[[pergunta]]
-texto = "produto escalar e projeção ortogonal"
-estilo = "exata"
-aceitas = ["secao:3.2", "secao:3.2.1", "secao:3.2.2"]
-
-[[pergunta]]
-texto = "a sombra de um vetor sobre outro"
-estilo = "parafrase"
-aceitas = ["secao:3.2.2"]
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes#p3-4", "fonte:Aula 7 - resolvidos e propostos", "secao:2.1.3", "secao:1.2.1"]
 
 [[pergunta]]
 texto = "determinantes"
 estilo = "exata"
-aceitas = ["secao:35", "secao:2.2", "secao:2.2.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes#p6-11", "fonte:Aula 7 - resolvidos e propostos", "secao:35", "secao:2.2"]
 
 [[pergunta]]
-texto = "regra de Cramer"
+texto = "subespaços afins e vetoriais"
 estilo = "exata"
-aceitas = ["secao:36"]
-
-[[pergunta]]
-texto = "resolver um sistema usando determinantes"
-estilo = "parafrase"
-aceitas = ["secao:36", "secao:2.2"]
-
-[[pergunta]]
-texto = "escalonamento e eliminação gaussiana"
-estilo = "exata"
-aceitas = ["secao:33", "secao:1.2.1"]
-
-[[pergunta]]
-texto = "como zerar os elementos abaixo do pivô para resolver o sistema"
-estilo = "parafrase"
-aceitas = ["secao:33", "secao:1.2.1", "secao:1.2.2"]
-
-[[pergunta]]
-texto = "matriz inversa"
-estilo = "exata"
-aceitas = ["secao:2.1", "secao:2.1.3", "secao:39"]
-
-[[pergunta]]
-texto = "quando uma matriz tem inversa"
-estilo = "parafrase"
-aceitas = ["secao:39", "secao:2.1", "secao:2.1.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 8 - Subespacos afins e vetoriais", "fonte:Aula 8 - resolvidos e propostos", "secao:5.2"]
 
 [[pergunta]]
 texto = "independência linear"
 estilo = "exata"
-aceitas = ["secao:5.1.3"]
+origem = "claude"
+aceitas = ["fonte:Aula 9 - Independencia linear#p2", "fonte:Aula 9 - resolvidos e propostos", "secao:5.1.3"]
 
 [[pergunta]]
-texto = "vetores que não podem ser escritos como combinação dos outros"
+texto = "bases e dimensão"
+estilo = "exata"
+origem = "claude"
+aceitas = ["fonte:Aula 10 - Bases e dimensao", "fonte:Aula 10 - resolvidos e propostos", "secao:5.2"]
+
+[[pergunta]]
+texto = "desigualdade de Cauchy-Schwarz"
+estilo = "exata"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao#p8", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos"]
+
+[[pergunta]]
+texto = "projeção ortogonal"
+estilo = "exata"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao#p9", "secao:3.2.2"]
+
+[[pergunta]]
+texto = "Gram-Schmidt"
+estilo = "exata"
+origem = "claude"
+aceitas = ["fonte:Aula 12 - Bases ortonormais e Gram-Schmidt#p4", "fonte:Aula 12 - resolvidos e propostos", "secao:5.3.2"]
+
+[[pergunta]]
+texto = "como saber se três pontos estão na mesma reta"
 estilo = "parafrase"
-aceitas = ["secao:5.1.3", "secao:5.1.2"]
+origem = "claude"
+aceitas = ["fonte:Aula 1 - Vetores e translacoes", "fonte:Aula 3 - Retas e planos", "fonte:Aula 1 - resolvidos e propostos", "fonte:Aula 3 - resolvidos e propostos"]
 
 [[pergunta]]
-texto = "base e dimensão de um subespaço"
-estilo = "exata"
-aceitas = ["secao:5.2"]
-
-[[pergunta]]
-texto = "autovalores e autovetores"
-estilo = "exata"
-aceitas = ["secao:6.1.2"]
-
-[[pergunta]]
-texto = "vetor que só muda de tamanho quando aplico a matriz"
+texto = "deslocar um ponto somando um vetor"
 estilo = "parafrase"
-aceitas = ["secao:6.1.2"]
+origem = "claude"
+aceitas = ["fonte:Aula 1 - Vetores e translacoes", "fonte:Aula 1 - resolvidos e propostos"]
 
 [[pergunta]]
-texto = "equação da elipse"
-estilo = "exata"
-aceitas = ["secao:16", "secao:6.3.1"]
-
-[[pergunta]]
-texto = "curva em que a soma das distâncias a dois focos é constante"
+texto = "quando um sistema tem infinitas soluções ou nenhuma"
 estilo = "parafrase"
-aceitas = ["secao:16", "secao:6.3.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 5 - Sistemas lineares", "fonte:Aula 5 - resolvidos e propostos", "secao:1.2"]
 
 [[pergunta]]
-texto = "equação da hipérbole"
-estilo = "exata"
-aceitas = ["secao:17", "secao:6.3.2"]
-
-[[pergunta]]
-texto = "descobrir qual cônica uma equação do segundo grau representa"
+texto = "por que AB é diferente de BA"
 estilo = "parafrase"
-aceitas = ["secao:21", "secao:6.3", "secao:20"]
+origem = "claude"
+aceitas = ["fonte:Aula 6 - Produto de matrizes#p6-10", "fonte:Aula 6 - Netflix, resolvido e propostos", "secao:34"]
 
 [[pergunta]]
-texto = "mudança de coordenadas por rotação e translação"
-estilo = "exata"
-aceitas = ["secao:19", "secao:41", "secao:5.4", "secao:5.4.1", "secao:5.4.2"]
-
-[[pergunta]]
-texto = "girar os eixos para sumir com o termo xy"
+texto = "como recomendar filmes usando matrizes"
 estilo = "parafrase"
-aceitas = ["secao:19", "secao:21", "secao:20", "secao:6.3", "secao:5.4.1"]
+origem = "claude"
+aceitas = ["fonte:Aula 6 - Netflix, resolvido e propostos", "fonte:Aula 6 - Produto de matrizes"]
 
 [[pergunta]]
-texto = "quádricas centrais"
-estilo = "exata"
-aceitas = ["secao:43", "secao:45"]
-
-[[pergunta]]
-texto = "produto interno e bases ortonormais"
-estilo = "exata"
-aceitas = ["secao:5.3.1", "secao:5.3.2"]
-
-[[pergunta]]
-texto = "transformar uma base qualquer numa base de vetores perpendiculares"
+texto = "quando dá para desfazer uma matriz"
 estilo = "parafrase"
-aceitas = ["secao:5.3.2"]
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes#p3-4", "fonte:Aula 7 - resolvidos e propostos", "secao:39", "secao:2.1"]
+
+[[pergunta]]
+texto = "o conjunto de soluções passa pela origem?"
+estilo = "parafrase"
+origem = "claude"
+aceitas = ["fonte:Aula 8 - Subespacos afins e vetoriais", "fonte:Aula 8 - resolvidos e propostos"]
+
+[[pergunta]]
+texto = "vetores sobrando num conjunto que gera o mesmo espaço"
+estilo = "parafrase"
+origem = "claude"
+aceitas = ["fonte:Aula 9 - Independencia linear", "fonte:Aula 10 - Bases e dimensao", "fonte:Aula 9 - resolvidos e propostos", "fonte:Aula 10 - resolvidos e propostos"]
+
+[[pergunta]]
+texto = "medir o ângulo entre dois vetores em R4"
+estilo = "parafrase"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos"]
+
+[[pergunta]]
+texto = "transformar uma base em vetores perpendiculares de tamanho 1"
+estilo = "parafrase"
+origem = "claude"
+aceitas = ["fonte:Aula 12 - Bases ortonormais e Gram-Schmidt", "fonte:Aula 12 - resolvidos e propostos", "secao:5.3.2"]
+
+# L1 questão 1
+[[pergunta]]
+texto = "Considere um tetraedro ABCD e seja M o ponto médio da aresta BC. Defina v1 = −−→ DA, v2 = −−→ DB, v3 = −−→ DC. Expresse o vetor −−→ AM como combinação linear de v1, v2, v3."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 1 - Vetores e translacoes", "fonte:Aula 1 - resolvidos e propostos"]
+
+# L1 questão 2
+[[pergunta]]
+texto = "Em R3, considere o triângulo de vértices A = (2, −1, 1), B = (4, 3, −2), C = (−1, 2, 5). (a) Encontre o baricentro G do triângulo e o ponto médio M do lado AB. (b) Verifique diretamente, usando vetores, que os pontos C, G e M são colineares."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 1 - Vetores e translacoes", "fonte:Aula 2 - Coordenadas e distancia", "fonte:Aula 1 - resolvidos e propostos", "fonte:Aula 2 - resolvidos e propostos"]
+
+# L1 questão 3
+[[pergunta]]
+texto = "Seja la reta de R3 que passa pelos pontos P = (2, −1, 4), Q = (−1, 5, 1). (a) Encontre uma equação paramétrica para l. (b) Para quais valores do parâmetro a equação obtida descreve o segmento PQ? (c) Determine o ponto de lcuja coordenada y é igual a 3."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 3 - Retas e planos", "fonte:Aula 3 - resolvidos e propostos"]
+
+# L1 questão 5
+[[pergunta]]
+texto = "Seja o plano π : (x, y, z) = (1, 2, 0) + λ(1, 1, 2) + μ(2, −1, 1), λ, μ ∈R, e seja σ : 2x −y + z = 3. (a) Encontre dois pontos distintos da interseção l= π ∩σ. (b) Obtenha uma equação paramétrica para l. (c) Encontre uma equação Cartesiana para π."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 3 - Retas e planos", "fonte:Aula 3 - resolvidos e propostos"]
+
+# L1 questão 7
+[[pergunta]]
+texto = "Seja l: (x, y, z) = (2, −1, 1) + λ(1, 2, −1), λ ∈R. Encontre uma equação Cartesiana para: (a) o plano α que contém le é perpendicular ao plano OXY ; (b) o plano β que contém le é perpendicular ao plano OY Z."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 3 - Retas e planos", "fonte:Aula 11 - Produto interno, angulos e projecao", "fonte:Aula 3 - resolvidos e propostos", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos"]
+
+# L1 questão 9
+[[pergunta]]
+texto = "Considere o sistema linear (S) x1 + 2x2 −x3 = −3, 2x1 + 3x2 + x3 = 1, −x1 + x2 + 2x3 = 2. (a) Escreva a matriz ampliada de (S) e reduza-a, via eliminação progressiva, a uma forma escalonada. (b) Resolva (S) por substituição regressiva."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 4 - Rn, matrizes e escalonamento", "fonte:Aula 5 - Sistemas lineares", "fonte:Aula 4 - resolvidos e propostos", "fonte:Aula 5 - resolvidos e propostos"]
+
+# L1 questão 14
+[[pergunta]]
+texto = "Considere, para a, b ∈R, o sistema (S) x + y + z = 1, 2x + 3y + z = 2, 3x + ay + 2z = b. Classifique (S), em função de a e b, nos três casos abaixo: (a) sistema sem solução; (b) sistema com uma única solução; (c) sistema com infinitas soluções. No caso de infi"
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 5 - Sistemas lineares", "fonte:Aula 5 - resolvidos e propostos"]
+
+# L1 questão 15
+[[pergunta]]
+texto = "Considere os três planos de R3 π1 : x + y + z = 1, π2 : 2x −y + 3z = 2, π3 : 3x + ay + 4z = b, onde a, b ∈R. Lista de Exercícios - 1 29 de agosto de 2026 (a) Para quais valores de a e b os três planos se interceptam em mais de um ponto? (b) Para esses valores,"
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 5 - Sistemas lineares", "fonte:Aula 3 - Retas e planos", "fonte:Aula 5 - resolvidos e propostos", "fonte:Aula 3 - resolvidos e propostos"]
+
+# L2 questão 1
+[[pergunta]]
+texto = "Resolva, utilizando eliminação de Gauss–Jordan, o sistema 2x1 −x2 + x3 = 3, x1 + x2 −2x3 = −1, 3x1 + 2x2 −x3 = 4."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes", "fonte:Aula 7 - resolvidos e propostos"]
+
+# L2 questão 2
+[[pergunta]]
+texto = "Calcule, por Gauss–Jordan, a inversa de A= −1 . Em seguida, use A−1 para resolver simultaneamente AX= b1 e AX= b2, onde b1 = , b2 = ."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes", "fonte:Aula 7 - resolvidos e propostos"]
+
+# L2 questão 3
+[[pergunta]]
+texto = "Para Bt= t t t , calcule det(Bt) e determine para quais valores de t∈R a matriz Bté inversível."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 7 - Gauss-Jordan, inversa e determinantes", "fonte:Aula 7 - resolvidos e propostos"]
+
+# L2 questão 7
+[[pergunta]]
+texto = "Considere A = {(x1, x2, x3) ∈R3 : x1 −2x2 + x3 = 4}. Escreva A em forma paramétrica e decida se A é um subespaço vetorial de R3."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 8 - Subespacos afins e vetoriais", "fonte:Aula 8 - resolvidos e propostos"]
+
+# L2 questão 9
+[[pergunta]]
+texto = "Seja A = (1, −1, 2, 0) + ger[(1, 0, 1, 1), (0, 2, −1, 1)] ⊂R4 e considere Pt= (2, t, 2, 2). Determine todos os valores de t∈R para os quais Pt∈A."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 8 - Subespacos afins e vetoriais", "fonte:Aula 8 - resolvidos e propostos"]
+
+# L2 questão 13
+[[pergunta]]
+texto = "Para a∈R, considere v1 = (1, 0, 1, 0), v2 = (0, 1, 1, 0), v3 = (1, 1, a, 1), v4 = (0, 0, 1, 1). Determine os valores de apara os quais v1, v2, v3, v4 são L.I."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 9 - Independencia linear", "fonte:Aula 9 - resolvidos e propostos"]
+
+# L2 questão 14
+[[pergunta]]
+texto = "Os vetores u1 = (1, 1, 0, 1), u2 = (2, 0, 1, 1), u3 = (0, 2, −1, 1), u4 = (3, 1, 1, 2), u5 = (1, 3, −1, 2) pertencem a R4. Encontre uma sublista maximal de vetores L.I. e escreva cada vetor restante como combinação linear dos vetores escolhidos."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 9 - Independencia linear", "fonte:Aula 10 - Bases e dimensao", "fonte:Aula 9 - resolvidos e propostos", "fonte:Aula 10 - resolvidos e propostos"]
+
+# L2 questão 16
+[[pergunta]]
+texto = "Considere as retas l: (x, y, z) = (1, 0, 1) + s(1, 2, −1), r: (x, y, z) = (0, 2, 2) + t(2, −1, 1). Determine se elas são paralelas, concorrentes ou reversas. Justifique tanto pela tentativa de resolver as equações dos parâmetros quanto por um critério de indep"
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao", "fonte:Aula 3 - Retas e planos", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos", "fonte:Aula 3 - resolvidos e propostos"]
+
+# L2 questão 20
+[[pergunta]]
+texto = "Considere W= x∈R6 : x1 + x2 −x4 + x6 = 0, x2 + x3 + x5 = 0, x1 −x3 + x4 −x5 = . Encontre uma base de We determine dimW."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 10 - Bases e dimensao", "fonte:Aula 10 - resolvidos e propostos"]
+
+# L2 questão 21
+[[pergunta]]
+texto = "Seja B = {(1, 0, 1, 0), (0, 1, 1, 0), (1, 1, 0, 1)} uma base de W= ger(B). Encontre as coordenadas de w= (0, 1, 3, −1) com respeito à base B e explique por que essas coordenadas são únicas."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 10 - Bases e dimensao", "fonte:Aula 10 - resolvidos e propostos"]
+
+# L2 questão 26
+[[pergunta]]
+texto = "Seja x= (x1, x2, x3) ∈R3 com ∥x∥= 1. Use a desigualdade de Cauchy–Schwarz para determinar o maior valor possível de 2x1 −x2 + 2x3. Indique um vetor xno qual esse valor é atingido."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos"]
+
+# L2 questão 29
+[[pergunta]]
+texto = "Sejam v= (3, −1, 2, 1), u= (1, 1, 0, −1). Calcule Proju(v) e escreva v= v∥+ v⊥, onde v∥é colinear a ue v⊥⊥u. Verifique diretamente a ortogonalidade obtida."
+estilo = "questao"
+origem = "claude"
+aceitas = ["fonte:Aula 11 - Produto interno, angulos e projecao", "fonte:Aula 11 - retas e planos bis, resolvidos e propostos"]
+
+# --- LINKS: a partir de uma aula, o que deveria aparecer ligado a ela ---
+[[relacionado]]
+de = "fonte:Aula 1 - Vetores e translacoes"
+esperados = ["fonte:Aula 1 - resolvidos e propostos", "fonte:Atividade - Aula 1"]
+
+[[relacionado]]
+de = "fonte:Aula 2 - Coordenadas e distancia"
+esperados = ["fonte:Aula 2 - resolvidos e propostos"]
+
+[[relacionado]]
+de = "fonte:Aula 3 - Retas e planos"
+esperados = ["fonte:Aula 3 - resolvidos e propostos"]
+
+[[relacionado]]
+de = "fonte:Aula 4 - Rn, matrizes e escalonamento"
+esperados = ["fonte:Aula 4 - resolvidos e propostos", "fonte:Atividade - Aula 4"]
+
+[[relacionado]]
+de = "fonte:Aula 5 - Sistemas lineares"
+esperados = ["fonte:Aula 5 - resolvidos e propostos"]
+
+[[relacionado]]
+de = "fonte:Aula 6 - Produto de matrizes"
+esperados = ["fonte:Aula 6 - Netflix, resolvido e propostos", "fonte:Atividade - Aula 6"]
+
+[[relacionado]]
+de = "fonte:Aula 7 - Gauss-Jordan, inversa e determinantes"
+esperados = ["fonte:Aula 7 - resolvidos e propostos", "fonte:Atividade - Aula 7"]
+
+[[relacionado]]
+de = "fonte:Aula 8 - Subespacos afins e vetoriais"
+esperados = ["fonte:Aula 8 - resolvidos e propostos", "fonte:Atividade - Aula 8"]
+
+[[relacionado]]
+de = "fonte:Aula 9 - Independencia linear"
+esperados = ["fonte:Aula 9 - resolvidos e propostos", "fonte:Atividade - Aula 9"]
+
+[[relacionado]]
+de = "fonte:Aula 10 - Bases e dimensao"
+esperados = ["fonte:Aula 10 - resolvidos e propostos", "fonte:Atividade - Aula 10"]
+
+[[relacionado]]
+de = "fonte:Aula 11 - Produto interno, angulos e projecao"
+esperados = ["fonte:Aula 11 - retas e planos bis, resolvidos e propostos", "fonte:Atividade - Aula 11"]
+
+[[relacionado]]
+de = "fonte:Aula 12 - Bases ortonormais e Gram-Schmidt"
+esperados = ["fonte:Aula 12 - resolvidos e propostos", "fonte:Atividade - Aula 12"]

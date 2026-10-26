@@ -2,6 +2,17 @@
 # estilo: "exata" usa as palavras do livro; "parafrase" pergunta como um aluno perguntaria.
 # aceitas: "secao:<código>" (qualquer livro: o Guidorizzi usa capítulos 8–16) ou "documento:<título exato>".
 
+# --- SUAS PERGUNTAS -------------------------------------------------------------------------------
+# Escreva aqui as dúvidas que você realmente teve (do jeito que perguntaria). Copie o modelo e tire os #:
+#
+# [[pergunta]]
+# texto = "sua pergunta aqui"
+# estilo = "parafrase"        # ou "exata" (palavras do material) ou "questao" (enunciado de questão)
+# origem = "usuario"
+# aceitas = ["secao:15.4"]   # onde está a resposta; vale mais de uma
+#
+# Formatos de resposta: secao:15.4 | documento:<título>#<bloco> | fonte:<arquivo>#p5-7 (página opcional)
+
 [[pergunta]]
 texto = "funções de várias variáveis domínio e imagem"
 estilo = "exata"
@@ -201,3 +212,52 @@ aceitas = ["secao:15.7", "documento:15.7 Integrais Triplas"]
 texto = "substituição de u e v para simplificar a região de integração e o jacobiano"
 estilo = "parafrase"
 aceitas = ["secao:15.10"]
+
+# --- LINKS: a partir de um resumo, o que deveria aparecer ligado a ele (a seção e as resoluções da seção) ---
+[[relacionado]]
+de = "documento:14.1 Funções de várias variáveis"
+esperados = ["secao:14.1", "documento:Resolução 14.1-20", "documento:Resolução 14.1-22", "documento:Resolução 14.1-26", "documento:Resolução 14.1-30"]
+
+[[relacionado]]
+de = "documento:14.2 Limite e continuidade"
+esperados = ["secao:14.2", "documento:Resolução 14.2-11", "documento:Resolução 14.2-12", "documento:Resolução 14.2-13", "documento:Resolução 14.2-16"]
+
+[[relacionado]]
+de = "documento:14.3 Derivadas parciais"
+esperados = ["secao:14.3"]
+
+[[relacionado]]
+de = "documento:14.4 Plano tangente e diferencial"
+esperados = ["secao:14.4"]
+
+[[relacionado]]
+de = "documento:14.5 Regra da cadeia e derivação implícita"
+esperados = ["secao:14.5"]
+
+[[relacionado]]
+de = "documento:14.6 Derivada direcional e vetor gradiente"
+esperados = ["secao:14.6", "documento:Resolução 14.6-12"]
+
+[[relacionado]]
+de = "documento:14.7 Valores máximo e mínimo"
+esperados = ["secao:14.7"]
+
+[[relacionado]]
+de = "documento:14.8 Multiplicadores de Lagrange"
+esperados = ["secao:14.8"]
+
+[[relacionado]]
+de = "documento:15.4 Integrais Duplas em Coordenadas Polares"
+esperados = ["secao:15.4", "documento:Resolução 15.4-7"]
+
+[[relacionado]]
+de = "documento:15.5 Aplicações de Integrais Duplas"
+esperados = ["secao:15.5"]
+
+[[relacionado]]
+de = "documento:15.7 Integrais Triplas"
+esperados = ["secao:15.7"]
+
+[[relacionado]]
+de = "documento:Coordenadas polares"
+esperados = ["secao:10.3"]
