@@ -1,6 +1,7 @@
 """Tabelas da avaliação em Markdown, gravadas em docs/avaliacoes/ para a decisão ficar registrada."""
 
 import datetime
+import unicodedata
 from pathlib import Path
 
 from estudos.avaliacao.busca import LinhaBusca
@@ -23,9 +24,15 @@ def tabela_busca(linhas: list[LinhaBusca]) -> str:
     return cabecalho + corpo
 
 
-def gravar(conteudo: str, pasta: Path, tipo: str, hoje: datetime.date) -> Path:
+def slug(texto: str) -> str:
+    """"Geometria Analítica" → "geometriaanalitica": nome de arquivo sem acento nem espaço."""
+    return "".join(c for c in unicodedata.normalize("NFD", texto.lower()) if c.isascii() and c.isalnum())
+
+
+def gravar(conteudo: str, pasta: Path, tipo: str, hoje: datetime.date, materia: str | None = None) -> Path:
+    """Grava em AAAA-MM-DD-<matéria>-<tipo>.md (uma matéria nunca sobrescreve o relatório de outra)."""
     pasta.mkdir(parents=True, exist_ok=True)
-    caminho = pasta / f"{hoje.isoformat()}-{tipo}.md"
+    caminho = pasta / f"{hoje.isoformat()}-{slug(materia) + '-' if materia else ''}{tipo}.md"
     caminho.write_text(conteudo, encoding="utf-8")
     return caminho
 

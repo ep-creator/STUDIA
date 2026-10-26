@@ -105,3 +105,13 @@ def test_configuracoes_do_mesmo_modelo_reaproveitam_o_indice(con, materia, cenar
     linhas = avaliar(con, materia.pasta, perguntas, configs, tmp_path / "t", provedores={"f": EmbeddingsFalso()})
     assert len(chamadas) == 2                       # um índice para o modelo "f" e um só de texto
     assert linhas[0].indexacao_s == linhas[1].indexacao_s
+
+
+def test_nomes_de_arquivo_por_materia_sem_acento(tmp_path):
+    from estudos.avaliacao.__main__ import _arquivo_gabarito, _slug
+    assert _slug("Geometria Analítica") == "geometriaanalitica" and _slug("Calculo 2") == "calculo2"
+    assert _arquivo_gabarito("Geometria Analítica", "busca").name == "geometriaanalitica_busca.toml"
+    a = gravar("x", tmp_path, "busca", datetime.date(2026, 10, 26), materia="Geometria Analítica")
+    b = gravar("y", tmp_path, "busca", datetime.date(2026, 10, 26), materia="Calculo 2")
+    assert a.name == "2026-10-26-geometriaanalitica-busca.md" and b.name == "2026-10-26-calculo2-busca.md"
+    assert a.read_text(encoding="utf-8") == "x"

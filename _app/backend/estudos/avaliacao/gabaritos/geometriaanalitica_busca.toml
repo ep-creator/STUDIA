@@ -1,0 +1,183 @@
+# Gabarito de busca da Geometria Analítica (Fase 6, peça B). Rascunho do Claude, sem revisão do usuário: conferência.
+# Seções do Lima (capítulos 7–48) e do Santos (1.1, 3.3.1…); os capítulos 1–6 existem nos dois livros e ficaram de fora.
+# O Boulos (principal) não tem seções cadastradas, e os slides não contam como acerto: os números saem pessimistas para todos.
+
+[[pergunta]]
+texto = "equação da circunferência"
+estilo = "exata"
+aceitas = ["secao:12", "secao:13"]
+
+[[pergunta]]
+texto = "como sei se uma equação x² + y² + Dx + Ey + F = 0 representa um círculo"
+estilo = "parafrase"
+aceitas = ["secao:13", "secao:12"]
+
+[[pergunta]]
+texto = "distância de um ponto a uma reta"
+estilo = "exata"
+aceitas = ["secao:9", "secao:4.3.2"]
+
+[[pergunta]]
+texto = "qual a menor distância entre um ponto e uma linha"
+estilo = "parafrase"
+aceitas = ["secao:9", "secao:4.3.2"]
+
+[[pergunta]]
+texto = "ângulo entre duas retas"
+estilo = "exata"
+aceitas = ["secao:8", "secao:4.3.1"]
+
+[[pergunta]]
+texto = "equação do plano"
+estilo = "exata"
+aceitas = ["secao:29", "secao:4.1", "secao:4.1.1"]
+
+[[pergunta]]
+texto = "achar o plano que passa por três pontos dados"
+estilo = "parafrase"
+aceitas = ["secao:29", "secao:4.1.1", "secao:4.1.2"]
+
+[[pergunta]]
+texto = "equações paramétricas da reta"
+estilo = "exata"
+aceitas = ["secao:25", "secao:4.2.1", "secao:7"]
+
+[[pergunta]]
+texto = "descrever uma reta no espaço usando um parâmetro t"
+estilo = "parafrase"
+aceitas = ["secao:25", "secao:4.2.1"]
+
+[[pergunta]]
+texto = "produto vetorial"
+estilo = "exata"
+aceitas = ["secao:40", "secao:3.3.1"]
+
+[[pergunta]]
+texto = "vetor perpendicular a dois vetores dados"
+estilo = "parafrase"
+aceitas = ["secao:40", "secao:3.3.1"]
+
+[[pergunta]]
+texto = "produto misto e volume do paralelepípedo"
+estilo = "exata"
+aceitas = ["secao:3.3.2", "secao:38"]
+
+[[pergunta]]
+texto = "calcular o volume do sólido gerado por três vetores"
+estilo = "parafrase"
+aceitas = ["secao:38", "secao:3.3.2"]
+
+[[pergunta]]
+texto = "produto escalar e projeção ortogonal"
+estilo = "exata"
+aceitas = ["secao:3.2", "secao:3.2.1", "secao:3.2.2"]
+
+[[pergunta]]
+texto = "a sombra de um vetor sobre outro"
+estilo = "parafrase"
+aceitas = ["secao:3.2.2"]
+
+[[pergunta]]
+texto = "determinantes"
+estilo = "exata"
+aceitas = ["secao:35", "secao:2.2", "secao:2.2.1"]
+
+[[pergunta]]
+texto = "regra de Cramer"
+estilo = "exata"
+aceitas = ["secao:36"]
+
+[[pergunta]]
+texto = "resolver um sistema usando determinantes"
+estilo = "parafrase"
+aceitas = ["secao:36", "secao:2.2"]
+
+[[pergunta]]
+texto = "escalonamento e eliminação gaussiana"
+estilo = "exata"
+aceitas = ["secao:33", "secao:1.2.1"]
+
+[[pergunta]]
+texto = "como zerar os elementos abaixo do pivô para resolver o sistema"
+estilo = "parafrase"
+aceitas = ["secao:33", "secao:1.2.1", "secao:1.2.2"]
+
+[[pergunta]]
+texto = "matriz inversa"
+estilo = "exata"
+aceitas = ["secao:2.1", "secao:2.1.3", "secao:39"]
+
+[[pergunta]]
+texto = "quando uma matriz tem inversa"
+estilo = "parafrase"
+aceitas = ["secao:39", "secao:2.1", "secao:2.1.1"]
+
+[[pergunta]]
+texto = "independência linear"
+estilo = "exata"
+aceitas = ["secao:5.1.3"]
+
+[[pergunta]]
+texto = "vetores que não podem ser escritos como combinação dos outros"
+estilo = "parafrase"
+aceitas = ["secao:5.1.3", "secao:5.1.2"]
+
+[[pergunta]]
+texto = "base e dimensão de um subespaço"
+estilo = "exata"
+aceitas = ["secao:5.2"]
+
+[[pergunta]]
+texto = "autovalores e autovetores"
+estilo = "exata"
+aceitas = ["secao:6.1.2"]
+
+[[pergunta]]
+texto = "vetor que só muda de tamanho quando aplico a matriz"
+estilo = "parafrase"
+aceitas = ["secao:6.1.2"]
+
+[[pergunta]]
+texto = "equação da elipse"
+estilo = "exata"
+aceitas = ["secao:16", "secao:6.3.1"]
+
+[[pergunta]]
+texto = "curva em que a soma das distâncias a dois focos é constante"
+estilo = "parafrase"
+aceitas = ["secao:16", "secao:6.3.1"]
+
+[[pergunta]]
+texto = "equação da hipérbole"
+estilo = "exata"
+aceitas = ["secao:17", "secao:6.3.2"]
+
+[[pergunta]]
+texto = "descobrir qual cônica uma equação do segundo grau representa"
+estilo = "parafrase"
+aceitas = ["secao:21", "secao:6.3", "secao:20"]
+
+[[pergunta]]
+texto = "mudança de coordenadas por rotação e translação"
+estilo = "exata"
+aceitas = ["secao:19", "secao:41", "secao:5.4", "secao:5.4.1", "secao:5.4.2"]
+
+[[pergunta]]
+texto = "girar os eixos para sumir com o termo xy"
+estilo = "parafrase"
+aceitas = ["secao:19", "secao:21", "secao:20", "secao:6.3", "secao:5.4.1"]
+
+[[pergunta]]
+texto = "quádricas centrais"
+estilo = "exata"
+aceitas = ["secao:43", "secao:45"]
+
+[[pergunta]]
+texto = "produto interno e bases ortonormais"
+estilo = "exata"
+aceitas = ["secao:5.3.1", "secao:5.3.2"]
+
+[[pergunta]]
+texto = "transformar uma base qualquer numa base de vetores perpendiculares"
+estilo = "parafrase"
+aceitas = ["secao:5.3.2"]

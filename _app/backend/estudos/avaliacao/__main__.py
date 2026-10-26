@@ -13,7 +13,7 @@ from pathlib import Path
 
 from estudos.avaliacao.busca import Configuracao, avaliar
 from estudos.avaliacao.gabarito import ler_busca, ler_vinculos
-from estudos.avaliacao.relatorio import gravar, tabela_busca, tabela_vinculos
+from estudos.avaliacao.relatorio import gravar, slug as _slug, tabela_busca, tabela_vinculos
 from estudos.avaliacao.vinculos import ConfigVinculo, avaliar as avaliar_vinculos
 from estudos.config import carregar_settings
 from estudos.ia.embeddings import obter_embeddings
@@ -51,8 +51,7 @@ def _config_vinculo(nome: str) -> ConfigVinculo:
 
 
 def _arquivo_gabarito(materia: str, tipo: str) -> Path:
-    nome = "".join(c for c in materia.lower().replace(" ", "") if c.isalnum())
-    return GABARITOS / f"{nome}_{tipo}.toml"
+    return GABARITOS / f"{_slug(materia)}_{tipo}.toml"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -88,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(perguntas)} perguntas · {arquivo.name}\n\n{tabela}")
     if args.gravar:
         texto = f"# Avaliação da busca — {args.materia}\n\nGabarito: `{arquivo.name}` ({len(perguntas)} perguntas)\n\n{tabela}"
-        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today())}")
+        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today(), materia=args.materia)}")
     return 0
 
 
@@ -102,7 +101,7 @@ def _vinculos(args, pasta: Path, arquivo: Path, configs) -> int:
     print(f"{total} itens · {arquivo.name} · limiares {settings.limiar_vinculo} / {settings.limiar_confianca}\n\n{tabela}")
     if args.gravar:
         texto = f"# Avaliação dos vínculos — {args.materia}\n\nGabarito: `{arquivo.name}` ({total} itens)\n\n{tabela}"
-        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today())}")
+        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today(), materia=args.materia)}")
     return 0
 
 
