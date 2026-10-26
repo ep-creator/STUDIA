@@ -10,6 +10,8 @@
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
+  import BuscaMateria from './componentes/BuscaMateria.svelte'
+  import { busca } from './estado/busca.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
   import { atalhoDesfazer, desfazer } from './estado/desfazer'
@@ -33,6 +35,12 @@
   aplicarTema()
 
   function teclado(e: KeyboardEvent) {
+    // Ctrl K (ou ⌘K) abre a busca na matéria, em qualquer tela da matéria
+    if (rota.tela === 'materia' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      busca.aberta = true
+      return
+    }
     if (rota.tela !== 'materias' && atalhoDesfazer(e)) {
       e.preventDefault()
       void desfazer()
@@ -100,6 +108,7 @@
     <main class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
         {#if rota.tela === 'materia'}
+          <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
           <Topo {painel} area={rota.area}>
             {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
           </Topo>

@@ -10,25 +10,8 @@ from test_rag_indexador import PAGINAS_LIVRO
 
 
 @pytest.fixture
-def cenario(con, materia):
-    criar_pdf(materia.pasta / "fontes/livros/livro.pdf", PAGINAS_LIVRO)
-    criar_pdf(materia.pasta / "fontes/listas/lista.pdf", ["Lista 5\n1. Calcule a integral dupla em polares.", "2. Área da cardioide."])
-    with operacao(con, "base", materia.pasta) as op:
-        u1, u3 = unidades.criar(op, 1), unidades.criar(op, 3)
-        livro = fontes.registrar(op, "livro", "fontes/livros/livro.pdf")
-        livros.criar(op, livro, "principal", gabarito_pdf_ini=7, gabarito_pdf_fim=8)
-        s11 = livros.criar_secao(op, livro, "1.1", "Coordenadas polares", 2, 3)
-        s12 = livros.criar_secao(op, livro, "1.2", "Integrais triplas", 4, 6)
-        t3 = topicos.criar(op, u3, "Integrais triplas em coordenadas cilíndricas")
-        livros.vincular_topico(op, t3, s12, confianca=1.0, confirmado=True)
-        fl = fontes.registrar(op, "lista", "fontes/listas/lista.pdf")
-        listas.criar(op, "L5", "Lista 5", u3, fonte_id=fl)
-        documentos.salvar(op, "resumo", "polares", "Polares", "# Polares\n\nCoordenadas polares e cardioides.", unidade_id=u1)
-        documentos.salvar(op, "anotacao", "geral", "Geral", "Integrais em geral.")
-    sincronizar(con, materia.pasta)
-    indice = abrir_indice(materia.pasta)
-    yield {"indice": indice, "s11": s11, "s12": s12, "t3": t3, "u1": u1}
-    indice.close()
+def cenario(cenario_busca):
+    return cenario_busca
 
 
 def test_montar_consulta():
@@ -90,3 +73,53 @@ def test_cao_e_coes_casam():
     assert montar_consulta("funções") == '"func"*' == montar_consulta("função")
     assert montar_consulta("equações integração") == '"equac"* OR "integr"*'
     assert montar_consulta("derivação") == montar_consulta("derivadas") == '"deriv"*'
+
+
+# ---- modos "vetor" e "hibrida" (peça B da Fase 6) ------------------------------------------------------------------
+
+from estudos.ia.embeddings import EmbeddingsFalso  # noqa: E402
+from estudos.rag.busca import buscar_modo, fundir_rrf  # noqa: E402
+
+
+@pytest.fixture
+def com_vetores(con, materia, cenario):
+    e = EmbeddingsFalso()
+    sincronizar(con, materia.pasta, embeddings=e)
+    return cenario, e
+
+
+def test_rrf_soma_as_posicoes_dos_dois_rankings():
+    # 2 aparece bem nos dois: sobe; 1 só no primeiro; 3 só no segundo
+    fundido = fundir_rrf([[1, 2], [3, 2]], k=60)
+    assert [i for i, _ in fundido] == [2, 1, 3]
+    assert fundido[0][1] == pytest.approx(1 / 62 + 1 / 62)
+
+
+def test_vetor_e_hibrida_respeitam_os_filtros(com_vetores):
+    cenario, e = com_vetores
+    indice = cenario["indice"]
+    for modo in ("vetor", "hibrida"):
+        efetivo, r = buscar_modo(indice, "polares", tipos=["resumo"], modo=modo, embeddings=e)
+        assert efetivo == modo and r and {x.tipo for x in r} == {"resumo"}
+        _, r = buscar_modo(indice, "integrais", secao_id=cenario["s12"], modo=modo, embeddings=e)
+        assert r and {x.secao_id for x in r} == {cenario["s12"]}
+        _, r = buscar_modo(indice, "integrais triplas", unidade=1, modo=modo, embeddings=e)
+        assert not any(x.secao_id == cenario["s12"] for x in r)
+
+
+def test_hibrida_marca_de_onde_veio_cada_resultado(com_vetores):
+    cenario, e = com_vetores
+    _, r = buscar_modo(cenario["indice"], "coordenadas polares", modo="hibrida", embeddings=e, limite=20)
+    assert {x.por for x in r} <= {"texto", "sentido", "ambos"} and any(x.por == "ambos" for x in r)
+
+
+def test_sem_vetores_cai_para_texto(cenario):
+    efetivo, r = buscar_modo(cenario["indice"], "polares", modo="hibrida", embeddings=None)
+    assert efetivo == "texto" and r == buscar(cenario["indice"], "polares")
+
+
+@pytest.mark.parametrize("modo", ["texto", "vetor", "hibrida"])
+@pytest.mark.parametrize("consulta", ["", "  ", "de a o", "!"])
+def test_consulta_vazia_ou_so_palavras_vazias_nao_traz_nada(com_vetores, modo, consulta):
+    cenario, e = com_vetores
+    assert buscar_modo(cenario["indice"], consulta, modo=modo, embeddings=e)[1] == []

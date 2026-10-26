@@ -1,15 +1,13 @@
 <script lang="ts">
-  import type { Documento, FonteResumo, Topico } from '../api/tipos'
-  import { compararNomes, ordenarPeloAssunto } from '../apresentacao'
+  import type { Documento, FonteResumo } from '../api/tipos'
+  import { compararNomes } from '../apresentacao'
   import { recolhidos } from '../estado/recolhidos.svelte'
 
   export type Selecao = { tipo: 'documento' | 'fonte'; id: number } | null
 
-  let { documentos, fontes, topicos, unidadeAtual, selecao, onselecionar }: {
+  let { documentos, fontes, selecao, onselecionar }: {
     documentos: Documento[]
     fontes: FonteResumo[]
-    topicos: Pick<Topico, 'unidade_id' | 'ordem' | 'titulo'>[]
-    unidadeAtual: number | null
     selecao: Selecao
     onselecionar: (s: Selecao) => void
   } = $props()
@@ -17,7 +15,8 @@
   type Item = { tipo: 'documento' | 'fonte'; id: number; titulo: string; ia: boolean }
   type Grupo = { chave: string; nome: string; itens: Item[] }
 
-  // Textos de estudo (resumos, resoluções…) seguem a ordem do assunto; os demais, a ordem dos nomes
+  // Resumos, resoluções e planos seguem a ordem do livro (posição da seção ligada); os sem seção vão para o fim.
+  // Anotações e contexto, a ordem dos nomes
   const GRUPOS_DOC: [string, string, boolean][] = [
     ['resumo', 'Resumos', true], ['resolucao', 'Resoluções', true], ['plano', 'Planos', true], ['anotacao', 'Anotações', false], ['contexto', 'Contexto', false],
   ]
@@ -32,7 +31,8 @@
   const estudo = $derived.by((): Grupo[] => {
     const grupos = GRUPOS_DOC.map(([tipo, nome, porAssunto]) => {
       const docs = documentos.filter((d) => d.tipo === tipo)
-      const ordem = porAssunto ? ordenarPeloAssunto(docs, topicos, unidadeAtual) : docs.sort((a, b) => compararNomes(a.titulo, b.titulo))
+      const ordem = docs.sort((a, b) =>
+        (porAssunto ? (a.secao_posicao ?? Infinity) - (b.secao_posicao ?? Infinity) : 0) || compararNomes(a.titulo, b.titulo))
       return { chave: tipo, nome, itens: ordem.map(doDoc) }
     })
     const outros = documentos.filter((d) => !GRUPOS_DOC.some(([t]) => t === d.tipo)).sort((a, b) => compararNomes(a.titulo, b.titulo))

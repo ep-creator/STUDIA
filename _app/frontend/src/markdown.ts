@@ -6,6 +6,21 @@ import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({ html: true, linkify: true, breaks: true })
 
+/** Âncora estável de um título ("Mudança para polares" → "mudanca-para-polares"): a busca abre o texto no bloco certo. */
+export function slugTitulo(texto: string): string {
+  return texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+}
+
+// Títulos ## e ### ganham id = slug do texto (DOMPurify mantém o atributo id)
+md.core.ruler.push('ancoras', (estado) => {
+  estado.tokens.forEach((token, i) => {
+    if (token.type === 'heading_open' && (token.tag === 'h2' || token.tag === 'h3')) {
+      const texto = estado.tokens[i + 1]?.content ?? ''
+      if (texto) token.attrSet('id', slugTitulo(texto))
+    }
+  })
+})
+
 // $$…$$ em bloco; $…$ em linha só quando colado ao conteúdo ("R$ 10 e R$ 20" não é fórmula)
 const FORMULA = /\$\$([\s\S]+?)\$\$|(?<![\\\w])\$(?!\s)([^$\n]+?)(?<!\s)\$(?!\d)/g
 const CODIGO = /```[\s\S]*?```|`[^`\n]+`/g

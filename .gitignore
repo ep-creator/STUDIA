@@ -40,3 +40,6 @@ _app/frontend/node_modules/
 _app/frontend/dist/
 _app/frontend/test-results/
 _app/frontend/playwright-report/
+
+# Modelos de embeddings baixados (Fase 6)
+_app/.modelos/

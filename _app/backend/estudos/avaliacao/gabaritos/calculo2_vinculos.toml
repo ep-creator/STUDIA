@@ -1,0 +1,254 @@
+# Gabarito de vínculos do Cálculo 2 (Fase 6, peça B). Rascunho do Claude, aprovado pelo usuário em 2026-10-26.
+# topico: seções aceitas do livro principal (Stewart); [] = o certo é não ligar.
+# lista: unidade certa. documento: seções aceitas; [] = não ligar (planos cobrem a unidade inteira).
+
+[[topico]]
+titulo = "Funções de várias variáveis · gráficos · curvas de nível"
+unidade = 1
+secoes = ["14.1"]
+
+[[topico]]
+titulo = "Coordenadas polares"
+unidade = 1
+secoes = ["10.3", "10.4"]
+
+[[topico]]
+titulo = "Limite e continuidade"
+unidade = 1
+secoes = ["14.2"]
+
+[[topico]]
+titulo = "Derivadas parciais e de ordens superiores"
+unidade = 1
+secoes = ["14.3"]
+
+[[topico]]
+titulo = "Diferenciabilidade · diferencial · aproximação linear · plano tangente"
+unidade = 1
+secoes = ["14.4"]
+
+[[topico]]
+titulo = "Regra da cadeia e derivação implícita"
+unidade = 1
+secoes = ["14.5"]
+
+[[topico]]
+titulo = "Derivada direcional e vetor gradiente"
+unidade = 2
+secoes = ["14.6"]
+
+[[topico]]
+titulo = "Pontos críticos e ponto de sela"
+unidade = 2
+secoes = ["14.7"]
+
+[[topico]]
+titulo = "Extremos absolutos em região fechada"
+unidade = 2
+secoes = ["14.7"]
+
+[[topico]]
+titulo = "Multiplicadores de Lagrange"
+unidade = 2
+secoes = ["14.8"]
+
+[[topico]]
+titulo = "Integrais iteradas · integrais duplas sobre regiões gerais"
+unidade = 2
+secoes = ["15.2", "15.3"]
+
+[[topico]]
+titulo = "Sem aula — pré-requisitos"
+unidade = 3
+secoes = []
+
+[[topico]]
+titulo = "Integrais duplas em coordenadas polares"
+unidade = 3
+secoes = ["15.4"]
+
+[[topico]]
+titulo = "Polares (fim) · aplicações"
+unidade = 3
+secoes = ["15.4", "15.5"]
+
+[[topico]]
+titulo = "Integrais triplas"
+unidade = 3
+secoes = ["15.7"]
+
+[[topico]]
+titulo = "Coordenadas cilíndricas"
+unidade = 3
+secoes = ["15.8"]
+
+[[topico]]
+titulo = "Coordenadas esféricas"
+unidade = 3
+secoes = ["15.9"]
+
+[[topico]]
+titulo = "Mudança de variáveis"
+unidade = 3
+secoes = ["15.10"]
+
+[[topico]]
+titulo = "Aula extra"
+unidade = 3
+secoes = []
+
+[[lista]]
+titulo = "Funções de Várias Variáveis"
+unidade = 1
+
+[[lista]]
+titulo = "Limites e Continuidade"
+unidade = 1
+
+[[lista]]
+titulo = "Derivadas Parciais"
+unidade = 1
+
+[[lista]]
+titulo = "Planos Tangentes e Aproximações Lineares"
+unidade = 1
+
+[[lista]]
+titulo = "A Regra da Cadeia"
+unidade = 1
+
+[[lista]]
+titulo = "Derivadas Direcionais e o Vetor Gradiente"
+unidade = 2
+
+[[lista]]
+titulo = "Valores Máximo e Mínimo"
+unidade = 2
+
+[[lista]]
+titulo = "Multiplicadores de Lagrange"
+unidade = 2
+
+[[lista]]
+titulo = "Integrais Iteradas"
+unidade = 2
+
+[[lista]]
+titulo = "Integrais Duplas sobre Regiões Gerais"
+unidade = 2
+
+[[lista]]
+titulo = "Lista 3 (2026.1) — Direcional, Gradiente, Máx/Mín e Lagrange"
+unidade = 2
+
+[[lista]]
+titulo = "Lista 4 (2026.1) — Integrais Duplas e Inversão de Ordem"
+unidade = 2
+
+[[lista]]
+titulo = "Integrais Duplas em Coordenadas Polares"
+unidade = 3
+
+[[lista]]
+titulo = "Aplicações de Integrais Duplas"
+unidade = 3
+
+[[lista]]
+titulo = "Integrais Triplas"
+unidade = 3
+
+[[lista]]
+titulo = "Integrais Triplas em Coordenadas Cilíndricas"
+unidade = 3
+
+[[lista]]
+titulo = "Integrais Triplas em Coordenadas Esféricas"
+unidade = 3
+
+[[lista]]
+titulo = "Mudança de Variáveis em Integrais Múltiplas"
+unidade = 3
+
+[[lista]]
+titulo = "Lista 5 (2026.1) — Polares, Aplicações e Mudança de Variáveis"
+unidade = 3
+
+[[lista]]
+titulo = "Lista 6 (2026.1) — Integrais Triplas, Cilíndricas e Esféricas"
+unidade = 3
+
+[[documento]]
+titulo = "Plano — 1ª unidade"
+secoes = []
+
+[[documento]]
+titulo = "Plano — 2ª unidade"
+secoes = []
+
+[[documento]]
+titulo = "Plano — 3ª unidade"
+secoes = []
+
+[[documento]]
+titulo = "14.1 Funções de várias variáveis"
+secoes = ["14.1"]
+
+[[documento]]
+titulo = "14.2 Limite e continuidade"
+secoes = ["14.2"]
+
+[[documento]]
+titulo = "14.3 Derivadas parciais"
+secoes = ["14.3"]
+
+[[documento]]
+titulo = "14.4 Plano tangente e diferencial"
+secoes = ["14.4"]
+
+[[documento]]
+titulo = "14.5 Regra da cadeia e derivação implícita"
+secoes = ["14.5"]
+
+[[documento]]
+titulo = "14.6 Derivada direcional e vetor gradiente"
+secoes = ["14.6"]
+
+[[documento]]
+titulo = "14.7 Valores máximo e mínimo"
+secoes = ["14.7"]
+
+[[documento]]
+titulo = "14.8 Multiplicadores de Lagrange"
+secoes = ["14.8"]
+
+[[documento]]
+titulo = "15.4 Integrais Duplas em Coordenadas Polares"
+secoes = ["15.4"]
+
+[[documento]]
+titulo = "15.5 Aplicações de Integrais Duplas"
+secoes = ["15.5"]
+
+[[documento]]
+titulo = "15.7 Integrais Triplas"
+secoes = ["15.7"]
+
+[[documento]]
+titulo = "Coordenadas polares"
+secoes = ["10.3", "10.4"]
+
+[[documento]]
+titulo = "Resolução 14.1-30"
+secoes = ["14.1"]
+
+[[documento]]
+titulo = "Resolução 14.2-7"
+secoes = ["14.2"]
+
+[[documento]]
+titulo = "Resolução 14.6-12"
+secoes = ["14.6"]
+
+[[documento]]
+titulo = "Resolução 15.4-7"
+secoes = ["15.4"]

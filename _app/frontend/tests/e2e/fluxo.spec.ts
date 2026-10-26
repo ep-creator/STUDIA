@@ -90,6 +90,22 @@ test('editar resumo e ver a diferença', async ({ page }) => {
   await expect(page.getByText('+ Primeira linha com $x^2$')).toBeVisible()
 })
 
+test('busca com Ctrl K abre o texto e o PDF', async ({ page }) => {
+  await abrirArea(page, '1ª', 'Painel')
+  await page.keyboard.press('Control+k')
+  const campo = page.getByRole('combobox', { name: 'Buscar na matéria' })
+  await campo.fill('primeira linha')
+  await page.getByRole('option', { name: /Resumo E2E/ }).first().click()
+  await expect(page.locator('.leitor h2', { hasText: 'Resumo E2E' })).toBeVisible()
+
+  await page.getByRole('button', { name: /Buscar na matéria/ }).click()
+  await campo.fill('lista')
+  await page.getByRole('radio', { name: 'Toda a matéria' }).click()
+  await page.getByRole('radio', { name: 'Listas e provas' }).click()
+  await page.getByRole('option').first().click()
+  await expect(page.locator('.leitor iframe')).toBeVisible()
+})
+
 test('quatro temas persistem', async ({ page }) => {
   await page.goto(inicioMateria)
   for (const [identidade, modo, esperado] of [

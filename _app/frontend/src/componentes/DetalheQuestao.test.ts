@@ -9,7 +9,7 @@ const q = questao(2, '30')
 const l = lista(1, '14.1', [q])
 const resolucao: Documento = {
   id: 16, tipo: 'resolucao', titulo: 'Resolução 14.1-30', caminho: 'conteudo/resolucoes/14-1-30.md', origem: 'migrado',
-  unidade_id: 1, secao_id: null, questao_id: 2, atualizado_em: '2026-10-22',
+  unidade_id: 1, secao_id: null, questao_id: 2, atualizado_em: '2026-10-22', secao_decidida: false,
 }
 
 afterEach(() => vi.unstubAllGlobals())

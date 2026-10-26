@@ -10,6 +10,8 @@ _MAPA_TOML = {
     "importacao": {"limiar_confianca": "limiar_confianca", "limiar_vinculo": "limiar_vinculo",
                    "limite_upload_mb": "limite_upload_mb"},
     "historico": {"max_grupos": "historico_max_grupos"},
+    "inteligencia": {"embeddings": "embeddings", "modelo": "modelo", "busca": "busca",
+                     "vinculos_com_embeddings": "vinculos_com_embeddings", "peso_sentido_vinculo": "peso_sentido_vinculo"},
 }
 
 
@@ -23,6 +25,12 @@ class Settings:
     limiar_vinculo: float = 0.35
     historico_max_grupos: int = 500
     limite_upload_mb: int = 200
+    # Inteligência (peça B da Fase 6): tudo desligado até a avaliação mandar ligar
+    embeddings: bool = False
+    modelo: str = "intfloat/multilingual-e5-small"
+    busca: str = "texto"                 # "texto", "vetor" ou "hibrida"
+    vinculos_com_embeddings: bool = False
+    peso_sentido_vinculo: float = 0.5
 
 
 def carregar_settings(app_dir: Path, workspace: Path | None = None) -> Settings:

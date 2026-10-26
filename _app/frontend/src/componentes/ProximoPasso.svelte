@@ -1,7 +1,6 @@
 <script lang="ts">
   import { urlArquivo } from '../api/cliente'
   import type { Documento, SecaoVinculada, Topico } from '../api/tipos'
-  import { documentoDoTopico } from '../apresentacao'
   import { pedido } from '../estado/pedido.svelte'
 
   // O próximo tópico a estudar, com atalhos para o resumo dele e a página do livro
@@ -15,8 +14,10 @@
   } = $props()
 
   const topico = $derived(topicos.find((t) => t.status === 'proxima') ?? topicos.find((t) => t.status === 'pendente') ?? null)
-  const resumo = $derived(topico ? documentoDoTopico(topico.titulo, documentos.filter((d) => d.tipo === 'resumo')) : null)
-  const secao = $derived(topico ? (vinculos[String(topico.id)]?.[0] ?? null) : null)
+  const secoesDoTopico = $derived(topico ? (vinculos[String(topico.id)] ?? []) : [])
+  const secao = $derived(secoesDoTopico[0] ?? null)
+  // o resumo do tópico é o que está ligado a uma das seções do tópico (tópico → seção → documento)
+  const resumo = $derived(documentos.find((d) => d.tipo === 'resumo' && secoesDoTopico.some((s) => s.secao_id === d.secao_id)) ?? null)
 </script>
 
 <section class="cartao bloco" aria-label="Próximo passo">

@@ -75,3 +75,53 @@ def test_um_vinculo_fraco_nao_vira_certeza():
 def test_empate_entre_capitulo_e_secao_fica_com_a_secao_mais_especifica():
     candidatos = [Candidato("14", "14 Derivadas Parciais"), Candidato("14.3", "14.3 Derivadas Parciais")]
     assert melhores("Derivadas parciais", candidatos, 0.35)[0].chave == "14.3"
+
+
+# ---- nota combinada (regra + sentido), peça B da Fase 6 ------------------------------------------------------------
+
+from estudos.importacao.vinculo import Semantica, pontuar  # noqa: E402
+
+
+class SentidoFixo:
+    """Faz o papel de Semantica com notas escolhidas: {título do candidato: nota de sentido em 0..1}."""
+
+    def __init__(self, notas: dict[str, float], padrao: float = 0.5):
+        self.notas, self.padrao = notas, padrao
+
+    def similaridades(self, texto: str, titulos: list[str]) -> list[float]:
+        return [self.notas.get(t, self.padrao) for t in titulos]
+
+
+def test_sem_semantica_e_identico_ao_de_antes():
+    textos = ["Extremos absolutos em região fechada", "Integrais triplas em coordenadas cilíndricas", "Plano tangente"]
+    for texto in textos:
+        antes = [(round(s, 6), c.chave) for s, c in pontuar(texto, CANDIDATOS, 0.0)]
+        depois = [(round(s, 6), c.chave) for s, c in pontuar(texto, CANDIDATOS, 0.0, semantica=None, peso=0.5)]
+        assert antes == depois
+        assert [(v.chave, v.confianca) for v in melhores(texto, CANDIDATOS, 0.35)] == \
+               [(v.chave, v.confianca) for v in melhores(texto, CANDIDATOS, 0.35, semantica=None)]
+        assert all(v.por == "palavras" for v in melhores(texto, CANDIDATOS, 0.35))
+
+
+def test_sentido_acha_par_sem_palavras_em_comum():
+    texto = "Extremos absolutos em região fechada"
+    assert melhores(texto, CANDIDATOS, 0.35) == []          # pelas palavras, nada
+    sentido = SentidoFixo({"14.7 Valores Máximo e Mínimo": 0.95}, padrao=0.4)
+    [v] = melhores(texto, CANDIDATOS, 0.35, semantica=sentido, peso=0.5)
+    assert v.chave == "14.7" and v.por == "sentido" and v.confianca == pytest.approx(0.475)
+
+
+def test_motivo_do_vinculo():
+    sentido = SentidoFixo({"15.8 Integrais Triplas em Coordenadas Cilíndricas": 0.9, "14.4 Planos Tangentes e Aproximações Lineares": 0.3})
+    [ambos] = melhores("Integrais triplas em coordenadas cilíndricas", CANDIDATOS, 0.35, semantica=sentido)
+    assert ambos.chave == "15.8" and ambos.por == "ambos"
+    sentido_fraco = SentidoFixo({}, padrao=0.3)  # nenhum candidato perto pelo sentido: o motivo fica nas palavras
+    [palavras] = melhores("Plano tangente a um gráfico", CANDIDATOS, 0.2, semantica=sentido_fraco)
+    assert palavras.chave == "14.4" and palavras.por == "palavras"
+
+
+def test_semantica_real_normaliza_o_cosseno_para_0_a_1():
+    from estudos.ia.embeddings import EmbeddingsFalso
+    s = Semantica(EmbeddingsFalso())
+    notas = s.similaridades("integrais triplas", ["Integrais triplas em coordenadas", "regra da cadeia"])
+    assert all(0 <= n <= 1 for n in notas) and notas[0] > notas[1]
