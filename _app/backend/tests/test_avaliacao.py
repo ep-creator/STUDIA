@@ -132,7 +132,7 @@ def test_avaliar_mede_por_origem_e_no_trecho(con, materia, cenario_busca, tmp_pa
     # a lista do cenário (fontes/listas/lista.pdf) tem "integral dupla em polares" na página 1 e "cardioide" na 2
     perguntas = [
         PerguntaBusca("cardioide", "exata", ("fonte:lista#p2",), None, "usuario"),        # arquivo e trecho certos
-        PerguntaBusca("integral dupla em polares", "questao", ("fonte:lista#p3",), None, "gerada"),  # arquivo sim, página não
+        PerguntaBusca("integral dupla em polares", "exata", ("fonte:lista#p3",), None, "gerada"),  # arquivo sim, página não
         PerguntaBusca("coordenadas polares", "exata", ("secao:1.1",), None, "claude"),     # sem trecho: fora da conta de trecho
     ]
     [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
@@ -161,3 +161,14 @@ def test_relacionados_conta_os_esperados_entre_os_10_primeiros(con, materia, cen
                       [Configuracao("texto", "texto", None)], tmp_path / "t", relacionados=itens)
     assert linha.n_relacionados == 2
     assert 0 < linha.relacionados <= (2 / 3 + 1) / 2
+
+
+def test_questao_ignora_o_resultado_que_contem_o_proprio_enunciado(con, materia, cenario_busca, tmp_path):
+    # a lista do cenário contém "Calcule a integral dupla em polares": ela é a questão, não a explicação.
+    # Sem ela, a resposta (a seção 1.1 de coordenadas polares) tem de aparecer pela teoria.
+    from estudos.avaliacao.busca import contem_o_enunciado
+    assert contem_o_enunciado("Lista 5\n1. Calcule a integral dupla em polares.", "Calcule a integral dupla em polares.")
+    assert not contem_o_enunciado("Coordenadas polares: r e theta definem o ponto.", "Calcule a integral dupla em polares.")
+    perguntas = [PerguntaBusca("Calcule a integral dupla em polares.", "questao", ("fonte:lista",), None, "gerada")]
+    [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
+    assert linha.acerto5 == 0   # a única "resposta" era a própria lista: não vale

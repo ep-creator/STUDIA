@@ -12,6 +12,15 @@
 # origem = "usuario"
 # aceitas = ["fonte:Aula 3 - Retas e planos"]   # onde está a resposta; vale mais de uma
 #
+# DÚVIDA SOBRE UMA QUESTÃO (o uso principal: na página da lista, pedir a explicação/resolução):
+# o texto é "enunciado | sua dúvida"; a página onde a questão está impressa não conta como resposta.
+#
+# [[pergunta]]
+# texto = "Lista 2, questão 14: encontre uma sublista maximal L.I. | como sei quais vetores posso tirar sem perder o espaço gerado?"
+# estilo = "duvida"
+# origem = "usuario"
+# aceitas = ["fonte:Aula 9 - Independencia linear", "fonte:Aula 10 - Bases e dimensao"]
+#
 # Formatos de resposta: secao:15.4 | documento:<título>#<bloco> | fonte:<arquivo>#p5-7 (página opcional)
 
 [[pergunta]]

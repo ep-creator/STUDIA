@@ -8,7 +8,8 @@ from typing import Literal
 from estudos.avaliacao.respostas import ler_aceita
 
 # exata: palavras do livro · parafrase: como um aluno perguntaria · questao: o enunciado de uma questão (o que a IA vê)
-ESTILOS = ("exata", "parafrase", "questao")
+# duvida: "enunciado | dúvida" — o aluno, na página da lista, pergunta algo sobre a questão
+ESTILOS = ("exata", "parafrase", "questao", "duvida")
 # quem escreveu: claude (rascunho revisado), usuario (dúvida real), gerada (a partir do banco, sem revisão item a item)
 ORIGENS = ("claude", "usuario", "gerada")
 
@@ -16,7 +17,7 @@ ORIGENS = ("claude", "usuario", "gerada")
 @dataclass(frozen=True)
 class PerguntaBusca:
     texto: str
-    estilo: Literal["exata", "parafrase", "questao"]
+    estilo: Literal["exata", "parafrase", "questao", "duvida"]
     aceitas: tuple[str, ...]
     unidade: int | None = None
     origem: Literal["claude", "usuario", "gerada"] = "claude"

@@ -11,6 +11,15 @@
 # origem = "usuario"
 # aceitas = ["secao:15.4"]   # onde está a resposta; vale mais de uma
 #
+# DÚVIDA SOBRE UMA QUESTÃO (o uso principal: na página da lista, pedir a explicação/resolução):
+# o texto é "enunciado | sua dúvida"; a página onde a questão está impressa não conta como resposta.
+#
+# [[pergunta]]
+# texto = "Lista 5, questão 12: calcule a área dentro de r = 1 + cos θ | por que θ vai de 0 a 2π e não de 0 a π?"
+# estilo = "duvida"
+# origem = "usuario"
+# aceitas = ["secao:10.4", "secao:15.4"]
+#
 # Formatos de resposta: secao:15.4 | documento:<título>#<bloco> | fonte:<arquivo>#p5-7 (página opcional)
 
 [[pergunta]]

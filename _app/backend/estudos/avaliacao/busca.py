@@ -1,6 +1,7 @@
 """Avaliação da busca: cada configuração roda num índice temporário (o índice real da matéria não é tocado)."""
 
 import sqlite3
+import re
 import statistics
 import time
 import tracemalloc
@@ -12,11 +13,42 @@ from estudos.avaliacao.gabarito import ItemRelacionado, PerguntaBusca
 from estudos.avaliacao.metricas import acerto_em, mrr
 from estudos.avaliacao.respostas import casa, ler_aceita
 from estudos.ia.embeddings import Embeddings, obter_embeddings
+from estudos.importacao.idioma import sem_acento
 from estudos.rag.busca import Resultado, buscar_modo
 from estudos.rag.indexador import sincronizar
 from estudos.rag.indice import abrir_indice, descartar_indice
 
 _LIMITE = 10
+_PALAVRA = re.compile(r"[a-z0-9]+")
+_ESTILOS_DE_QUESTAO = ("questao", "duvida")
+
+
+def _palavras(texto: str) -> list[str]:
+    return [p for p in _PALAVRA.findall(sem_acento(texto or "").lower()) if len(p) >= 4]
+
+
+def contem_o_enunciado(texto: str, enunciado: str) -> bool:
+    """O trecho é a própria questão (a página da lista ou dos exercícios do livro), e não a explicação do assunto:
+    traz as palavras do começo do enunciado (todas, se forem poucas; 80% delas, se forem muitas)."""
+    alvo = _palavras(enunciado)[:12]
+    if len(alvo) < 2:
+        return False
+    presentes = set(_palavras(texto))
+    achadas = sum(1 for p in alvo if p in presentes)
+    return achadas == len(alvo) if len(alvo) <= 4 else achadas >= 0.8 * len(alvo)
+
+
+def _enunciado(p) -> str:
+    """Na dúvida sobre uma questão, o texto é "enunciado | dúvida": só o enunciado identifica a questão."""
+    return p.texto.split(" | ")[0] if p.estilo == "duvida" else p.texto
+
+
+def _sem_a_propria_questao(indice, resultados, enunciado: str):
+    if not resultados:
+        return resultados
+    marcas = ", ".join("?" * len(resultados))
+    textos = dict(indice.execute(f"SELECT id, texto FROM trecho WHERE id IN ({marcas})", [r.trecho_id for r in resultados]).fetchall())
+    return [r for r in resultados if not contem_o_enunciado(textos.get(r.trecho_id, ""), enunciado)]
 _APP_DIR = Path(__file__).resolve().parents[3]   # _app/ (cache dos modelos em _app/.modelos/)
 
 
@@ -129,8 +161,11 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
     try:
         for p, aceitas_p in zip(perguntas, aceitas):
             t0 = time.perf_counter()
-            efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_LIMITE, modo=config.modo,
-                                              embeddings=embeddings)
+            de_questao = p.estilo in _ESTILOS_DE_QUESTAO
+            efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_LIMITE * 2 if de_questao else _LIMITE,
+                                              modo=config.modo, embeddings=embeddings)
+            if de_questao:  # a página onde a questão está impressa não é a resposta: o que vale é a explicação
+                resultados = _sem_a_propria_questao(indice, resultados, _enunciado(p))[:_LIMITE]
             if efetivo != config.modo:
                 raise ValueError(f"{config.nome}: a busca caiu para {efetivo!r} (sem vetores no índice?)")
             tempos.append((time.perf_counter() - t0) * 1000)
