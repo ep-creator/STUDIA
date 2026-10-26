@@ -25,3 +25,18 @@ Gabarito: `geometriaanalitica_busca.toml` (44 perguntas)
 | hibrida:small | 70% | 100% | 30% | 70% | 70% | 75% (n=8) | 42% (n=12) | 0.51 | 121.08 | 99.8 |
 | vetor:base | 64% | 93% | 10% | 70% | 64% | 38% (n=8) | 21% (n=12) | 0.51 | 301.22 | 97.4 |
 | hibrida:base | 68% | 93% | 20% | 75% | 68% | 50% (n=8) | 29% (n=12) | 0.48 | 301.22 | 104.7 |
+
+
+---
+
+## Versão 3: perguntas de questão sem a página da própria questão
+
+Um resultado que contém o enunciado (a página da lista ou dos exercícios do livro) não conta: só vale a explicação.
+
+| configuração | acerto@5 | exata | parafrase | questao | de claude | trecho | links | MRR@10 | indexação (s) | busca p95 (ms) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| texto | 70% | 100% | 20% | 75% | 70% | 75% (n=8) | 29% (n=12) | 0.51 | 4.2 | 20.8 |
+| vetor:small | 66% | 100% | 50% | 50% | 66% | 62% (n=8) | 33% (n=12) | 0.51 | 120.75 | 61.9 |
+| hibrida:small | 70% | 100% | 30% | 70% | 70% | 75% (n=8) | 42% (n=12) | 0.57 | 120.75 | 98.1 |
+| vetor:base | 61% | 93% | 10% | 65% | 61% | 38% (n=8) | 21% (n=12) | 0.55 | 367.67 | 89.6 |
+| hibrida:base | 68% | 93% | 20% | 75% | 68% | 50% (n=8) | 29% (n=12) | 0.55 | 367.67 | 158.0 |

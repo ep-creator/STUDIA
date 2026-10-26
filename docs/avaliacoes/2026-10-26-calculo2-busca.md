@@ -41,3 +41,18 @@ Gabarito: `calculo2_busca.toml` (161 perguntas)
 | hibrida:small | 84% | 100% | 75% | 83% | 88% | 83% | — | 68% (n=12) | 0.68 | 248.49 | 97.6 |
 | vetor:base | 78% | 100% | 75% | 75% | 88% | 75% | — | 60% (n=12) | 0.59 | 863.24 | 66.9 |
 | hibrida:base | 89% | 100% | 80% | 89% | 90% | 89% | — | 68% (n=12) | 0.75 | 863.24 | 84.3 |
+
+
+---
+
+## Versão 3: perguntas de questão sem a página da própria questão
+
+Um resultado que contém o enunciado (a página da lista ou dos exercícios do livro) não conta: só vale a explicação.
+
+| configuração | acerto@5 | exata | parafrase | questao | de claude | de gerada | trecho | links | MRR@10 | indexação (s) | busca p95 (ms) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| texto | 78% | 100% | 65% | 77% | 82% | 77% | — | 56% (n=12) | 0.61 | 28.17 | 21.7 |
+| vetor:small | 56% | 95% | 70% | 47% | 82% | 47% | — | 55% (n=12) | 0.41 | 336.09 | 109.0 |
+| hibrida:small | 73% | 100% | 75% | 69% | 88% | 69% | — | 68% (n=12) | 0.55 | 336.09 | 111.8 |
+| vetor:base | 71% | 100% | 75% | 65% | 88% | 65% | — | 60% (n=12) | 0.52 | 881.41 | 118.2 |
+| hibrida:base | 80% | 100% | 80% | 76% | 90% | 76% | — | 68% (n=12) | 0.65 | 881.41 | 288.2 |
