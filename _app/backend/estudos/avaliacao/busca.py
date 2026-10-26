@@ -67,13 +67,18 @@ def _provedor(modelo: str | None, provedores: dict[str, Embeddings]) -> Embeddin
     return e
 
 
-def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path, provedores) -> LinhaBusca:
+def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path, provedores,
+           ja_indexados: dict[Path, float]) -> LinhaBusca:
+    """`ja_indexados`: índices desta rodada (caminho → segundos para indexar); o mesmo modelo não é indexado duas vezes."""
     embeddings = _provedor(config.modelo, provedores)
-    descartar_indice(raiz, caminho)
     tracemalloc.start()
-    inicio = time.perf_counter()
-    sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings)
-    indexacao = time.perf_counter() - inicio
+    if caminho in ja_indexados:
+        indexacao = ja_indexados[caminho]
+    else:
+        descartar_indice(raiz, caminho)
+        inicio = time.perf_counter()
+        sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings)
+        indexacao = ja_indexados[caminho] = time.perf_counter() - inicio
     indice = abrir_indice(raiz, caminho)
     posicoes, tempos = [], []
     try:
@@ -108,7 +113,10 @@ def avaliar(
     con: sqlite3.Connection, raiz: Path, perguntas: list[PerguntaBusca], configuracoes: list[Configuracao], pasta_temp: Path,
     provedores: dict[str, Embeddings] | None = None,
 ) -> list[LinhaBusca]:
-    """`provedores` (nome → Embeddings) substitui os modelos reais, para os testes."""
+    """`provedores` (nome → Embeddings) substitui os modelos reais, para os testes. Configurações do mesmo modelo
+    ("vetor" e "hibrida") usam o mesmo índice temporário e repetem o tempo de indexação medido na primeira."""
     pasta_temp.mkdir(parents=True, exist_ok=True)
-    return [_medir(con, raiz, perguntas, c, pasta_temp / f"{c.nome.replace(':', '-')}.db", provedores or {})
+    ja_indexados: dict[Path, float] = {}
+    return [_medir(con, raiz, perguntas, c, pasta_temp / f"indice-{(c.modelo or 'texto').replace('/', '-')}.db",
+                   provedores or {}, ja_indexados)
             for c in configuracoes]

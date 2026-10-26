@@ -92,3 +92,16 @@ def test_avaliar_modos_vetor_e_hibrida_com_provedor_injetado(con, materia, cenar
     linhas = avaliar(con, materia.pasta, perguntas, configs, tmp_path / "t", provedores={"falso": EmbeddingsFalso()})
     assert [l.nome for l in linhas] == ["vetor:falso", "hibrida:falso"]
     assert all(l.acerto5 == 1 for l in linhas)
+
+
+def test_configuracoes_do_mesmo_modelo_reaproveitam_o_indice(con, materia, cenario_busca, tmp_path, monkeypatch):
+    from estudos.avaliacao import busca as modulo
+    from estudos.ia.embeddings import EmbeddingsFalso
+    chamadas = []
+    original = modulo.sincronizar
+    monkeypatch.setattr(modulo, "sincronizar", lambda *a, **k: chamadas.append(k.get("embeddings")) or original(*a, **k))
+    perguntas = [PerguntaBusca("coordenadas polares", "exata", ("secao:1.1",), None)]
+    configs = [Configuracao("vetor:f", "vetor", "f"), Configuracao("hibrida:f", "hibrida", "f"), Configuracao("texto", "texto", None)]
+    linhas = avaliar(con, materia.pasta, perguntas, configs, tmp_path / "t", provedores={"f": EmbeddingsFalso()})
+    assert len(chamadas) == 2                       # um índice para o modelo "f" e um só de texto
+    assert linhas[0].indexacao_s == linhas[1].indexacao_s
