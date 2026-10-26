@@ -1,0 +1,203 @@
+# Gabarito de busca do Cálculo 2 (Fase 6, peça B). Rascunho do Claude, aprovado pelo usuário em 2026-10-26.
+# estilo: "exata" usa as palavras do livro; "parafrase" pergunta como um aluno perguntaria.
+# aceitas: "secao:<código>" (qualquer livro: o Guidorizzi usa capítulos 8–16) ou "documento:<título exato>".
+
+[[pergunta]]
+texto = "funções de várias variáveis domínio e imagem"
+estilo = "exata"
+aceitas = ["secao:14.1", "secao:8", "documento:14.1 Funções de várias variáveis"]
+
+[[pergunta]]
+texto = "como descobrir para quais pontos uma função de duas variáveis está definida"
+estilo = "parafrase"
+aceitas = ["secao:14.1", "secao:8", "documento:14.1 Funções de várias variáveis"]
+
+[[pergunta]]
+texto = "curvas de nível"
+estilo = "exata"
+aceitas = ["secao:14.1", "secao:8"]
+
+[[pergunta]]
+texto = "desenhar o mapa de contorno de uma superfície"
+estilo = "parafrase"
+aceitas = ["secao:14.1", "secao:8"]
+
+[[pergunta]]
+texto = "limite de função de duas variáveis por caminhos diferentes"
+estilo = "exata"
+aceitas = ["secao:14.2", "secao:9", "documento:14.2 Limite e continuidade"]
+
+[[pergunta]]
+texto = "como mostrar que um limite não existe chegando na origem por retas diferentes"
+estilo = "parafrase"
+aceitas = ["secao:14.2", "secao:9", "documento:14.2 Limite e continuidade"]
+
+[[pergunta]]
+texto = "continuidade de funções de várias variáveis"
+estilo = "exata"
+aceitas = ["secao:14.2", "secao:9"]
+
+[[pergunta]]
+texto = "derivadas parciais de segunda ordem e teorema de Clairaut"
+estilo = "exata"
+aceitas = ["secao:14.3", "secao:10", "secao:14.1"]
+
+[[pergunta]]
+texto = "derivar em relação a x mantendo o y constante"
+estilo = "parafrase"
+aceitas = ["secao:14.3", "secao:10", "documento:14.3 Derivadas parciais"]
+
+[[pergunta]]
+texto = "plano tangente a uma superfície"
+estilo = "exata"
+aceitas = ["secao:14.4", "secao:11", "documento:14.4 Plano tangente e diferencial"]
+
+[[pergunta]]
+texto = "equação do plano que encosta no gráfico em um ponto"
+estilo = "parafrase"
+aceitas = ["secao:14.4", "secao:11"]
+
+[[pergunta]]
+texto = "aproximação linear e diferencial"
+estilo = "exata"
+aceitas = ["secao:14.4", "secao:11"]
+
+[[pergunta]]
+texto = "estimar o valor da função perto de um ponto conhecido sem calcular direto"
+estilo = "parafrase"
+aceitas = ["secao:14.4", "secao:11"]
+
+[[pergunta]]
+texto = "regra da cadeia"
+estilo = "exata"
+aceitas = ["secao:14.5", "secao:12", "documento:14.5 Regra da cadeia e derivação implícita"]
+
+[[pergunta]]
+texto = "derivar uma composição quando x e y dependem de t"
+estilo = "parafrase"
+aceitas = ["secao:14.5", "secao:12"]
+
+[[pergunta]]
+texto = "derivação implícita"
+estilo = "exata"
+aceitas = ["secao:14.5", "secao:12"]
+
+[[pergunta]]
+texto = "achar dy/dx quando o y não está isolado na equação"
+estilo = "parafrase"
+aceitas = ["secao:14.5", "secao:12"]
+
+[[pergunta]]
+texto = "coordenadas polares"
+estilo = "exata"
+aceitas = ["secao:10.3", "documento:Coordenadas polares"]
+
+[[pergunta]]
+texto = "trocar x e y por raio e ângulo"
+estilo = "parafrase"
+aceitas = ["secao:10.3", "secao:15.4", "documento:Coordenadas polares"]
+
+[[pergunta]]
+texto = "área em coordenadas polares"
+estilo = "exata"
+aceitas = ["secao:10.4", "secao:15.4"]
+
+[[pergunta]]
+texto = "derivada direcional e vetor gradiente"
+estilo = "exata"
+aceitas = ["secao:14.6", "secao:13", "documento:14.6 Derivada direcional e vetor gradiente"]
+
+[[pergunta]]
+texto = "em que direção a função cresce mais rápido"
+estilo = "parafrase"
+aceitas = ["secao:14.6", "secao:13", "secao:11"]
+
+[[pergunta]]
+texto = "pontos críticos e ponto de sela"
+estilo = "exata"
+aceitas = ["secao:14.7", "secao:16", "documento:14.7 Valores máximo e mínimo"]
+
+[[pergunta]]
+texto = "como saber se um ponto é máximo, mínimo ou nenhum dos dois"
+estilo = "parafrase"
+aceitas = ["secao:14.7", "secao:16", "documento:14.7 Valores máximo e mínimo"]
+
+[[pergunta]]
+texto = "valores máximo e mínimo absolutos em região fechada e limitada"
+estilo = "exata"
+aceitas = ["secao:14.7", "secao:16"]
+
+[[pergunta]]
+texto = "maior e menor valor da função dentro de um triângulo"
+estilo = "parafrase"
+aceitas = ["secao:14.7", "secao:16"]
+
+[[pergunta]]
+texto = "multiplicadores de Lagrange"
+estilo = "exata"
+aceitas = ["secao:14.8", "secao:16.5", "secao:16", "documento:14.8 Multiplicadores de Lagrange"]
+
+[[pergunta]]
+texto = "otimizar uma função com uma restrição tipo x² + y² = 1"
+estilo = "parafrase"
+aceitas = ["secao:14.8", "secao:16.5", "documento:14.8 Multiplicadores de Lagrange"]
+
+[[pergunta]]
+texto = "caixa de maior volume gastando uma quantidade fixa de material"
+estilo = "parafrase"
+aceitas = ["secao:14.8", "secao:14.7", "secao:16.5", "secao:16"]
+
+[[pergunta]]
+texto = "integrais iteradas e teorema de Fubini"
+estilo = "exata"
+aceitas = ["secao:15.2"]
+
+[[pergunta]]
+texto = "integrar primeiro em y e depois em x"
+estilo = "parafrase"
+aceitas = ["secao:15.2", "secao:15.3"]
+
+[[pergunta]]
+texto = "integrais duplas sobre regiões gerais do tipo I e tipo II"
+estilo = "exata"
+aceitas = ["secao:15.3"]
+
+[[pergunta]]
+texto = "inverter a ordem de integração"
+estilo = "parafrase"
+aceitas = ["secao:15.3"]
+
+[[pergunta]]
+texto = "integral dupla em coordenadas polares"
+estilo = "exata"
+aceitas = ["secao:15.4", "documento:15.4 Integrais Duplas em Coordenadas Polares"]
+
+[[pergunta]]
+texto = "integrar sobre um disco ou uma região redonda"
+estilo = "parafrase"
+aceitas = ["secao:15.4", "documento:15.4 Integrais Duplas em Coordenadas Polares"]
+
+[[pergunta]]
+texto = "centro de massa e momento de inércia de uma lâmina"
+estilo = "exata"
+aceitas = ["secao:15.5", "documento:15.5 Aplicações de Integrais Duplas"]
+
+[[pergunta]]
+texto = "onde fica o ponto de equilíbrio de uma placa com densidade variável"
+estilo = "parafrase"
+aceitas = ["secao:15.5", "documento:15.5 Aplicações de Integrais Duplas"]
+
+[[pergunta]]
+texto = "integrais triplas em coordenadas cilíndricas e esféricas"
+estilo = "exata"
+aceitas = ["secao:15.8", "secao:15.9"]
+
+[[pergunta]]
+texto = "volume de um sólido limitado por superfícies usando três integrais"
+estilo = "parafrase"
+aceitas = ["secao:15.7", "documento:15.7 Integrais Triplas"]
+
+[[pergunta]]
+texto = "substituição de u e v para simplificar a região de integração e o jacobiano"
+estilo = "parafrase"
+aceitas = ["secao:15.10"]
