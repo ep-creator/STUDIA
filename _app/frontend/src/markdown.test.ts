@@ -68,3 +68,12 @@ test('modo "contas em código": bloco ``` sem linguagem vira fórmula do KaTeX; 
   // sem o modo, nada muda
   expect(renderizarMarkdown(texto)).not.toContain('katex')
 })
+
+test('títulos ## e ### ganham id para a busca abrir no bloco certo', async () => {
+  const { renderizarMarkdown, slugTitulo } = await import('./markdown')
+  expect(slugTitulo('Mudança para polares!')).toBe('mudanca-para-polares')
+  const html = renderizarMarkdown('# Topo\n\n## Mudança para polares\n\ntexto\n\n### Exemplo 2')
+  expect(html).toContain('<h2 id="mudanca-para-polares">')
+  expect(html).toContain('<h3 id="exemplo-2">')
+  expect(html).not.toContain('<h1 id=')
+})

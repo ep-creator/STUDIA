@@ -1,6 +1,7 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import { consumirDocumento } from '../estado/pedido.svelte'
+  import { tick } from 'svelte'
+  import { consumirAncora, consumirDocumento, consumirFonte, pedido } from '../estado/pedido.svelte'
   import type { DocumentoComCorpo, FonteResumo, Painel } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
   import ListaDocumentos, { type Selecao } from '../componentes/ListaDocumentos.svelte'
@@ -33,9 +34,28 @@
     leitor?.scrollTo?.({ top: 0 })
   })
 
-  // o painel pode ter pedido um resumo específico ("Ler o resumo" do próximo passo)
-  const pedido = consumirDocumento()
-  if (pedido !== null) selecionar({ tipo: 'documento', id: pedido })
+  // Pedidos de outras telas (o painel pede um resumo; a busca pede um PDF na página ou um texto num bloco).
+  // Lidos por efeito: chegam também com Documentos já aberto.
+  let paginaInicial = $state(1)
+  let ancora: string | null = null
+  $effect(() => {
+    if (pedido.documento !== null) {
+      const id = consumirDocumento()!
+      ancora = consumirAncora()
+      selecionar({ tipo: 'documento', id })
+    } else if (pedido.fonte !== null) {
+      const f = consumirFonte()!
+      paginaInicial = f.pagina ?? 1
+      selecionar({ tipo: 'fonte', id: f.id })
+    }
+  })
+  // com o texto na tela, rola até o bloco pedido
+  $effect(() => {
+    if (!documento || !ancora) return
+    const alvo = ancora
+    ancora = null
+    void tick().then(() => leitor?.querySelector(`#${CSS.escape(alvo)}`)?.scrollIntoView?.({ block: 'start' }))
+  })
 
   $effect(() => {
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
@@ -92,7 +112,7 @@
         <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
       </form>
     {/if}
-    <ListaDocumentos documentos={painel.documentos} {fontes} topicos={painel.topicos} {unidadeAtual} {selecao} onselecionar={selecionar} />
+    <ListaDocumentos documentos={painel.documentos} {fontes} topicos={painel.topicos} {unidadeAtual} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />
   </aside>
 
   <section class="leitor" bind:this={leitor}>
@@ -110,7 +130,7 @@
       {/if}
     {:else if fonte}
       <h2>{fonte.titulo || fonte.caminho.split('/').pop()}</h2>
-      <VisualizadorPdf {uid} {fonte} />
+      {#key `${fonte.id}:${paginaInicial}`}<VisualizadorPdf {uid} {fonte} {paginaInicial} />{/key}
     {:else}
       <p class="suave">Escolha um resumo, anotação, livro ou PDF à esquerda.</p>
     {/if}
