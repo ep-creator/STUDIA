@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from dataclasses import dataclass
 from pathlib import Path
 
-from estudos.avaliacao.gabarito import PerguntaBusca
+from estudos.avaliacao.gabarito import ItemRelacionado, PerguntaBusca
 from estudos.avaliacao.metricas import acerto_em, mrr
 from estudos.avaliacao.respostas import casa, ler_aceita
 from estudos.ia.embeddings import Embeddings, obter_embeddings
@@ -40,6 +40,8 @@ class LinhaBusca:
     p50_ms: float
     p95_ms: float
     memoria_mb: float
+    relacionados: float | None = None   # fração média dos esperados entre os 10 primeiros (links entre documentos)
+    n_relacionados: int = 0
 
 
 def _posicao(nomes, resultados: list[Resultado], aceitas, trecho: bool) -> int | None:
@@ -74,8 +76,42 @@ def _provedor(modelo: str | None, provedores: dict[str, Embeddings]) -> Embeddin
     return e
 
 
+_TAMANHO_CONSULTA = 400   # caracteres do começo do documento usados como consulta (o que a IA teria em mãos)
+
+
+def _consulta_de(con, indice, raiz: Path, de) -> tuple[str, str] | None:
+    """(texto da consulta, origem no índice) do ponto de partida de um relacionado; None se não existe na matéria."""
+    if de.tipo == "documento":
+        linha = con.execute("SELECT id FROM documento WHERE titulo = ?", (de.valor,)).fetchone()
+        origem = f"documento:{linha['id']}" if linha else None
+    else:
+        linha = con.execute("SELECT id FROM fonte WHERE titulo = ? OR caminho LIKE ?", (de.valor, f"%/{de.valor}.pdf")).fetchone()
+        origem = f"fonte:{linha['id']}" if linha else None
+    if origem is None:
+        return None
+    trechos = indice.execute("SELECT titulo, texto FROM trecho WHERE origem = ? ORDER BY ordem LIMIT 3", (origem,)).fetchall()
+    texto = " ".join([de.valor] + [t["texto"] for t in trechos])[:_TAMANHO_CONSULTA]
+    return texto, origem
+
+
+def _medir_relacionados(con, indice, raiz, itens, config, embeddings, nomes) -> tuple[float | None, int]:
+    fracoes = []
+    for item in itens:
+        achado = _consulta_de(con, indice, raiz, ler_aceita(item.de))
+        if achado is None:
+            raise ValueError(f"relacionado sem ponto de partida na matéria: {item.de!r}")
+        texto, origem = achado
+        _, resultados = buscar_modo(indice, texto, limite=_LIMITE + 5, modo=config.modo, embeddings=embeddings)
+        resultados = [r for r in resultados if r.origem != origem][:_LIMITE]
+        esperados = [ler_aceita(e) for e in item.esperados]
+        fontes, documentos = nomes
+        achados = sum(1 for e in esperados if any(casa(fontes, documentos, r, e, trecho=False) for r in resultados))
+        fracoes.append(achados / len(esperados))
+    return (sum(fracoes) / len(fracoes), len(fracoes)) if fracoes else (None, 0)
+
+
 def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path, provedores,
-           ja_indexados: dict[Path, float]) -> LinhaBusca:
+           ja_indexados: dict[Path, float], relacionados: list[ItemRelacionado] = ()) -> LinhaBusca:
     """`ja_indexados`: índices desta rodada (caminho → segundos para indexar); o mesmo modelo não é indexado duas vezes."""
     embeddings = _provedor(config.modelo, provedores)
     tracemalloc.start()
@@ -102,6 +138,7 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
             precisas = tuple(a for a in aceitas_p if a.precisa)
             if precisas:
                 trechos.append(_posicao(nomes, resultados, precisas, trecho=True))
+        relacionados_frac, n_relacionados = _medir_relacionados(con, indice, raiz, relacionados, config, embeddings, nomes)
     finally:
         indice.close()
         _, pico = tracemalloc.get_traced_memory()
@@ -119,17 +156,19 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
         p50_ms=round(statistics.median(tempos), 1) if tempos else 0.0,
         p95_ms=round(tempos[max(0, round(0.95 * len(tempos)) - 1)], 1) if tempos else 0.0,
         memoria_mb=round(pico / 2**20, 1),
+        relacionados=relacionados_frac,
+        n_relacionados=n_relacionados,
     )
 
 
 def avaliar(
     con: sqlite3.Connection, raiz: Path, perguntas: list[PerguntaBusca], configuracoes: list[Configuracao], pasta_temp: Path,
-    provedores: dict[str, Embeddings] | None = None,
+    provedores: dict[str, Embeddings] | None = None, relacionados: list[ItemRelacionado] = (),
 ) -> list[LinhaBusca]:
     """`provedores` (nome → Embeddings) substitui os modelos reais, para os testes. Configurações do mesmo modelo
     ("vetor" e "hibrida") usam o mesmo índice temporário e repetem o tempo de indexação medido na primeira."""
     pasta_temp.mkdir(parents=True, exist_ok=True)
     ja_indexados: dict[Path, float] = {}
     return [_medir(con, raiz, perguntas, c, pasta_temp / f"indice-{(c.modelo or 'texto').replace('/', '-')}.db",
-                   provedores or {}, ja_indexados)
+                   provedores or {}, ja_indexados, relacionados)
             for c in configuracoes]

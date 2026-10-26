@@ -81,3 +81,29 @@ def ler_vinculos(caminho: Path) -> GabaritoVinculos:
         )
     except (KeyError, TypeError, ValueError) as e:
         raise ValueError(f"gabarito de vínculos inválido: {e}") from e
+
+
+@dataclass(frozen=True)
+class ItemRelacionado:
+    de: str                       # documento ou arquivo de partida (mesmo formato das respostas aceitas)
+    esperados: tuple[str, ...]    # o que deveria aparecer ligado a ele (seções, documentos, slides, listas…)
+
+
+def ler_relacionados(caminho: Path) -> list[ItemRelacionado]:
+    """[[relacionado]] do mesmo arquivo do gabarito de busca: mede os links entre documentos."""
+    dados = tomllib.loads(Path(caminho).read_text(encoding="utf-8"))
+    itens = []
+    for i, r in enumerate(dados.get("relacionado", []), start=1):
+        try:
+            de = ler_aceita(r["de"])
+            if de.tipo == "secao":
+                raise ValueError("o ponto de partida precisa ser documento: ou fonte:")
+            esperados = tuple(r.get("esperados", []))
+            if not esperados:
+                raise ValueError("sem esperados")
+            for e in esperados:
+                ler_aceita(e)
+        except (KeyError, ValueError) as e:
+            raise ValueError(f"relacionado {i}: {e}") from e
+        itens.append(ItemRelacionado(r["de"], esperados))
+    return itens

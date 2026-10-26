@@ -12,7 +12,7 @@ from contextlib import closing
 from pathlib import Path
 
 from estudos.avaliacao.busca import Configuracao, avaliar
-from estudos.avaliacao.gabarito import ler_busca, ler_vinculos
+from estudos.avaliacao.gabarito import ler_busca, ler_relacionados, ler_vinculos
 from estudos.avaliacao.gerar import perguntas_das_questoes
 from estudos.avaliacao.relatorio import gravar, slug as _slug, tabela_busca, tabela_vinculos
 from estudos.avaliacao.vinculos import ConfigVinculo, avaliar as avaliar_vinculos
@@ -84,10 +84,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.tipo == "vinculos":
         return _vinculos(args, pasta, arquivo, configs)
     perguntas = ler_busca(arquivo)
+    relacionados = ler_relacionados(arquivo)
     with closing(conectar(pasta / ARQUIVO_DB)) as con, tempfile.TemporaryDirectory() as temp:
         if args.geradas:
             perguntas += perguntas_das_questoes(con)
-        linhas = avaliar(con, pasta, perguntas, configs, Path(temp))
+        linhas = avaliar(con, pasta, perguntas, configs, Path(temp), relacionados=relacionados)
     tabela = tabela_busca(linhas)
     print(f"{len(perguntas)} perguntas · {arquivo.name}\n\n{tabela}")
     if args.gravar:

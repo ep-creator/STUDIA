@@ -138,3 +138,26 @@ def test_avaliar_mede_por_origem_e_no_trecho(con, materia, cenario_busca, tmp_pa
     [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
     assert linha.por_origem == {"usuario": 1.0, "gerada": 1.0, "claude": 1.0}
     assert linha.n_trecho == 2 and linha.acerto5_trecho == 0.5
+
+
+def test_ler_relacionados_do_mesmo_arquivo(tmp_path):
+    from estudos.avaliacao.gabarito import ler_relacionados
+    arq = tmp_path / "g.toml"
+    arq.write_text('[[relacionado]]\nde = "documento:Polares"\nesperados = ["secao:1.1", "fonte:lista"]\n', encoding="utf-8")
+    [r] = ler_relacionados(arq)
+    assert r.de == "documento:Polares" and r.esperados == ("secao:1.1", "fonte:lista")
+    arq.write_text('[[relacionado]]\nde = "capitulo:1"\nesperados = ["secao:1.1"]\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="relacionado 1"):
+        ler_relacionados(arq)
+
+
+def test_relacionados_conta_os_esperados_entre_os_10_primeiros(con, materia, cenario_busca, tmp_path):
+    from estudos.avaliacao.gabarito import ItemRelacionado
+    itens = [
+        ItemRelacionado("documento:Polares", ("secao:1.1", "fonte:lista", "secao:9.9")),  # 9.9 não existe: no máximo 2/3
+        ItemRelacionado("fonte:lista", ("documento:Polares",)),
+    ]
+    [linha] = avaliar(con, materia.pasta, [PerguntaBusca("polares", "exata", ("secao:1.1",), None)],
+                      [Configuracao("texto", "texto", None)], tmp_path / "t", relacionados=itens)
+    assert linha.n_relacionados == 2
+    assert 0 < linha.relacionados <= (2 / 3 + 1) / 2
