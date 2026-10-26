@@ -321,3 +321,50 @@ Cada passo termina com as suítes verdes:
 - Extensão vetorial no SQLite e servidor remoto.
 - Normalização especial de fórmulas para a busca (pergunta em aberto, fica para depois dos números).
 - Peças A, C e D da Fase 6.
+
+## 9. Emenda: resultado da avaliação e decisão (2026-10-26)
+
+Relatórios completos: `docs/avaliacoes/2026-10-26-calculo2-busca.md`, `…-calculo2-vinculos.md` e
+`…-geometriaanalitica-busca.md`.
+
+**Decisão: os embeddings ficam desligados por padrão** (`embeddings = false`, `busca = "texto"`,
+`vinculos_com_embeddings = false`). O código fica pronto atrás do config.
+
+**Por quê**, em três rodadas:
+
+1. **v1** (40 perguntas do Cálculo 2 revisadas pelo usuário): a híbrida small passou nas regras da §4.4
+   (paráfrase 65% → 75%, exatas mantidas em 95%, indexação 5,2 min).
+2. **v2** (uso real): o gabarito ganhou as questões das listas, os slides e as listas como resposta, o trecho e os
+   links. Nenhuma configuração ganhou em tudo.
+3. **v3**: as perguntas de questão deixaram de contar a página da própria questão. Esse é o uso principal: na página
+   das listas, achar a explicação do assunto. Resultado:
+
+| configuração | questão → material, Cálculo 2 (121) | idem, Geometria (20) | perguntas livres (paráfrase), Cálculo | links, Cálculo / Geometria |
+|---|---|---|---|---|
+| texto | **77%** | **75%** | 65% | 56% / 29% |
+| híbrida small | 69% | 70% | 75% | **68% / 42%** |
+| híbrida base | 76% | **75%** | **80%** | **68%** / 29% |
+
+- No uso principal, a busca por palavras é a melhor ou empata. Os embeddings ajudam nas perguntas livres e nos links,
+  mas pioram a busca a partir do enunciado.
+- O modelo base não ganha de forma consistente (piora a página certa na Geometria: 75% → 50%) e indexa o Cálculo 2
+  em 15 min.
+- Vínculos: nenhuma configuração com sentido aumenta os acertos (melhor 51/58 contra 52/58 da regra).
+
+**O que limita, seja qual for o modelo**, e é o próximo trabalho:
+
+- texto das fórmulas estragado na extração do PDF;
+- trechos de até 1.600 caracteres misturando teoria e exercícios (o e5 lê só ~512 tokens);
+- fusão com o mesmo peso;
+- falta de um reordenador (*reranker*) que leia a pergunta e o trecho juntos.
+
+**Também mudou nesta peça:**
+- o índice guarda a última página de cada trecho (versão 3), para citar a faixa certa;
+- o gabarito aceita slides, listas e provas (com página) e mede o trecho certo e os links;
+- as perguntas de questão não contam a página da própria questão;
+- o relatório tem a matéria no nome.
+
+**Achados para depois:**
+- o sumário do Boulos ("CAP. 19. DISTÂNCIAS . . .") não é reconhecido pelo leitor de livro;
+- uma lista da Geometria ficou com o título errado (uma frase do enunciado);
+- o seletor de seção do visualizador de PDF fica vazio quando a página pedida não é o início de uma seção.
