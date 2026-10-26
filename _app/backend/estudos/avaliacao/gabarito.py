@@ -5,16 +5,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-ESTILOS = ("exata", "parafrase")
-PREFIXOS_ACEITA = ("secao:", "documento:")
+from estudos.avaliacao.respostas import ler_aceita
+
+# exata: palavras do livro · parafrase: como um aluno perguntaria · questao: o enunciado de uma questão (o que a IA vê)
+ESTILOS = ("exata", "parafrase", "questao")
+# quem escreveu: claude (rascunho revisado), usuario (dúvida real), gerada (a partir do banco, sem revisão item a item)
+ORIGENS = ("claude", "usuario", "gerada")
 
 
 @dataclass(frozen=True)
 class PerguntaBusca:
     texto: str
-    estilo: Literal["exata", "parafrase"]
+    estilo: Literal["exata", "parafrase", "questao"]
     aceitas: tuple[str, ...]
     unidade: int | None = None
+    origem: Literal["claude", "usuario", "gerada"] = "claude"
 
 
 def ler_busca(caminho: Path) -> list[PerguntaBusca]:
@@ -26,9 +31,17 @@ def ler_busca(caminho: Path) -> list[PerguntaBusca]:
             raise ValueError(f"pergunta {i}: texto vazio")
         if estilo not in ESTILOS:
             raise ValueError(f"pergunta {i}: estilo {estilo!r} (use {' ou '.join(ESTILOS)})")
-        if not aceitas or not all(isinstance(a, str) and a.startswith(PREFIXOS_ACEITA) and a.split(":", 1)[1] for a in aceitas):
-            raise ValueError(f"pergunta {i}: aceitas precisa de itens 'secao:<código>' ou 'documento:<título>'")
-        perguntas.append(PerguntaBusca(texto, estilo, tuple(aceitas), p.get("unidade")))
+        origem = p.get("origem", "claude")
+        if origem not in ORIGENS:
+            raise ValueError(f"pergunta {i}: origem {origem!r} (use {', '.join(ORIGENS)})")
+        if not aceitas:
+            raise ValueError(f"pergunta {i}: sem respostas aceitas")
+        for a in aceitas:
+            try:
+                ler_aceita(a)
+            except ValueError as e:
+                raise ValueError(f"pergunta {i}: {e}") from e
+        perguntas.append(PerguntaBusca(texto, estilo, tuple(aceitas), p.get("unidade"), origem))
     return perguntas
 
 

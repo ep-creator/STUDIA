@@ -40,14 +40,14 @@ def test_avaliar_usa_indice_temporario_e_nao_toca_o_real(con, materia, cenario_b
     [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "temp")
     assert linha.nome == "texto"
     assert linha.acerto5 == pytest.approx(2 / 3)
-    assert linha.acerto5_exata == 1 and linha.acerto5_parafrase == 0.5
+    assert linha.por_estilo == {"exata": 1.0, "parafrase": 0.5}
     assert linha.indexacao_s >= 0 and linha.p95_ms >= linha.p50_ms >= 0
     assert real.stat().st_mtime_ns == antes
 
 
 def test_relatorio_grava_tabela_com_a_data(tmp_path):
     from estudos.avaliacao.busca import LinhaBusca
-    linhas = [LinhaBusca("texto", 0.5, 1.0, 0.0, 0.4, 1.2, 3.0, 9.0, 12.5)]
+    linhas = [LinhaBusca("texto", 0.5, 0.4, {"exata": 1.0, "parafrase": 0.0}, {"claude": 0.5}, None, 0, 1.2, 3.0, 9.0, 12.5)]
     tabela = tabela_busca(linhas)
     assert "| texto |" in tabela and "50%" in tabela
     caminho = gravar(tabela, tmp_path, "busca", datetime.date(2026, 10, 26))
@@ -115,3 +115,26 @@ def test_nomes_de_arquivo_por_materia_sem_acento(tmp_path):
     b = gravar("y", tmp_path, "busca", datetime.date(2026, 10, 26), materia="Calculo 2")
     assert a.name == "2026-10-26-geometriaanalitica-busca.md" and b.name == "2026-10-26-calculo2-busca.md"
     assert a.read_text(encoding="utf-8") == "x"
+
+
+def test_ler_busca_aceita_questao_origem_e_fonte(tmp_path):
+    arq = tmp_path / "g.toml"
+    arq.write_text('[[pergunta]]\ntexto = "x"\nestilo = "questao"\norigem = "usuario"\naceitas = ["fonte:Aula 3#p5-7", "secao:1.1"]\n',
+                   encoding="utf-8")
+    [p] = ler_busca(arq)
+    assert p.estilo == "questao" and p.origem == "usuario" and p.aceitas == ("fonte:Aula 3#p5-7", "secao:1.1")
+    arq.write_text('[[pergunta]]\ntexto = "x"\nestilo = "exata"\norigem = "outra"\naceitas = ["secao:1"]\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="pergunta 1"):
+        ler_busca(arq)
+
+
+def test_avaliar_mede_por_origem_e_no_trecho(con, materia, cenario_busca, tmp_path):
+    # a lista do cenário (fontes/listas/lista.pdf) tem "integral dupla em polares" na página 1 e "cardioide" na 2
+    perguntas = [
+        PerguntaBusca("cardioide", "exata", ("fonte:lista#p2",), None, "usuario"),        # arquivo e trecho certos
+        PerguntaBusca("integral dupla em polares", "questao", ("fonte:lista#p3",), None, "gerada"),  # arquivo sim, página não
+        PerguntaBusca("coordenadas polares", "exata", ("secao:1.1",), None, "claude"),     # sem trecho: fora da conta de trecho
+    ]
+    [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
+    assert linha.por_origem == {"usuario": 1.0, "gerada": 1.0, "claude": 1.0}
+    assert linha.n_trecho == 2 and linha.acerto5_trecho == 0.5

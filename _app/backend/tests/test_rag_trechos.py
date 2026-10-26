@@ -52,3 +52,12 @@ def test_markdown_bloco_grande_dividido():
 
 def test_markdown_vazio():
     assert dividir_markdown("", "X") == []
+
+
+def test_trecho_sabe_a_primeira_e_a_ultima_pagina():
+    [t] = dividir_paginas([(1, "integral dupla em polares"), (2, "área da cardioide")], "Lista")
+    assert (t.pagina, t.pagina_fim) == (1, 2)
+    a, b = dividir_paginas([(3, "x" * 1000), (4, "y" * 1000)], "Livro", limite=1200)
+    assert (a.pagina, a.pagina_fim, b.pagina, b.pagina_fim) == (3, 3, 4, 4)
+    [m] = dividir_markdown("texto", "Doc")
+    assert m.pagina is None and m.pagina_fim is None

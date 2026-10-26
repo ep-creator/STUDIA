@@ -51,10 +51,10 @@ def assinatura_documento(con: sqlite3.Connection, raiz: Path, documento_id: int)
 def _inserir(indice: sqlite3.Connection, origem: str, trechos: list[TrechoNovo], tipo: str, **ids) -> int:
     for t in trechos:
         indice.execute(
-            "INSERT INTO trecho (origem, fonte_id, documento_id, secao_id, tipo, titulo, texto, pagina, ordem) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO trecho (origem, fonte_id, documento_id, secao_id, tipo, titulo, texto, pagina, pagina_fim, ordem) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (origem, ids.get("fonte_id"), ids.get("documento_id"), ids.get("secao_id"), ids.get("tipo", tipo),
-             t.titulo, t.texto, t.pagina, t.ordem),
+             t.titulo, t.texto, t.pagina, t.pagina_fim, t.ordem),
         )
     return len(trechos)
 

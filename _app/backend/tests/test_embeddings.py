@@ -68,7 +68,7 @@ def test_indice_versao_1_e_refeito_sem_erro(con, materia):
     resumo = sincronizar(con, materia.pasta)
     indice = abrir_indice(materia.pasta)
     try:
-        assert indice.execute("PRAGMA user_version").fetchone()[0] == VERSAO_INDICE == 2
+        assert indice.execute("PRAGMA user_version").fetchone()[0] == VERSAO_INDICE == 3
     finally:
         indice.close()
     assert resumo is not None

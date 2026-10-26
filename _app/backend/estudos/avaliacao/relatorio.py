@@ -12,13 +12,19 @@ def _pct(valor: float) -> str:
 
 
 def tabela_busca(linhas: list[LinhaBusca]) -> str:
-    cabecalho = (
-        "| configuração | acerto@5 | exata | paráfrase | MRR@10 | indexação (s) | busca p50 (ms) | busca p95 (ms) | memória (MB) |\n"
-        "|---|---|---|---|---|---|---|---|---|\n"
-    )
+    """Colunas fixas + uma por estilo e por origem presentes; "trecho" = página/bloco exato (n = perguntas com trecho)."""
+    estilos = sorted({e for l in linhas for e in l.por_estilo})
+    origens = sorted({o for l in linhas for o in l.por_origem})
+    nomes = ["configuração", "acerto@5", *estilos, *(f"de {o}" for o in origens), "trecho", "MRR@10", "indexação (s)",
+             "busca p95 (ms)"]
+    cabecalho = "| " + " | ".join(nomes) + " |\n|" + "---|" * len(nomes) + "\n"
     corpo = "".join(
-        f"| {l.nome} | {_pct(l.acerto5)} | {_pct(l.acerto5_exata)} | {_pct(l.acerto5_parafrase)} | {l.mrr10:.2f} | "
-        f"{l.indexacao_s} | {l.p50_ms} | {l.p95_ms} | {l.memoria_mb} |\n"
+        "| " + " | ".join([
+            l.nome, _pct(l.acerto5), *(_pct(l.por_estilo[e]) if e in l.por_estilo else "—" for e in estilos),
+            *(_pct(l.por_origem[o]) if o in l.por_origem else "—" for o in origens),
+            f"{_pct(l.acerto5_trecho)} (n={l.n_trecho})" if l.acerto5_trecho is not None else "—",
+            f"{l.mrr10:.2f}", str(l.indexacao_s), str(l.p95_ms),
+        ]) + " |\n"
         for l in linhas
     )
     return cabecalho + corpo

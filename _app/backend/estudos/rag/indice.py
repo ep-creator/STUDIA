@@ -9,7 +9,7 @@ from pathlib import Path
 
 from estudos.workspace import ARQUIVO_DB
 
-VERSAO_INDICE = 2   # 2: trecho.vetor e tabela meta (modelo e dimensão dos vetores)
+VERSAO_INDICE = 3   # 2: trecho.vetor e tabela meta; 3: trecho.pagina_fim
 PASTA_INDICE = ".indice"
 _ARQUIVO = "indice.db"
 
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS trecho (
     titulo TEXT NOT NULL,
     texto TEXT NOT NULL,
     pagina INTEGER,
+    pagina_fim INTEGER,        -- última página coberta (o trecho pode juntar páginas curtas)
     ordem INTEGER NOT NULL,
     vetor BLOB                 -- embedding normalizado (float32); NULL sem embeddings
 );

@@ -31,7 +31,8 @@ class Resultado:
     fonte_id: int | None
     documento_id: int | None
     score: float
-    por: str = "texto"     # de onde veio: "texto", "sentido" ou "ambos" (modo híbrido)
+    por: str = "texto"
+    pagina_fim: int | None = None   # última página do trecho (para citar a faixa certa)     # de onde veio: "texto", "sentido" ou "ambos" (modo híbrido)
 
 
 def montar_consulta(texto: str) -> str | None:
@@ -111,7 +112,7 @@ def buscar(
         Resultado(
             trecho_id=l["id"], origem=l["origem"], tipo=l["tipo"], titulo=l["titulo"], trecho=l["resumo"],
             pagina=l["pagina"], secao_id=l["secao_id"], secao_codigo=l["secao_codigo"], fonte_id=l["fonte_id"],
-            documento_id=l["documento_id"], score=round(l["score"], 4),
+            documento_id=l["documento_id"], score=round(l["score"], 4), pagina_fim=l["pagina_fim"],
         )
         for l in linhas
     ]
@@ -164,7 +165,7 @@ def _por_sentido(indice, consulta, unidade, secao_id, tipos, limite, embeddings)
         Resultado(
             trecho_id=i, origem=l["origem"], tipo=l["tipo"], titulo=l["titulo"], trecho=l["texto"][:_RESUMO_VETOR],
             pagina=l["pagina"], secao_id=l["secao_id"], secao_codigo=l["secao_codigo"], fonte_id=l["fonte_id"],
-            documento_id=l["documento_id"], score=round(nota[i], 4), por="sentido",
+            documento_id=l["documento_id"], score=round(nota[i], 4), por="sentido", pagina_fim=l["pagina_fim"],
         )
         for i in ordem for l in [linhas[i]]
     ]

@@ -16,6 +16,7 @@ class TrechoNovo:
     texto: str
     pagina: int | None
     ordem: int
+    pagina_fim: int | None = None   # última página que o trecho cobre (páginas curtas se juntam num trecho só)
 
 
 def _cortar(paragrafo: str, limite: int) -> list[str]:
@@ -36,10 +37,11 @@ def _agrupar(pecas: list[tuple[int | None, str]], titulo: str, limite: int, orde
     trechos: list[TrechoNovo] = []
     atual: list[str] = []
     pagina_atual: int | None = None
+    pagina_ultima: int | None = None
 
     def fechar() -> None:
         if atual:
-            trechos.append(TrechoNovo(titulo, _SEPARADOR.join(atual), pagina_atual, ordem_inicial + len(trechos)))
+            trechos.append(TrechoNovo(titulo, _SEPARADOR.join(atual), pagina_atual, ordem_inicial + len(trechos), pagina_ultima))
 
     for pagina, texto in pecas:
         for parte in _cortar(texto, limite):
@@ -48,6 +50,7 @@ def _agrupar(pecas: list[tuple[int | None, str]], titulo: str, limite: int, orde
                 atual = []
             if not atual:
                 pagina_atual = pagina
+            pagina_ultima = pagina
             atual.append(parte)
     fechar()
     return trechos

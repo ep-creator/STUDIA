@@ -10,6 +10,7 @@ from pathlib import Path
 
 from estudos.avaliacao.gabarito import PerguntaBusca
 from estudos.avaliacao.metricas import acerto_em, mrr
+from estudos.avaliacao.respostas import casa, ler_aceita
 from estudos.ia.embeddings import Embeddings, obter_embeddings
 from estudos.rag.busca import Resultado, buscar_modo
 from estudos.rag.indexador import sincronizar
@@ -29,31 +30,37 @@ class Configuracao:
 @dataclass(frozen=True)
 class LinhaBusca:
     nome: str
-    acerto5: float
-    acerto5_exata: float
-    acerto5_parafrase: float
+    acerto5: float                      # resposta aceita (arquivo ou seção) entre os 5 primeiros
     mrr10: float
+    por_estilo: dict[str, float]        # acerto@5 por estilo de pergunta
+    por_origem: dict[str, float]        # acerto@5 por quem escreveu a pergunta
+    acerto5_trecho: float | None        # página/bloco exato entre os 5 primeiros (só perguntas com trecho indicado)
+    n_trecho: int
     indexacao_s: float
     p50_ms: float
     p95_ms: float
     memoria_mb: float
 
 
-def _casa(con: sqlite3.Connection, resultado: Resultado, aceita: str) -> bool:
-    tipo, valor = aceita.split(":", 1)
-    if tipo == "secao":
-        return resultado.secao_codigo == valor
-    if resultado.documento_id is None:
-        return False
-    linha = con.execute("SELECT titulo FROM documento WHERE id = ?", (resultado.documento_id,)).fetchone()
-    return linha is not None and linha["titulo"] == valor
-
-
-def _posicao(con: sqlite3.Connection, resultados: list[Resultado], aceitas: tuple[str, ...]) -> int | None:
+def _posicao(nomes, resultados: list[Resultado], aceitas, trecho: bool) -> int | None:
+    fontes, documentos = nomes
     for i, r in enumerate(resultados, start=1):
-        if any(_casa(con, r, a) for a in aceitas):
+        if any(casa(fontes, documentos, r, a, trecho) for a in aceitas):
             return i
     return None
+
+
+def _nomes(con: sqlite3.Connection):
+    fontes = {r["id"]: (r["titulo"] or "", r["caminho"]) for r in con.execute("SELECT id, titulo, caminho FROM fonte")}
+    documentos = {r["id"]: r["titulo"] for r in con.execute("SELECT id, titulo FROM documento")}
+    return fontes, documentos
+
+
+def _por_grupo(posicoes: list[int | None], chaves: list[str]) -> dict[str, float]:
+    grupos: dict[str, list[int | None]] = {}
+    for pos, chave in zip(posicoes, chaves):
+        grupos.setdefault(chave, []).append(pos)
+    return {chave: acerto_em(ps, 5) for chave, ps in grupos.items()}
 
 
 def _provedor(modelo: str | None, provedores: dict[str, Embeddings]) -> Embeddings | None:
@@ -80,28 +87,34 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
         sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings)
         indexacao = ja_indexados[caminho] = time.perf_counter() - inicio
     indice = abrir_indice(raiz, caminho)
-    posicoes, tempos = [], []
+    nomes = _nomes(con)
+    aceitas = [tuple(ler_aceita(a) for a in p.aceitas) for p in perguntas]
+    posicoes, trechos, tempos = [], [], []
     try:
-        for p in perguntas:
+        for p, aceitas_p in zip(perguntas, aceitas):
             t0 = time.perf_counter()
             efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_LIMITE, modo=config.modo,
                                               embeddings=embeddings)
             if efetivo != config.modo:
                 raise ValueError(f"{config.nome}: a busca caiu para {efetivo!r} (sem vetores no índice?)")
             tempos.append((time.perf_counter() - t0) * 1000)
-            posicoes.append(_posicao(con, resultados, p.aceitas))
+            posicoes.append(_posicao(nomes, resultados, aceitas_p, trecho=False))
+            precisas = tuple(a for a in aceitas_p if a.precisa)
+            if precisas:
+                trechos.append(_posicao(nomes, resultados, precisas, trecho=True))
     finally:
         indice.close()
         _, pico = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-    por_estilo = {e: [pos for pos, p in zip(posicoes, perguntas) if p.estilo == e] for e in ("exata", "parafrase")}
     tempos.sort()
     return LinhaBusca(
         nome=config.nome,
         acerto5=acerto_em(posicoes, 5),
-        acerto5_exata=acerto_em(por_estilo["exata"], 5),
-        acerto5_parafrase=acerto_em(por_estilo["parafrase"], 5),
         mrr10=mrr(posicoes, 10),
+        por_estilo=_por_grupo(posicoes, [p.estilo for p in perguntas]),
+        por_origem=_por_grupo(posicoes, [p.origem for p in perguntas]),
+        acerto5_trecho=acerto_em(trechos, 5) if trechos else None,
+        n_trecho=len(trechos),
         indexacao_s=round(indexacao, 2),
         p50_ms=round(statistics.median(tempos), 1) if tempos else 0.0,
         p95_ms=round(tempos[max(0, round(0.95 * len(tempos)) - 1)], 1) if tempos else 0.0,
