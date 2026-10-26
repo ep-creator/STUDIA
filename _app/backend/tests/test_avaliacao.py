@@ -52,3 +52,34 @@ def test_relatorio_grava_tabela_com_a_data(tmp_path):
     assert "| texto |" in tabela and "50%" in tabela
     caminho = gravar(tabela, tmp_path, "busca", datetime.date(2026, 10, 26))
     assert caminho.name == "2026-10-26-busca.md" and "texto" in caminho.read_text(encoding="utf-8")
+
+
+def test_ler_vinculos(tmp_path):
+    from estudos.avaliacao.gabarito import ler_vinculos
+    arq = tmp_path / "v.toml"
+    arq.write_text(
+        '[[topico]]\ntitulo = "Coordenadas polares"\nunidade = 1\nsecoes = ["10.3", "10.4"]\n'
+        '[[topico]]\ntitulo = "Aula extra"\nunidade = 3\nsecoes = []\n'
+        '[[lista]]\ntitulo = "Lista 5"\nunidade = 3\n'
+        '[[documento]]\ntitulo = "Coordenadas polares"\nsecoes = ["10.3"]\n', encoding="utf-8")
+    g = ler_vinculos(arq)
+    assert g.topicos[0].secoes == ("10.3", "10.4") and g.topicos[1].secoes == ()
+    assert g.listas[0].unidade == 3 and g.documentos[0].titulo == "Coordenadas polares"
+
+
+def test_avaliar_vinculos_conta_acertos_erros_confiantes_e_revisao(con, materia, cenario_busca):
+    # cenario_busca: livro principal com 1.1 "Coordenadas polares" e 1.2 "Integrais triplas"; tópico da unidade 3 ligado à 1.2
+    from estudos.avaliacao.gabarito import GabaritoVinculos, ItemDocumento, ItemLista, ItemTopico
+    from estudos.avaliacao.vinculos import ConfigVinculo, avaliar
+    gabarito = GabaritoVinculos(
+        topicos=(ItemTopico("Integrais triplas", 3, ("1.2",)),          # acerto
+                 ItemTopico("Coordenadas polares", 1, ("1.2",)),        # escolhe 1.1 com confiança alta: erro confiante
+                 ItemTopico("Séries de Fourier", 3, ())),               # nada parecido: acerto (não ligar)
+        listas=(ItemLista("Integrais triplas em coordenadas cilíndricas", 3),),
+        documentos=(ItemDocumento("Polares", ("1.1",)),),
+    )
+    linhas = {l.tipo: l for l in avaliar(con, gabarito, [ConfigVinculo("regra")], limiar_vinculo=0.35, limiar_gravar=0.75)}
+    assert (linhas["topicos"].acertos, linhas["topicos"].total, linhas["topicos"].erros_confiantes) == (2, 3, 1)
+    assert linhas["listas"].acertos == 1
+    assert linhas["documentos"].total == 1
+    assert linhas["total"].total == 5

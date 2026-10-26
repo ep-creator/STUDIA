@@ -28,3 +28,13 @@ def gravar(conteudo: str, pasta: Path, tipo: str, hoje: datetime.date) -> Path:
     caminho = pasta / f"{hoje.isoformat()}-{tipo}.md"
     caminho.write_text(conteudo, encoding="utf-8")
     return caminho
+
+
+def tabela_vinculos(linhas) -> str:
+    cabecalho = "| configuração | ligação | acertos | erros confiantes | para revisão |\n|---|---|---|---|---|\n"
+    corpo = "".join(
+        f"| {l.nome} | {l.tipo} | {l.acertos}/{l.total} ({_pct(l.acertos / l.total) if l.total else '—'}) | "
+        f"{l.erros_confiantes} | {l.para_revisao} |\n"
+        for l in linhas
+    )
+    return cabecalho + corpo

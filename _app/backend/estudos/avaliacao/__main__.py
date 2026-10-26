@@ -1,4 +1,4 @@
-"""`python -m estudos.avaliacao busca --materia "Calculo 2"` — mede a busca contra o gabarito e imprime a tabela.
+"""`python -m estudos.avaliacao busca|vinculos --materia "Calculo 2"` — mede contra o gabarito e imprime a tabela.
 
 A matéria só é lida: cada configuração usa um índice temporário. Com --gravar, a tabela vai para docs/avaliacoes/.
 Saída: 0 se avaliou, 2 se a matéria ou o gabarito não existem.
@@ -12,8 +12,10 @@ from contextlib import closing
 from pathlib import Path
 
 from estudos.avaliacao.busca import Configuracao, avaliar
-from estudos.avaliacao.gabarito import ler_busca
-from estudos.avaliacao.relatorio import gravar, tabela_busca
+from estudos.avaliacao.gabarito import ler_busca, ler_vinculos
+from estudos.avaliacao.relatorio import gravar, tabela_busca, tabela_vinculos
+from estudos.avaliacao.vinculos import ConfigVinculo, avaliar as avaliar_vinculos
+from estudos.config import carregar_settings
 from estudos.db.conexao import conectar
 from estudos.workspace import ARQUIVO_DB
 
@@ -21,6 +23,7 @@ APP_DIR = Path(__file__).resolve().parents[3]          # _app/
 WORKSPACE = APP_DIR.parent
 GABARITOS = Path(__file__).resolve().parent / "gabaritos"
 CONFIGS_BUSCA = {"texto": Configuracao("texto", "texto", None)}
+CONFIGS_VINCULOS = {"regra": ConfigVinculo("regra")}
 
 
 def _arquivo_gabarito(materia: str, tipo: str) -> Path:
@@ -29,11 +32,11 @@ def _arquivo_gabarito(materia: str, tipo: str) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="estudos.avaliacao", description="Avalia a busca de uma matéria contra o gabarito.")
-    parser.add_argument("tipo", choices=["busca"])
+    parser = argparse.ArgumentParser(prog="estudos.avaliacao", description="Avalia a busca ou os vínculos de uma matéria contra o gabarito.")
+    parser.add_argument("tipo", choices=["busca", "vinculos"])
     parser.add_argument("--materia", required=True, help="nome da pasta da matéria (ex.: \"Calculo 2\")")
     parser.add_argument("--gabarito", type=Path, help="arquivo TOML (padrão: gabaritos/<matéria>_<tipo>.toml)")
-    parser.add_argument("--configs", default="texto", help=f"separadas por vírgula: {', '.join(CONFIGS_BUSCA)}")
+    parser.add_argument("--configs", default=None, help="separadas por vírgula (busca: texto…; vínculos: regra…)")
     parser.add_argument("--gravar", action="store_true", help="grava a tabela em docs/avaliacoes/")
     args = parser.parse_args(argv)
     sys.stdout.reconfigure(encoding="utf-8")
@@ -45,11 +48,15 @@ def main(argv: list[str] | None = None) -> int:
     if not arquivo.is_file():
         print(f"gabarito não encontrado: {arquivo}", file=sys.stderr)
         return 2
+    catalogo = CONFIGS_BUSCA if args.tipo == "busca" else CONFIGS_VINCULOS
+    padrao = "texto" if args.tipo == "busca" else "regra"
     try:
-        configs = [CONFIGS_BUSCA[n.strip()] for n in args.configs.split(",") if n.strip()]
+        configs = [catalogo[n.strip()] for n in (args.configs or padrao).split(",") if n.strip()]
     except KeyError as e:
         print(f"configuração desconhecida: {e}", file=sys.stderr)
         return 2
+    if args.tipo == "vinculos":
+        return _vinculos(args, pasta, arquivo, configs)
     perguntas = ler_busca(arquivo)
     with closing(conectar(pasta / ARQUIVO_DB)) as con, tempfile.TemporaryDirectory() as temp:
         linhas = avaliar(con, pasta, perguntas, configs, Path(temp))
@@ -57,6 +64,20 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{len(perguntas)} perguntas · {arquivo.name}\n\n{tabela}")
     if args.gravar:
         texto = f"# Avaliação da busca — {args.materia}\n\nGabarito: `{arquivo.name}` ({len(perguntas)} perguntas)\n\n{tabela}"
+        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today())}")
+    return 0
+
+
+def _vinculos(args, pasta: Path, arquivo: Path, configs) -> int:
+    settings = carregar_settings(APP_DIR)
+    gabarito = ler_vinculos(arquivo)
+    with closing(conectar(pasta / ARQUIVO_DB)) as con:
+        linhas = avaliar_vinculos(con, gabarito, configs, settings.limiar_vinculo, settings.limiar_confianca)
+    tabela = tabela_vinculos(linhas)
+    total = len(gabarito.topicos) + len(gabarito.listas) + len(gabarito.documentos)
+    print(f"{total} itens · {arquivo.name} · limiares {settings.limiar_vinculo} / {settings.limiar_confianca}\n\n{tabela}")
+    if args.gravar:
+        texto = f"# Avaliação dos vínculos — {args.materia}\n\nGabarito: `{arquivo.name}` ({total} itens)\n\n{tabela}"
         print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today())}")
     return 0
 
