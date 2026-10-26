@@ -71,9 +71,26 @@ def salvar(
     return _base.inserir(op, "documento", {"caminho": caminho, **valores})
 
 
+# Código e posição da seção ligada: livro principal primeiro, depois os demais; dentro do livro, pela página
+_COM_SECAO = """
+    WITH ordem AS (
+        SELECT s.id, s.codigo,
+               ROW_NUMBER() OVER (ORDER BY l.papel = 'principal' DESC, l.fonte_id, s.pagina_pdf_ini, s.nivel) AS posicao
+        FROM secao_livro s JOIN livro l ON l.fonte_id = s.livro_id)
+    SELECT d.*, o.codigo AS secao_codigo, o.posicao AS secao_posicao
+    FROM documento d LEFT JOIN ordem o ON o.id = d.secao_id
+"""
+
+
+def _documento(linha: sqlite3.Row) -> Documento:
+    dados = dict(linha)
+    dados["secao_decidida"] = bool(dados.get("secao_decidida"))
+    return Documento(**dados)
+
+
 def listar(con: sqlite3.Connection, tipo: str | None = None, unidade_id: int | None = None) -> list[Documento]:
     """Com `unidade_id`: documentos da unidade, os que a têm como unidade extra e os globais (sem unidade)."""
-    sql, params = "SELECT * FROM documento d WHERE 1 = 1", []
+    sql, params = _COM_SECAO + " WHERE 1 = 1", []
     if tipo is not None:
         sql += " AND d.tipo = ?"
         params.append(tipo)
@@ -83,7 +100,7 @@ def listar(con: sqlite3.Connection, tipo: str | None = None, unidade_id: int | N
             "SELECT 1 FROM documento_unidade_extra e WHERE e.documento_id = d.id AND e.unidade_id = ?))"
         )
         params += [unidade_id, unidade_id]
-    return [Documento(**dict(l)) for l in con.execute(sql + " ORDER BY d.caminho", params)]
+    return [_documento(l) for l in con.execute(sql + " ORDER BY d.caminho", params)]
 
 
 def adicionar_unidade_extra(op: Operacao, documento_id: int, unidade_id: int) -> None:
@@ -93,10 +110,10 @@ def adicionar_unidade_extra(op: Operacao, documento_id: int, unidade_id: int) ->
 
 
 def obter(con: sqlite3.Connection, documento_id: int) -> Documento:
-    linha = con.execute("SELECT * FROM documento WHERE id = ?", (documento_id,)).fetchone()
+    linha = con.execute(_COM_SECAO + " WHERE d.id = ?", (documento_id,)).fetchone()
     if linha is None:
         raise NaoEncontrado(f"Documento {documento_id} não encontrado")
-    return Documento(**dict(linha))
+    return _documento(linha)
 
 
 def versao(raiz: Path, caminho_rel: str) -> str | None:
@@ -113,3 +130,43 @@ def remover(op: Operacao, documento_id: int) -> None:
     documento = obter(op.con, documento_id)
     apagar_md(op, documento.caminho)
     _base.remover(op, "documento", {"id": documento_id})
+
+
+TIPOS_COM_SECAO = ("resumo", "resolucao", "plano")
+
+
+def _regravar_secao(op: Operacao, raiz: Path, documento_id: int, secao_id: int | None) -> None:
+    """Troca a seção do documento mantendo o corpo (o frontmatter do .md acompanha)."""
+    doc = obter(op.con, documento_id)
+    corpo = ler_corpo(raiz, doc)
+    salvar(op, doc.tipo, doc.caminho.rsplit("/", 1)[-1], doc.titulo, corpo, doc.unidade_id, secao_id, doc.questao_id, doc.origem)
+
+
+def ligar_secao(op: Operacao, raiz: Path, documento_id: int, secao_id: int | None) -> None:
+    """Escolha do usuário (inclusive "sem seção"): fica marcada como decidida e a ligação automática não a desfaz."""
+    _regravar_secao(op, raiz, documento_id, secao_id)
+    _base.atualizar(op, "documento", {"id": documento_id}, {"secao_decidida": 1})
+
+
+def tentar_ligar(op: Operacao, raiz: Path, documento_id: int, limiar_vinculo: float, limiar_gravar: float) -> bool:
+    """Liga à seção sugerida só se a confiança alcança `limiar_gravar`; abaixo disso nada é gravado (vira sugestão)."""
+    from estudos.importacao.vinculo import secao_do_documento  # vínculo usa este repositório na leitura
+
+    doc = obter(op.con, documento_id)
+    if doc.tipo not in TIPOS_COM_SECAO or doc.secao_id is not None or doc.secao_decidida:
+        return False
+    sugestao = secao_do_documento(op.con, doc, limiar_vinculo)
+    if sugestao is None or sugestao.confianca < limiar_gravar:
+        return False
+    _regravar_secao(op, raiz, documento_id, sugestao.secao_id)
+    return True
+
+
+def ligar_sem_secao(op: Operacao, raiz: Path, limiar_vinculo: float, limiar_gravar: float) -> int:
+    """Liga os documentos ainda sem seção (e sem decisão do usuário) cuja sugestão é confiante; devolve quantos."""
+    ids = [
+        r["id"] for r in op.con.execute(
+            f"SELECT id FROM documento WHERE secao_id IS NULL AND secao_decidida = 0 "
+            f"AND tipo IN ({', '.join('?' * len(TIPOS_COM_SECAO))}) ORDER BY id", TIPOS_COM_SECAO)
+    ]
+    return sum(tentar_ligar(op, raiz, i, limiar_vinculo, limiar_gravar) for i in ids)

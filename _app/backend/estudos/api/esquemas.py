@@ -122,3 +122,7 @@ class DocumentoSalvar(BaseModel):
     questao_id: int | None = None
     # "versao" do documento quando foi aberto (diferente da atual → 409); "" ao criar (arquivo já existente → 409)
     versao_esperada: str | None = None
+
+
+class SecaoEscolhida(BaseModel):
+    secao_id: int | None = None   # None = "sem seção" (escolha do usuário, que a ligação automática respeita)

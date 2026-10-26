@@ -127,6 +127,9 @@ class Documento:
     questao_id: int | None
     origem: str
     atualizado_em: str
+    secao_decidida: bool = False        # seção escolhida/removida à mão: a ligação automática não mexe
+    secao_codigo: str | None = None     # código da seção ligada (calculado na leitura)
+    secao_posicao: int | None = None    # posição da seção no(s) livro(s): principal primeiro, depois pelas páginas
 
 
 @dataclass(frozen=True)

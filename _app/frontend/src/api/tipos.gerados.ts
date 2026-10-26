@@ -406,6 +406,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/documentos/ligar-secoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ligar Secoes
+         * @description Liga às seções do livro os documentos ainda sem seção cuja sugestão é confiante (os demais ficam como sugestão).
+         */
+        post: operations["ligar_secoes_api_materias__materia_uid__documentos_ligar_secoes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/documentos/{documento_id}/sugestao-secao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sugestao Secao */
+        get: operations["sugestao_secao_api_materias__materia_uid__documentos__documento_id__sugestao_secao_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/documentos/{documento_id}/secao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Escolher Secao */
+        put: operations["escolher_secao_api_materias__materia_uid__documentos__documento_id__secao_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/arquivos/{materia_uid}/{caminho}": {
         parameters: {
             query?: never;
@@ -641,6 +695,15 @@ export interface components {
             origem: string;
             /** Atualizado Em */
             atualizado_em: string;
+            /**
+             * Secao Decidida
+             * @default false
+             */
+            secao_decidida: boolean;
+            /** Secao Codigo */
+            secao_codigo?: string | null;
+            /** Secao Posicao */
+            secao_posicao?: number | null;
         };
         /** DocumentoComCorpo */
         DocumentoComCorpo: {
@@ -662,6 +725,12 @@ export interface components {
             origem: string;
             /** Atualizado Em */
             atualizado_em: string;
+            /** Secao Decidida */
+            secao_decidida: boolean;
+            /** Secao Codigo */
+            secao_codigo: string | null;
+            /** Secao Posicao */
+            secao_posicao: number | null;
             /** Corpo */
             corpo: string;
             /** Versao */
@@ -820,6 +889,11 @@ export interface components {
             confirmada_em: string | null;
             /** Pendencias */
             pendencias: number;
+        };
+        /** Ligados */
+        Ligados: {
+            /** Ligados */
+            ligados: number;
         };
         /** ListaComQuestoes */
         ListaComQuestoes: {
@@ -1133,6 +1207,11 @@ export interface components {
              */
             tempo_ms: number;
         };
+        /** SecaoEscolhida */
+        SecaoEscolhida: {
+            /** Secao Id */
+            secao_id?: number | null;
+        };
         /** SecaoLivro */
         SecaoLivro: {
             /** Id */
@@ -1216,6 +1295,19 @@ export interface components {
             feito?: boolean | null;
             /** Ordem */
             ordem?: number | null;
+        };
+        /** SugestaoSecao */
+        SugestaoSecao: {
+            /** Secao Id */
+            secao_id: number;
+            /** Codigo */
+            codigo: string;
+            /** Titulo */
+            titulo: string;
+            /** Confianca */
+            confianca: number;
+            /** Por */
+            por: string;
         };
         /** TextoSecao */
         TextoSecao: {
@@ -2364,6 +2456,105 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ok"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ligar_secoes_api_materias__materia_uid__documentos_ligar_secoes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ligados"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sugestao_secao_api_materias__materia_uid__documentos__documento_id__sugestao_secao_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documento_id: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SugestaoSecao"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    escolher_secao_api_materias__materia_uid__documentos__documento_id__secao_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documento_id: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecaoEscolhida"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

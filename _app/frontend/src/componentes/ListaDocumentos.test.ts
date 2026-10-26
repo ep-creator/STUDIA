@@ -5,7 +5,7 @@ import type { Documento, FonteResumo } from '../api/tipos'
 import ListaDocumentos from './ListaDocumentos.svelte'
 
 const doc = (id: number, tipo: string, titulo: string, origem = 'migrado'): Documento => ({
-  id, tipo, titulo, origem, caminho: `${id}.md`, unidade_id: 1, secao_id: null, questao_id: null, atualizado_em: '2026-10-22',
+  id, tipo, titulo, origem, caminho: `${id}.md`, unidade_id: 1, secao_id: null, questao_id: null, atualizado_em: '2026-10-22', secao_decidida: false,
 })
 const fonte = (id: number, tipo: string, titulo: string): FonteResumo => ({ id, tipo, titulo, caminho: `${id}.pdf`, paginas: 10 })
 

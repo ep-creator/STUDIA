@@ -22,6 +22,10 @@ class Ok(TypedDict):
     ok: bool
 
 
+class Ligados(TypedDict):
+    ligados: int
+
+
 class ProximaProva(TypedDict):
     data: str
     hora_inicio: str | None
@@ -113,6 +117,9 @@ class DocumentoComCorpo(TypedDict):
     questao_id: int | None
     origem: str
     atualizado_em: str
+    secao_decidida: bool
+    secao_codigo: str | None
+    secao_posicao: int | None
     corpo: str
     versao: str | None
 

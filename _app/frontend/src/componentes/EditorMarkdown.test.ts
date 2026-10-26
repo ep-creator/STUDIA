@@ -6,7 +6,7 @@ import EditorMarkdown from './EditorMarkdown.svelte'
 
 const doc: DocumentoComCorpo = {
   id: 3, tipo: 'resumo', caminho: 'conteudo/resumos/14-3.md', titulo: 'Derivadas parciais', unidade_id: 1, secao_id: null,
-  questao_id: null, origem: 'manual', atualizado_em: '2026-09-01T10:00:00', corpo: 'Texto', versao: 'abc',
+  questao_id: null, origem: 'manual', atualizado_em: '2026-09-01T10:00:00', secao_decidida: false, secao_codigo: null, secao_posicao: null, corpo: 'Texto', versao: 'abc',
 }
 
 function respostas(...lista: [number, unknown][]) {
