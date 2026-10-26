@@ -210,4 +210,5 @@ def secao_do_documento(
     if vinculo is None:
         return None
     secao = next(s for s in secoes if s["id"] == vinculo.chave)
-    return SugestaoSecao(secao["id"], secao["codigo"], secao["titulo"], vinculo.confianca, vinculo.por)
+    confianca = vinculo.confianca if secao["principal"] else round(vinculo.confianca * _FATOR_COMPLEMENTAR, 4)
+    return SugestaoSecao(secao["id"], secao["codigo"], secao["titulo"], confianca, vinculo.por)

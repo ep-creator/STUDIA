@@ -53,3 +53,13 @@ test('o seletor de seção do cabeçalho troca e remove a seção', async () => 
   // já estava sem seção: escolher "Sem seção" registra a decisão (a ligação automática passa a respeitar)
   await waitFor(() => expect(pedidos.find((p) => p.metodo === 'PUT' && p.url.endsWith('/documentos/7/secao'))?.corpo).toEqual({ secao_id: null }))
 })
+
+test('editando, a seção não pode ser trocada (trocar regravaria o .md e perderia o rascunho)', async () => {
+  motor()
+  render(Documentos, { painel: painel({ documentos: [resumo] }) })
+  await userEvent.click(await screen.findByRole('button', { name: 'Extremos' }))
+  expect(await screen.findByText(/Ligar à seção 14\.7/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Editar/ }))
+  expect(screen.queryByText(/Ligar à seção 14\.7/)).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /^Seção do livro/ })).not.toBeInTheDocument()
+})

@@ -148,6 +148,16 @@ def ligar_secao(op: Operacao, raiz: Path, documento_id: int, secao_id: int | Non
     _base.atualizar(op, "documento", {"id": documento_id}, {"secao_decidida": 1})
 
 
+def _ligacao_desfeita(con: sqlite3.Connection, documento_id: int) -> bool:
+    """O usuário desfez (no Histórico) uma ligação deste documento a uma seção: a ligação automática não a refaz."""
+    return con.execute(
+        "SELECT 1 FROM historico_mudanca m JOIN historico_grupo g ON g.id = m.grupo_id "
+        "WHERE g.desfeito_em IS NOT NULL AND m.tabela = 'documento' AND json_extract(m.chave_json, '$.id') = ? "
+        "AND json_extract(m.antes_json, '$.secao_id') IS NULL AND json_extract(m.depois_json, '$.secao_id') IS NOT NULL "
+        "LIMIT 1", (documento_id,),
+    ).fetchone() is not None
+
+
 def tentar_ligar(
     op: Operacao, raiz: Path, documento_id: int, limiar_vinculo: float, limiar_gravar: float, semantica=None, peso: float = 0.5
 ) -> bool:
@@ -155,7 +165,7 @@ def tentar_ligar(
     from estudos.importacao.vinculo import secao_do_documento  # vínculo usa este repositório na leitura
 
     doc = obter(op.con, documento_id)
-    if doc.tipo not in TIPOS_COM_SECAO or doc.secao_id is not None or doc.secao_decidida:
+    if doc.tipo not in TIPOS_COM_SECAO or doc.secao_id is not None or doc.secao_decidida or _ligacao_desfeita(op.con, documento_id):
         return False
     sugestao = secao_do_documento(op.con, doc, limiar_vinculo, semantica=semantica, peso=peso)
     if sugestao is None or sugestao.confianca < limiar_gravar:

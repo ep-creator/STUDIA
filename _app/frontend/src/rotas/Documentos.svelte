@@ -164,7 +164,8 @@
         <h2>{documento.titulo}</h2>
         {#if !editando}<button class="botao" onclick={() => (editando = true)}>✎ Editar</button>{/if}
       </header>
-      {#if TIPOS_COM_SECAO.includes(documento.tipo)}
+      <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
+      {#if TIPOS_COM_SECAO.includes(documento.tipo) && !editando}
         <div class="secao" bind:this={seletorSecao}>
           <Seletor rotulo="Seção do livro" variante="compacto" mostrarRotulo vazio="sem seção ligada"
             valor={documento.secao_id !== null ? String(documento.secao_id) : documento.secao_decidida ? '' : null}

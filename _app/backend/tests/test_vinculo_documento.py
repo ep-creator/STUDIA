@@ -94,6 +94,16 @@ def test_sem_livro_principal_so_sugere(con, materia):
     assert s is not None and s.confianca < 0.75
 
 
+def test_sem_livro_principal_titulo_sem_codigo_so_sugere(con, materia):
+    criar_pdf(materia.pasta / "fontes/livros/g.pdf", ["capa"])
+    with operacao(con, "base", materia.pasta) as op:
+        g = fontes.registrar(op, "livro", "fontes/livros/g.pdf")
+        livros.criar(op, g, "complementar")
+        livros.criar_secao(op, g, "14.7", "Valores Máximo e Mínimo", 1, 1)
+    s = secao_do_documento(con, _doc(con, materia, "resumo", "Valores máximo e mínimo"), LIMIAR)
+    assert s is not None and s.por == "palavras" and s.confianca < 0.75
+
+
 def test_ligar_sem_secao_grava_so_confiantes_e_pode_ser_desfeita(con, materia, dois_livros):
     certo = _doc(con, materia, "resumo", "14.7 Valores máximo e mínimo")
     duvidoso = _doc(con, materia, "resumo", "Mínimos")
@@ -104,6 +114,21 @@ def test_ligar_sem_secao_grava_so_confiantes_e_pode_ser_desfeita(con, materia, d
     assert ler_md(materia.pasta / certo.caminho).meta["secao"] == "14.7"
     desfazer_ultimo(con, materia.pasta)
     assert documentos.obter(con, certo.id).secao_id is None
+
+
+def test_ligacao_automatica_desfeita_nao_volta_sozinha(con, materia, dois_livros):
+    doc = _doc(con, materia, "resumo", "14.7 Valores máximo e mínimo")
+    with operacao(con, "Ligar documentos às seções do livro", materia.pasta) as op:
+        assert documentos.ligar_sem_secao(op, materia.pasta, LIMIAR, 0.75) == 1
+    desfazer_ultimo(con, materia.pasta)
+    with operacao(con, "Ligar documentos às seções do livro", materia.pasta) as op:
+        assert documentos.ligar_sem_secao(op, materia.pasta, LIMIAR, 0.75) == 0
+        assert not documentos.tentar_ligar(op, materia.pasta, doc.id, LIMIAR, 0.75)
+    assert documentos.obter(con, doc.id).secao_id is None
+    # a escolha manual continua valendo
+    with operacao(con, "escolha", materia.pasta) as op:
+        documentos.ligar_secao(op, materia.pasta, doc.id, dois_livros["secoes"]["14.7"])
+    assert documentos.obter(con, doc.id).secao_id == dois_livros["secoes"]["14.7"]
 
 
 def test_decisao_manual_nao_e_sobrescrita(con, materia, dois_livros):
