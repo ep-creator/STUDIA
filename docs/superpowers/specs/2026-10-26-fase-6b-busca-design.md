@@ -10,6 +10,7 @@ Melhorar como o STUDIA encontra coisas, **medindo antes de trocar**:
 
 - uma **busca na interface** (Ctrl K) que procura na matéria inteira e abre o resultado no lugar certo;
 - **embeddings locais** como candidatos para a busca (busca híbrida) e para os vínculos da importação;
+- a ligação **documento ↔ seção do livro** feita pelo motor, para os textos seguirem a ordem do livro;
 - um **comando de avaliação** com gabaritos revisados pelo usuário, que decide por números o que entra.
 
 Sucesso:
@@ -27,6 +28,7 @@ Sucesso:
 | Ordem na Fase 6 | Peça B primeiro (escolha do usuário) |
 | Gabarito | Rascunho do Claude (~40 perguntas do Cálculo 2), revisado e completado pelo usuário |
 | Escopo | Busca **e** vínculos da importação; cada um só muda se ganhar no seu gabarito |
+| Ligação nova | **Documento ↔ seção do livro** feita pelo motor (o campo `documento.secao_id` já existe e está vazio); a lista de documentos passa a seguir a ordem do livro |
 | Interface | Inclui a busca na interface (paleta com Ctrl K) |
 | Execução dos embeddings | `fastembed` (ONNX Runtime, só CPU, sem PyTorch) |
 | Vetores | Coluna `vetor BLOB` na tabela `trecho` do índice; comparação em memória com NumPy |
@@ -117,14 +119,51 @@ class Embeddings(Protocol):
   - `sentido = (1 + cos) / 2`, levado para 0 a 1;
   - `p` começa em 0,5 e é o único parâmetro calibrado no gabarito.
 - Vale para todas as ligações que hoje passam por `pontuar` e `melhores`: tópico ↔ seção, lista ↔ tópico/unidade,
-  livro ↔ livro e referência ↔ livro. A ordem dos resumos na lista de documentos é do frontend
-  (`ordenarPeloAssunto`) e fica fora desta peça.
+  livro ↔ livro e referência ↔ livro. Vale também para a ligação nova documento ↔ seção (§3.6).
 - Os limiares `limiar_vinculo` e `limiar_confianca` continuam decidindo entre "grava" e "revisar", e são recalibrados
   com o gabarito se os embeddings entrarem.
 - **Origem do vínculo:** a proposta mostra o motivo, que pode ser "por palavras", "pelo sentido" ou "pelos dois".
 - Com `vinculos_com_embeddings = false`, o resultado é **idêntico** ao atual (há teste para isso).
 
-### 3.6 Configuração
+### 3.6 Ligação documento ↔ seção do livro
+
+Hoje nenhum documento tem `secao_id`. A ordem dos resumos sai de um palpite no frontend (`ordenarPeloAssunto` compara o
+título do resumo com os títulos dos tópicos). A ligação passa a ser feita pelo motor, para os textos seguirem **a ordem do
+livro** e o resto do app saber "qual texto cobre a seção X".
+
+**Quais documentos:** resumos, resoluções e planos. Anotações e contexto não têm seção.
+
+**Como a seção é escolhida** (em `vinculo.py`, como as outras ligações):
+
+1. **Resolução de questão:** se o documento tem `questao_id`, a seção vem da lista da questão (`lista_secao`). A
+   confiança é alta e não há palpite.
+2. **Código no título** ("14.7 Valores máximo e mínimo", "Resolução 14.1-30"): procura a seção com esse código.
+   - Preferência pelo livro **principal**, ou pelo livro já ligado aos tópicos da unidade.
+   - O título confere com o título da seção (regra, ou regra + sentido).
+   - Códigos se repetem entre livros: "14.1" é "Funções de Várias Variáveis" no Stewart e "Derivadas parciais de
+     ordens superiores" no Guidorizzi. Código que bate sem título que confira **não** é confiança alta.
+3. **Sem código** ("Coordenadas polares"): o título é comparado com os títulos das seções dos livros da matéria, pela
+   mesma nota combinada da §3.5.
+
+**Nada chutado:**
+- Acima de `limiar_vinculo` e com confiança alta, o motor grava. A gravação fica no histórico e pode ser desfeita.
+- Abaixo disso, não grava: a seção sugerida aparece ao abrir o documento, com "Ligar à seção 14.7?" e as opções
+  **Sim** / **Escolher outra**.
+- O cabeçalho do documento mostra a seção ligada e permite trocar ou remover (Seletor "Seção do livro").
+
+**Quando roda:**
+- ao criar um documento ou mudar o título dele;
+- uma vez para os documentos que já existem (os 48 do Cálculo 2), na próxima abertura da matéria, como uma operação
+  do histórico ("Ligar documentos às seções do livro").
+
+**Na interface:**
+- **Lista de documentos:** resumos, resoluções e planos ordenados pela posição da seção no livro (livro principal
+  primeiro, depois a ordem das seções). Os sem seção vão para o fim, em ordem de nome. `ordenarPeloAssunto` sai do
+  código.
+- **"Próximo passo" do painel:** acha o resumo do tópico pela seção (tópico → seção → documento), não mais por
+  semelhança de título.
+
+### 3.7 Configuração
 
 ```toml
 [inteligencia]
@@ -140,7 +179,7 @@ peso_sentido_vinculo = 0.5
 
 Os valores padrão só mudam depois da avaliação (§4.4), num commit próprio que cita os números.
 
-### 3.7 Falhas
+### 3.8 Falhas
 
 | Situação | Comportamento |
 |---|---|
@@ -169,9 +208,13 @@ como tabela, o usuário corrige e acrescenta dúvidas reais, e só então o arqu
 
 Contém:
 - tópicos de cada unidade, com a seção certa do Stewart;
-- listas, com a unidade (e o tópico, quando houver) certa.
+- listas, com a unidade (e o tópico, quando houver) certa;
+- resumos, resoluções e planos do Cálculo 2, com a seção certa do livro. Inclui casos difíceis de propósito: sinônimos
+  ("Valores máximo e mínimo" × "Extremos"), resumo sem código ("Coordenadas polares") e código repetido entre livros
+  ("14.1").
 
-É preenchido a partir dos vínculos que hoje estão no banco, com os casos duvidosos marcados para o usuário revisar.
+Tópicos e listas são preenchidos a partir dos vínculos que hoje estão no banco. Os documentos, a partir do código no
+título e da questão ligada. Os casos duvidosos ficam marcados para o usuário revisar.
 
 ### 4.3 Comando
 
@@ -246,11 +289,15 @@ Escolhe-se o melhor `p` entre os testados e os limiares são recalibrados com o 
   - troca de modelo invalidando o índice;
   - sincronização incremental de vetores;
   - nota combinada nos vínculos;
+  - documento ↔ seção: resolução pela questão; código no título com preferência pelo livro principal; código repetido
+    entre livros sem título que confira não grava; sem código pela semelhança; abaixo do limiar vira só sugestão;
+    a ligação dos documentos existentes roda uma vez e pode ser desfeita;
   - **igualdade exata** com o comportamento atual quando desligado;
   - leitura dos gabaritos e cálculo das métricas.
 - **Modelo real:** um teste marcado `modelo`, fora da suíte padrão e do CI, que carrega o `fastembed` e gera um vetor.
 - **Interface:**
   - Vitest da paleta (teclado, filtros, etiqueta, abrir) e dos pedidos de abertura;
+  - Vitest da lista de documentos na ordem do livro, da sugestão "Ligar à seção…" e do seletor de seção no cabeçalho;
   - um e2e: buscar, abrir e cair na página ou no bloco certo.
 
 ## 7. Ordem de entrega
@@ -259,10 +306,12 @@ Cada passo termina com as suítes verdes:
 
 1. Gabaritos (rascunho → revisão do usuário) e comando de avaliação sobre o BM25 atual: a **linha de base**.
 2. Busca na interface (Ctrl K) sobre a busca atual.
-3. `estudos/ia/embeddings.py`, vetores no índice e busca `vetor`/`hibrida`, desligados por padrão. Avaliação e decisão
+3. Ligação documento ↔ seção por regras (§3.6), com a lista de documentos na ordem do livro, a sugestão no documento
+   e o "Próximo passo" pela seção. A linha de base desta ligação entra na avaliação de vínculos.
+4. `estudos/ia/embeddings.py`, vetores no índice e busca `vetor`/`hibrida`, desligados por padrão. Avaliação e decisão
    pela §4.4.
-4. Nota combinada nos vínculos. Avaliação, decisão e calibração.
-5. Registro das decisões em `docs/avaliacoes/`, novos padrões no `config.toml` (se for o caso) e emenda nesta spec com
+5. Nota combinada nos vínculos, inclusive documento ↔ seção. Avaliação, decisão e calibração.
+6. Registro das decisões em `docs/avaliacoes/`, novos padrões no `config.toml` (se for o caso) e emenda nesta spec com
    os números.
 
 ## 8. Fora de escopo
