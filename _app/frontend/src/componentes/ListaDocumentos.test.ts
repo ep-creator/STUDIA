@@ -12,8 +12,6 @@ const fonte = (id: number, tipo: string, titulo: string): FonteResumo => ({ id, 
 const props = () => ({
   documentos: [doc(1, 'resumo', '14.2 Limite'), doc(2, 'resumo', '14.1 Funções'), doc(3, 'anotacao', 'Calendário'), doc(4, 'resumo', '14.3 Derivadas', 'agente')],
   fontes: [fonte(9, 'livro', 'Stewart'), fonte(8, 'programa', 'Programa da disciplina')],
-  topicos: [],
-  unidadeAtual: 1,
   selecao: null,
   onselecionar: () => {},
 })
@@ -47,4 +45,14 @@ test('documento criado pela IA ganha o selo IA', () => {
   render(ListaDocumentos, props())
   expect(screen.getByRole('button', { name: /14.3 Derivadas/ }).textContent).toContain('IA')
   expect(screen.getByRole('button', { name: /14.1 Funções/ }).textContent).not.toContain('IA')
+})
+
+test('resumos na ordem do livro; sem seção no fim, por nome', () => {
+  const comPosicao = (id: number, titulo: string, secao_posicao: number | null): Documento => ({ ...doc(id, 'resumo', titulo), secao_posicao })
+  render(ListaDocumentos, {
+    ...props(),
+    documentos: [comPosicao(1, 'Z primeiro no livro', 3), comPosicao(2, 'B sem seção', null), comPosicao(3, 'Y', 1), comPosicao(4, 'A sem seção', null), comPosicao(5, 'X', 2)],
+  })
+  const titulos = [...document.querySelectorAll('section[aria-label="Materiais de estudo"] .item')].map((b) => b.textContent?.trim())
+  expect(titulos).toEqual(['Y', 'X', 'Z primeiro no livro', 'A sem seção', 'B sem seção'])
 })

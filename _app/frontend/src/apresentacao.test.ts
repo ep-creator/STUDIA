@@ -65,26 +65,6 @@ test('próxima prova entre todas as matérias ignora as que já passaram', async
   expect(proximaProvaGeral([m('B', '2026-10-20')], hoje)).toBeNull()
 })
 
-test('resumos seguem a ordem dos tópicos; sem tópico, ficam junto do vizinho de número; de unidades anteriores vêm antes', async () => {
-  const { ordenarPeloAssunto } = await import('./apresentacao')
-  const topicos = [
-    { unidade_id: 1, ordem: 1, titulo: 'Funções de várias variáveis · gráficos' },
-    { unidade_id: 1, ordem: 2, titulo: 'Coordenadas polares' },
-    { unidade_id: 1, ordem: 3, titulo: 'Limite e continuidade' },
-    { unidade_id: 1, ordem: 4, titulo: 'Multiplicadores de Lagrange' },
-  ]
-  const d = (titulo: string, unidade_id: number | null = 1) => ({ titulo, unidade_id })
-  const ordem = (docs: ReturnType<typeof d>[], atual: number) => ordenarPeloAssunto(docs, topicos, atual).map((x) => x.titulo)
-  expect(ordem([d('14.2 Limite e continuidade'), d('Coordenadas polares'), d('14.8 Multiplicadores de Lagrange'), d('14.7 Valores máximo e mínimo'), d('14.1 Funções de várias variáveis')], 1))
-    .toEqual(['14.1 Funções de várias variáveis', 'Coordenadas polares', '14.2 Limite e continuidade', '14.7 Valores máximo e mínimo', '14.8 Multiplicadores de Lagrange'])
-  // vendo a 3ª unidade: o resumo da 1ª (revisão) vem antes dos da unidade
-  expect(ordem([d('15.5 Aplicações', 3), d('Coordenadas polares', 1), d('15.4 Integrais em polares', 3)], 3))
-    .toEqual(['Coordenadas polares', '15.4 Integrais em polares', '15.5 Aplicações'])
-  // sem tópico nenhum, vale a ordem dos números
-  expect(ordenarPeloAssunto([d('Resolução 14.2-7'), d('Resolução 14.1-30'), d('Resolução 14.2-11')], [], 1).map((x) => x.titulo))
-    .toEqual(['Resolução 14.1-30', 'Resolução 14.2-7', 'Resolução 14.2-11'])
-})
-
 test('para revisar: questões ✗ e ?, agrupadas por lista, na ordem das listas', async () => {
   const { paraRevisar } = await import('./apresentacao')
   const listas = [
@@ -103,11 +83,4 @@ test('desempenho de uma lista conta acertos, erros, dúvidas e o que falta', asy
   const { desempenho } = await import('./apresentacao')
   expect(desempenho({ questoes: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] }, { '1': 'ok', '2': 'ok', '3': 'err' }))
     .toEqual({ ok: 2, err: 1, dub: 0, falta: 1, total: 4 })
-})
-
-test('resumo do tópico: o documento com mais palavras em comum', async () => {
-  const { documentoDoTopico } = await import('./apresentacao')
-  const docs = [{ id: 1, titulo: '14.2 Limite e continuidade' }, { id: 2, titulo: '14.3 Derivadas parciais' }]
-  expect(documentoDoTopico('Derivadas parciais e de ordens superiores', docs)?.id).toBe(2)
-  expect(documentoDoTopico('Aula extra', docs)).toBeNull()
 })

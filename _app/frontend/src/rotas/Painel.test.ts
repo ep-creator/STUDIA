@@ -56,3 +56,20 @@ test('semana mostra os próximos sete dias, com a prova em destaque', () => {
   expect(semana.querySelectorAll('[data-dia]')).toHaveLength(7)
   expect(semana.querySelector('.prova')?.textContent).toMatch(/Prova/)
 })
+
+test('próximo passo acha o resumo pela seção do tópico, mesmo com título diferente', async () => {
+  const { pedido } = await import('../estado/pedido.svelte')
+  const resumo = { id: 7, tipo: 'resumo', titulo: 'Valores máximo e mínimo', caminho: 'r.md', unidade_id: 1, secao_id: 42, questao_id: null,
+    origem: 'manual', atualizado_em: '2026-10-26', secao_decidida: false, secao_codigo: '14.7', secao_posicao: 9 }
+  const outro = { ...resumo, id: 8, titulo: 'Extremos absolutos', secao_id: 99, secao_codigo: '15.4' }
+  render(Painel, {
+    hoje,
+    painel: painel({
+      topicos: [topico(2, 'proxima', { titulo: 'Extremos absolutos em região fechada' })],
+      documentos: [outro, resumo],
+      vinculos: { topicos: { '2': [{ secao_id: 42, codigo: '14.7', titulo: 'Valores Máximo e Mínimo', fonte_id: 1, caminho: 'l.pdf', pagina_pdf_ini: 361 }] }, listas: {} },
+    }),
+  })
+  screen.getByRole('link', { name: 'Ler o resumo' }).click()
+  expect(pedido.documento).toBe(7)
+})
