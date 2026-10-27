@@ -9,7 +9,7 @@ from pathlib import Path
 
 from estudos.workspace import ARQUIVO_DB
 
-VERSAO_INDICE = 4   # 2: trecho.vetor e tabela meta; 3: trecho.pagina_fim; 4: trecho.parte e trecho.numero
+VERSAO_INDICE = 5   # 2: vetor e meta; 3: pagina_fim; 4: parte e numero; 5: texto pela leitura limpa dos PDFs
 PASTA_INDICE = ".indice"
 _ARQUIVO = "indice.db"
 

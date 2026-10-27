@@ -1,5 +1,5 @@
 """`python -m estudos.avaliacao.amostras <pdf> <página> <saída.json> [--imagem saída.png]` — salva os pedaços de texto
-de uma página (fonte, tamanho, caixa, texto) para os testes da leitura limpa rodarem sem o PDF.
+de uma página (fonte, tamanho, caixa, texto) e as tabelas de tradução dela para os testes da leitura limpa rodarem sem o PDF.
 
 O PDF só é lido. A imagem opcional serve para conferir à mão o texto esperado da amostra.
 """
@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 
 import pymupdf
+
+from estudos.importacao.pdf import traducoes_da_pagina
 
 
 def spans_da_pagina(pagina: pymupdf.Page) -> list[dict]:
@@ -28,7 +30,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     with pymupdf.open(stream=args.pdf.read_bytes(), filetype="pdf") as doc:
         pagina = doc[args.pagina - 1]
-        dados = {"largura": round(pagina.rect.width, 2), "altura": round(pagina.rect.height, 2), "spans": spans_da_pagina(pagina)}
+        dados = {"largura": round(pagina.rect.width, 2), "altura": round(pagina.rect.height, 2), "spans": spans_da_pagina(pagina),
+                 "tabelas": traducoes_da_pagina(doc, pagina)}  # inclui as que saem dos nomes dos glifos desta página
         args.saida.parent.mkdir(parents=True, exist_ok=True)
         args.saida.write_text(json.dumps(dados, ensure_ascii=False, indent=0), encoding="utf-8")
         if args.imagem:

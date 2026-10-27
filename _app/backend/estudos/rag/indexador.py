@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from estudos.ia.embeddings import Embeddings, avisos_pendentes, invalidar_vetores
-from estudos.importacao.pdf import DocumentoPdf, PdfInvalido, abrir_pdf
+from estudos.importacao.pdf import DocumentoPdf, PdfInvalido, ler_paginas_limpas
 from estudos.db.conexao import conectar
 from estudos.rag.corte import LIMITE_TEORIA, SecaoCorte, cortar_gabarito, cortar_livro
 from estudos.rag.indice import abrir_indice, caminho_indice, descartar_indice, eh_corrupcao
@@ -100,11 +100,14 @@ def indexar_fonte(indice, con, raiz: Path, fonte_id: int, avisos: list[str], lim
     if not caminho.is_file():
         avisos.append(f"{fonte['caminho']}: arquivo não encontrado; fora da busca")
         return None
-    try:
-        doc = abrir_pdf(caminho)
+    try:  # leitura por fonte e posição: fórmulas no lugar e símbolos das fontes de matemática traduzidos
+        paginas, sem_traducao = ler_paginas_limpas(caminho)
     except PdfInvalido as e:
         avisos.append(f"{fonte['caminho']}: {e}")
         return None
+    doc = DocumentoPdf(paginas=tuple(paginas), sumario=(), metadados={}, total_paginas=len(paginas))
+    if sem_traducao:
+        avisos.append(f"{fonte['caminho']}: {sem_traducao} símbolos sem tradução")
     if doc.sem_texto:
         avisos.append(f"{fonte['caminho']}: PDF sem texto (escaneado); fora da busca")
         return 0

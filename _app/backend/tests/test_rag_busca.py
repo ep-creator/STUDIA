@@ -144,3 +144,11 @@ def test_sem_vetores_cai_para_texto(cenario):
 def test_consulta_vazia_ou_so_palavras_vazias_nao_traz_nada(com_vetores, modo, consulta):
     cenario, e = com_vetores
     assert buscar_modo(cenario["indice"], consulta, modo=modo, embeddings=e)[1] == []
+
+
+def test_consulta_ignora_uso_privado(cenario):
+    # a busca por palavras só considera letras e números: caractere de uso privado na consulta não muda nada
+    from estudos.rag.busca import buscar_modo
+    _, com = buscar_modo(cenario["indice"], "polares" + chr(0xE001))
+    _, sem = buscar_modo(cenario["indice"], "polares")
+    assert com and [r.trecho_id for r in com] == [r.trecho_id for r in sem]

@@ -64,7 +64,7 @@ def test_segunda_sincronizacao_nao_abre_pdf(con, materia, base, monkeypatch):
     def proibido(*_a, **_k):
         raise AssertionError("não deveria abrir PDF")
 
-    monkeypatch.setattr(indexador, "abrir_pdf", proibido)
+    monkeypatch.setattr(indexador, "ler_paginas_limpas", proibido)
     r = sincronizar(con, materia.pasta)
     assert (r.indexadas, r.removidas) == (0, 0)
 
@@ -188,3 +188,10 @@ def test_livro_sem_secoes_usa_o_nome_do_arquivo(con, materia):
         livros.criar(op, f, "complementar")
     sincronizar(con, materia.pasta)
     assert {t["titulo"] for t in _trechos(materia, fonte_id=f)} == {"Stewart vol 1"}
+
+
+def test_indexador_avisa_simbolos_sem_traducao(con, materia, base, monkeypatch):
+    original = indexador.ler_paginas_limpas
+    monkeypatch.setattr(indexador, "ler_paginas_limpas", lambda caminho: (original(caminho)[0], 3))
+    r = sincronizar(con, materia.pasta)
+    assert any("3 símbolos sem tradução" in a for a in r.avisos)

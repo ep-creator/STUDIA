@@ -127,7 +127,7 @@ reais = pytest.mark.skipif(not ESPERADOS, reason="amostras reais só existem no 
 
 def _amostra(nome: str) -> str:
     d = json.loads((AMOSTRAS / f"{nome}.json").read_text(encoding="utf-8"))
-    return montar_texto(d["spans"], d["largura"], d["altura"], TABELAS)[0]
+    return montar_texto(d["spans"], d["largura"], d["altura"], d.get("tabelas", TABELAS))[0]
 
 
 def _sem_espaco(t: str) -> str:
@@ -165,3 +165,28 @@ def test_cabecalho_fora():
     nomes = ["st-113", "st-116", "st-303", "st-342", "st-631"]
     limpas = dict(zip(nomes, remover_repetidos([_amostra(n) for n in nomes])))
     assert not any(l.endswith("CÁLCULO") for n in ("st-113", "st-303") for l in limpas[n].split("\n"))
+
+
+# ---- tabelas das fontes (Task 6) ---------------------------------------------------------------------------------
+
+def test_traducao_pela_lista_de_glifos_da_pagina():
+    # MathematicalPi: o código muda de um PDF para outro, o nome do glifo (H11005 = "=") não
+    from estudos.importacao.pdf import traducao_por_nomes
+    assert traducao_por_nomes({2: "H11005", 3: "H11002", 4: "Hdesconhecido"}, "MathematicalPi-One") == {"\x02": "=", "\x03": "−"}
+    assert traducao_por_nomes({2: "H11005"}, "Times-Roman") == {}
+
+
+def test_tabelas_por_letra_das_fontes_gregas():
+    assert TABELAS["LTSGreek-Italic"]["u"] == "θ" and TABELAS["LTSGreek-Italic"]["p"] == "π"
+    assert TABELAS["TECHMath-Mix"]["¨"] == "θ" and TABELAS["MATH"]["h"] == "∫"
+
+
+@reais
+def test_simbolos_traduzidos_na_pagina_do_stewart():
+    texto = _amostra("st-113")
+    assert "θ" in texto and "π" in texto and " u, a medida" not in texto
+
+
+def test_espaco_largo_do_stewart_depois_da_virgula():
+    # a Times-Roman do Stewart desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ")
+    assert linhas([s("r = sen 2,Mr = cos 2, Mas não aqui", 100, 100, 400, 112)]) == ["r = sen 2, r = cos 2, Mas não aqui"]

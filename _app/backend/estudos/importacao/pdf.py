@@ -117,8 +117,14 @@ _SEM_TRADUCAO = re.compile(r"[-\x00-\x08\x0b-\x1f]")   # uso privado e con
 _PREFIXO_FONTE = re.compile(r"^[A-Z]{6}\+")
 
 
+# Stewart: a Times-Roman desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ"), e a vírgula vem em
+# outro pedaço; em texto corrido depois de vírgula sempre vem espaço, então ",M" colado no que segue é esse espaço
+_ESPACO_LARGO = re.compile(r",M(?=\S)")
+
+
 def _traduzir(span: dict, tabelas: dict[str, dict[str, str]]) -> tuple[str, int]:
-    tabela = tabelas.get(_PREFIXO_FONTE.sub("", span["font"]), {})
+    familia = _PREFIXO_FONTE.sub("", span["font"])
+    tabela = tabelas.get(familia, {})
     texto = "".join(tabela.get(c, c) for c in span["text"]) if tabela else span["text"]
     return _SEM_TRADUCAO.subn("", texto)
 
@@ -255,15 +261,50 @@ def montar_texto(spans: list[dict], largura: float, altura: float, tabelas: dict
     tamanhos = sorted(s["size"] for s in meio) or [1.0]
     corpo = tamanhos[len(tamanhos) // 2]
     linhas = _linhas(topo) + _cortar_xy(meio, largura, altura, h_mediana, corpo) + _linhas(rodape)
-    return limpar_texto("\n".join(linhas)), sem_traducao
+    return _ESPACO_LARGO.sub(", ", limpar_texto("\n".join(linhas))), sem_traducao
+
+
+_DIFERENCAS = re.compile(r"/Differences\s*\[(.*?)\]", re.S)
+
+
+def _diferencas(doc: pymupdf.Document, xref: int) -> dict[int, str]:
+    """Código → nome do glifo, da lista /Differences da codificação da fonte (vazio se não há)."""
+    codificacao = doc.xref_get_key(xref, "Encoding")
+    if codificacao[0] != "xref":
+        return {}
+    achado = _DIFERENCAS.search(doc.xref_object(int(codificacao[1].split()[0])))
+    mapa, codigo = {}, 0
+    for parte in achado.group(1).split() if achado else []:
+        if parte.startswith("/"):
+            mapa[codigo] = parte[1:]
+            codigo += 1
+        else:
+            codigo = int(parte)
+    return mapa
+
+
+def traducao_por_nomes(diferencas: dict[int, str], familia: str) -> dict[str, str]:
+    """Caractere que o PDF entrega (o próprio código) → texto, pelos nomes dos glifos da família."""
+    from estudos.importacao.fontes_matematicas import por_nome
+    nomes = por_nome(familia)
+    return {chr(codigo): nomes[nome] for codigo, nome in diferencas.items() if nome in nomes}
+
+
+def traducoes_da_pagina(doc: pymupdf.Document, pagina: pymupdf.Page) -> dict[str, dict[str, str]]:
+    """Tabelas de tradução para os pedaços desta página: as fixas (por letra) mais as que saem dos nomes dos glifos
+    das fontes da página (o mesmo nome de fonte pode ter outra codificação em outra página)."""
+    from estudos.importacao.fontes_matematicas import TABELAS
+    tabelas = {f: dict(t) for f, t in TABELAS.items()}
+    for xref, _, _, base, *_ in pagina.get_fonts():
+        familia = _PREFIXO_FONTE.sub("", base)
+        if traducao := traducao_por_nomes(_diferencas(doc, xref), familia):
+            tabelas.setdefault(familia, {}).update(traducao)
+    return tabelas
 
 
 def ler_paginas_limpas(caminho: Path, tabelas: dict[str, dict[str, str]] | None = None) -> tuple[list[PaginaPdf], int]:
-    """Páginas com o texto remontado e o total de caracteres sem tradução retirados. Página em que a leitura detalhada
-    falha usa a leitura de `abrir_pdf`."""
-    if tabelas is None:
-        from estudos.importacao.fontes_matematicas import TABELAS
-        tabelas = TABELAS
+    """Páginas com o texto remontado e o total de caracteres sem tradução retirados. Sem `tabelas`, cada página usa
+    `traducoes_da_pagina`. Página em que a leitura detalhada falha usa a leitura de `abrir_pdf`."""
     try:
         doc = pymupdf.open(stream=caminho.read_bytes(), filetype="pdf")
     except Exception as e:  # mesmos casos de abrir_pdf
@@ -275,7 +316,8 @@ def ler_paginas_limpas(caminho: Path, tabelas: dict[str, dict[str, str]] | None 
         for p in doc:
             try:
                 spans = [s for b in p.get_text("dict")["blocks"] for l in b.get("lines", []) for s in l["spans"]]
-                texto, n = montar_texto(spans, p.rect.width, p.rect.height, tabelas)
+                texto, n = montar_texto(spans, p.rect.width, p.rect.height,
+                                        tabelas if tabelas is not None else traducoes_da_pagina(doc, p))
                 total += n
             except Exception:  # página com estrutura estranha: a leitura de sempre
                 texto = limpar_texto(p.get_text())
