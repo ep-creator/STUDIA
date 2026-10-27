@@ -15,10 +15,13 @@ dependencies = [
     "python-multipart>=0.0.12",
     "numpy>=2.0",
     "fastembed>=0.5",
+    "httpx>=0.27",
+    "sympy>=1.13",
+    "scipy>=1.14",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "httpx>=0.27"]
+dev = ["pytest>=8.3"]
 
 [tool.setuptools.packages.find]
 include = ["estudos*"]
@@ -30,5 +33,5 @@ estudos = ["db/migracoes/*.sql"]
 testpaths = ["tests"]
 pythonpath = ["tests"]
 # Testes com o modelo real (baixa ~470 MB): fora da suíte padrão e do CI. Rodar com: pytest -m modelo
-addopts = "-m 'not modelo'"
-markers = ["modelo: usa o modelo de embeddings real (download)"]
+addopts = "-m 'not modelo and not gemini'"
+markers = ["modelo: usa o modelo de embeddings real (download)", "gemini: chama a API do Gemini de verdade (precisa da chave)"]

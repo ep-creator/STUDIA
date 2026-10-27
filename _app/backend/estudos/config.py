@@ -1,7 +1,7 @@
 """Configuração do motor: defaults num único lugar, sobrescritos por _app/config.toml."""
 
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 # Seção do config.toml -> {chave no arquivo: campo de Settings}
@@ -12,6 +12,8 @@ _MAPA_TOML = {
     "historico": {"max_grupos": "historico_max_grupos"},
     "inteligencia": {"embeddings": "embeddings", "modelo": "modelo", "busca": "busca",
                      "vinculos_com_embeddings": "vinculos_com_embeddings", "peso_sentido_vinculo": "peso_sentido_vinculo"},
+    "agente": {"modelo": "agente_modelo", "teto_mensal_brl": "teto_mensal_brl", "cotacao_dolar": "cotacao_dolar",
+               "max_rodadas": "max_rodadas", "tempo_limite_s": "tempo_limite_s", "precos": "agente_precos"},
 }
 
 
@@ -31,6 +33,13 @@ class Settings:
     busca: str = "texto"                 # "texto", "vetor" ou "hibrida"
     vinculos_com_embeddings: bool = False
     peso_sentido_vinculo: float = 0.5
+    # Assistente (peça A da Fase 6): Gemini por REST; preços em US$ por milhão de tokens
+    agente_modelo: str = "gemini-3.8-flash"
+    teto_mensal_brl: float = 20.0
+    cotacao_dolar: float = 5.6
+    max_rodadas: int = 6
+    tempo_limite_s: int = 60
+    agente_precos: dict = field(default_factory=lambda: {"gemini-3.8-flash": {"entrada": 0.30, "saida": 2.50}})
 
 
 def carregar_settings(app_dir: Path, workspace: Path | None = None) -> Settings:

@@ -46,3 +46,6 @@ _app/.modelos/
 
 # amostras de páginas reais (texto de livros e slides de terceiros): só locais, nunca no repositório
 _app/backend/tests/fixtures/paginas/
+
+# Chave da API do Gemini (assistente, Fase 6): nunca no repositório
+_app/.segredos.toml
