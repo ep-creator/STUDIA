@@ -17,6 +17,9 @@ class TrechoNovo:
     pagina: int | None
     ordem: int
     pagina_fim: int | None = None   # última página que o trecho cobre (páginas curtas se juntam num trecho só)
+    parte: str = "teoria"           # "teoria", "exercicio" ou "resposta" (só livros com seções têm as outras)
+    numero: int | None = None       # número do exercício ou da resposta
+    secao_id: int | None = None     # seção do livro, quando o corte já a conhece
 
 
 def _cortar(paragrafo: str, limite: int) -> list[str]:
