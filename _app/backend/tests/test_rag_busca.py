@@ -67,6 +67,27 @@ def test_secao_completa(cenario):
     texto = secao_completa(cenario["indice"], cenario["s12"])
     assert texto.index("integrais triplas em coordenadas") < texto.index("exercícios de integrais triplas")
     assert "Coordenadas polares" not in texto
+    assert "resposta da integral tripla" not in texto   # o gabarito não entra no texto da seção
+
+
+def test_filtro_por_parte(cenario):
+    teoria = buscar(cenario["indice"], "integrais triplas", partes=["teoria"])
+    assert teoria and all(r.parte == "teoria" for r in teoria)
+    todas = buscar(cenario["indice"], "integrais triplas")
+    assert {"teoria", "exercicio"} <= {r.parte for r in todas}
+    [ex] = buscar(cenario["indice"], "integrais triplas", partes=["exercicio"])
+    assert ex.numero == 1 and ex.secao_id == cenario["s12"]
+
+
+def test_resposta_e_exercicio_de(cenario):
+    from estudos.rag.busca import exercicio_de, resposta_de
+    ex = exercicio_de(cenario["indice"], cenario["s12"], 2)   # o 2 é curto e foi junto com o 1
+    assert ex is not None and ex.parte == "exercicio" and "Mude a ordem" in ex.trecho
+    assert exercicio_de(cenario["indice"], cenario["s12"], 9) is None
+    assert exercicio_de(cenario["indice"], cenario["s11"], 1) is None
+    r = resposta_de(cenario["indice"], cenario["s12"], 1)
+    assert r is not None and "resposta da integral tripla" in r.trecho
+    assert resposta_de(cenario["indice"], cenario["s12"], 3) is None
 
 
 def test_cao_e_coes_casam():

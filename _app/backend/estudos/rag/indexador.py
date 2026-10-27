@@ -4,6 +4,7 @@ Cada origem ("fonte:N", "documento:N") tem uma assinatura calculada só com dado
 nenhum arquivo é aberto.
 """
 
+import dataclasses
 import datetime
 import hashlib
 import sqlite3
@@ -15,6 +16,7 @@ from pathlib import Path
 from estudos.ia.embeddings import Embeddings, avisos_pendentes, invalidar_vetores
 from estudos.importacao.pdf import DocumentoPdf, PdfInvalido, abrir_pdf
 from estudos.db.conexao import conectar
+from estudos.rag.corte import LIMITE_TEORIA, SecaoCorte, cortar_gabarito, cortar_livro
 from estudos.rag.indice import abrir_indice, caminho_indice, descartar_indice, eh_corrupcao
 from estudos.rag.trechos import TrechoNovo, dividir_markdown, dividir_paginas
 from estudos.repos import documentos, livros
@@ -51,50 +53,46 @@ def assinatura_documento(con: sqlite3.Connection, raiz: Path, documento_id: int)
 def _inserir(indice: sqlite3.Connection, origem: str, trechos: list[TrechoNovo], tipo: str, **ids) -> int:
     for t in trechos:
         indice.execute(
-            "INSERT INTO trecho (origem, fonte_id, documento_id, secao_id, tipo, titulo, texto, pagina, pagina_fim, ordem) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (origem, ids.get("fonte_id"), ids.get("documento_id"), ids.get("secao_id"), ids.get("tipo", tipo),
-             t.titulo, t.texto, t.pagina, t.pagina_fim, t.ordem),
+            "INSERT INTO trecho (origem, fonte_id, documento_id, secao_id, tipo, titulo, texto, pagina, pagina_fim, ordem, "
+            "parte, numero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (origem, ids.get("fonte_id"), ids.get("documento_id"), t.secao_id or ids.get("secao_id"), ids.get("tipo", tipo),
+             t.titulo, t.texto, t.pagina, t.pagina_fim, t.ordem, t.parte, t.numero),
         )
     return len(trechos)
 
 
-def _secao_de_cada_pagina(con: sqlite3.Connection, fonte_id: int) -> dict[int, object]:
-    """Cada página fica com a seção mais profunda que a contém (o capítulo não repete o texto das subseções)."""
-    dona: dict[int, object] = {}
-    for s in sorted(livros.listar_secoes(con, fonte_id), key=lambda s: (s.nivel, s.pagina_pdf_ini)):
-        for pagina in range(s.pagina_pdf_ini, s.pagina_pdf_fim + 1):
-            dona[pagina] = s
-    return dona
+def _folhas(con: sqlite3.Connection, fonte_id: int) -> list[SecaoCorte]:
+    """Seções sem subseções, em ordem de página (o capítulo não repete o texto das subseções)."""
+    secoes = livros.listar_secoes(con, fonte_id)
+
+    def tem_filha(s) -> bool:
+        return any(o.nivel > s.nivel and s.pagina_pdf_ini <= o.pagina_pdf_ini <= s.pagina_pdf_fim for o in secoes)
+
+    return [SecaoCorte(s.id, s.codigo, s.titulo, s.pagina_pdf_ini, s.pagina_pdf_fim)
+            for s in sorted(secoes, key=lambda s: (s.pagina_pdf_ini, -s.nivel)) if not tem_filha(s)]
 
 
-def _indexar_livro(indice, con, origem: str, fonte_id: int, doc: DocumentoPdf, titulo: str) -> int:
+def _indexar_livro(indice, con, origem: str, fonte_id: int, doc: DocumentoPdf, titulo: str, limite_teoria: int) -> int:
     livro = con.execute("SELECT gabarito_pdf_ini, gabarito_pdf_fim FROM livro WHERE fonte_id = ?", (fonte_id,)).fetchone()
-    dona = _secao_de_cada_pagina(con, fonte_id)
-    if not dona:
+    folhas = _folhas(con, fonte_id)
+    if not folhas:
         paginas = [(p.indice, p.texto) for p in doc.paginas]
         return _inserir(indice, origem, dividir_paginas(paginas, titulo), "livro", fonte_id=fonte_id)
-    total = 0
-    grupos: list[tuple[object, list[tuple[int, str]]]] = []
-    for pagina in doc.paginas:
-        s = dona.get(pagina.indice)
-        if s is None:
-            continue  # capa, prefácio, apêndices: fora do índice (o gabarito entra abaixo)
-        if grupos and grupos[-1][0] is s:
-            grupos[-1][1].append((pagina.indice, pagina.texto))
-        else:
-            grupos.append((s, [(pagina.indice, pagina.texto)]))
-    for s, paginas in grupos:
-        total += _inserir(indice, origem, dividir_paginas(paginas, f"{s.codigo} {s.titulo}"), "livro",
-                          fonte_id=fonte_id, secao_id=s.id)
+    ini, fim = min(s.pagina_ini for s in folhas), max(s.pagina_fim for s in folhas)
+    paginas = [(p.indice, p.texto) for p in doc.paginas if ini <= p.indice <= fim]  # capa, prefácio e apêndices: fora
+    total = _inserir(indice, origem, cortar_livro(paginas, folhas, limite_teoria), "livro", fonte_id=fonte_id)
     if livro and livro["gabarito_pdf_ini"]:
         ini, fim = livro["gabarito_pdf_ini"], livro["gabarito_pdf_fim"] or doc.total_paginas
         paginas = [(p.indice, p.texto) for p in doc.paginas if ini <= p.indice <= fim]
-        total += _inserir(indice, origem, dividir_paginas(paginas, "Respostas"), "gabarito", fonte_id=fonte_id)
+        codigos = {s.codigo: s.id for s in livros.listar_secoes(con, fonte_id)}
+        # gabarito em formato não reconhecido: entra inteiro, como respostas sem número
+        respostas = cortar_gabarito(paginas, codigos, limite_teoria) or [
+            dataclasses.replace(t, parte="resposta") for t in dividir_paginas(paginas, "Respostas")]
+        total += _inserir(indice, origem, respostas, "gabarito", fonte_id=fonte_id)
     return total
 
 
-def indexar_fonte(indice, con, raiz: Path, fonte_id: int, avisos: list[str]) -> int | None:
+def indexar_fonte(indice, con, raiz: Path, fonte_id: int, avisos: list[str], limite_teoria: int | None = None) -> int | None:
     """Nº de trechos gravados; None quando a fonte não pôde ser lida (fica fora do estado para tentar de novo)."""
     fonte = con.execute("SELECT caminho, tipo FROM fonte WHERE id = ?", (fonte_id,)).fetchone()
     origem = f"fonte:{fonte_id}"
@@ -111,7 +109,7 @@ def indexar_fonte(indice, con, raiz: Path, fonte_id: int, avisos: list[str]) -> 
         avisos.append(f"{fonte['caminho']}: PDF sem texto (escaneado); fora da busca")
         return 0
     if fonte["tipo"] == "livro":
-        return _indexar_livro(indice, con, origem, fonte_id, doc, caminho.stem)
+        return _indexar_livro(indice, con, origem, fonte_id, doc, caminho.stem, limite_teoria or LIMITE_TEORIA)
     paginas = [(p.indice, p.texto) for p in doc.paginas]
     return _inserir(indice, origem, dividir_paginas(paginas, caminho.stem), fonte["tipo"], fonte_id=fonte_id)
 
@@ -139,7 +137,7 @@ def _trava(caminho: Path) -> threading.Lock:
 
 def sincronizar(
     con: sqlite3.Connection, raiz: Path, caminho_indice_: Path | None = None, esperar: bool = True,
-    embeddings: Embeddings | None = None,
+    embeddings: Embeddings | None = None, limite_teoria: int | None = None,
 ) -> ResumoSincronizacao:
     """Uma sincronização por índice de cada vez. Com esperar=False, quem chega durante outra sincronização não espera:
     devolve um aviso e quem chamou segue buscando no índice como ele está."""
@@ -149,12 +147,12 @@ def sincronizar(
         return ResumoSincronizacao(avisos=["sincronização em andamento; resultados podem ainda não incluir tudo"])
     try:
         try:
-            return _sincronizar(con, raiz, caminho, embeddings)
+            return _sincronizar(con, raiz, caminho, embeddings, limite_teoria)
         except sqlite3.DatabaseError as erro:
             if not eh_corrupcao(erro):
                 raise
             descartar_indice(raiz, caminho)
-            resumo = _sincronizar(con, raiz, caminho, embeddings)
+            resumo = _sincronizar(con, raiz, caminho, embeddings, limite_teoria)
             resumo.avisos.insert(0, "índice de busca estava corrompido e foi reconstruído")
             return resumo
     finally:
@@ -213,7 +211,8 @@ def _vetorizar(indice: sqlite3.Connection, embeddings: Embeddings) -> None:
 
 
 def _sincronizar(
-    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path, embeddings: Embeddings | None = None
+    con: sqlite3.Connection, raiz: Path, caminho_indice_: Path, embeddings: Embeddings | None = None,
+    limite_teoria: int | None = None,
 ) -> ResumoSincronizacao:
     inicio = time.perf_counter()
     resumo = ResumoSincronizacao()
@@ -238,7 +237,7 @@ def _sincronizar(
             indice.execute("DELETE FROM trecho WHERE origem = ?", (origem,))
             indice.execute("DELETE FROM estado WHERE origem = ?", (origem,))
             if tipo == "fonte":
-                gravados = indexar_fonte(indice, con, raiz, int(numero), resumo.avisos)
+                gravados = indexar_fonte(indice, con, raiz, int(numero), resumo.avisos, limite_teoria)
             else:
                 gravados = _indexar_documento(indice, con, raiz, int(numero), resumo.avisos)
             if gravados is not None:

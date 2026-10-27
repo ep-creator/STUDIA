@@ -9,7 +9,7 @@ from pathlib import Path
 
 from estudos.workspace import ARQUIVO_DB
 
-VERSAO_INDICE = 3   # 2: trecho.vetor e tabela meta; 3: trecho.pagina_fim
+VERSAO_INDICE = 4   # 2: trecho.vetor e tabela meta; 3: trecho.pagina_fim; 4: trecho.parte e trecho.numero
 PASTA_INDICE = ".indice"
 _ARQUIVO = "indice.db"
 
@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS trecho (
     pagina INTEGER,
     pagina_fim INTEGER,        -- última página coberta (o trecho pode juntar páginas curtas)
     ordem INTEGER NOT NULL,
+    parte TEXT NOT NULL DEFAULT 'teoria',  -- 'teoria', 'exercicio' ou 'resposta'
+    numero INTEGER,            -- número do exercício ou da resposta
     vetor BLOB                 -- embedding normalizado (float32); NULL sem embeddings
 );
 CREATE TABLE IF NOT EXISTS meta (
@@ -39,6 +41,7 @@ CREATE TABLE IF NOT EXISTS meta (
 );
 CREATE INDEX IF NOT EXISTS idx_trecho_origem ON trecho (origem);
 CREATE INDEX IF NOT EXISTS idx_trecho_secao ON trecho (secao_id);
+CREATE INDEX IF NOT EXISTS idx_trecho_parte ON trecho (parte);
 CREATE VIRTUAL TABLE IF NOT EXISTS trecho_fts USING fts5(
     titulo, texto, content='trecho', content_rowid='id', tokenize='unicode61 remove_diacritics 2'
 );
