@@ -219,16 +219,18 @@ _ITEM_NO_TEXTO = r"(^|\n)\s*{}\.\s"
 
 
 def exercicio_de(indice: sqlite3.Connection, secao_id: int, numero: int) -> Resultado | None:
-    """Exercício `numero` da seção, com o texto inteiro; exercícios curtos foram juntados ao seguinte, então vale o
-    trecho de maior número até o pedido, desde que o pedido apareça nele como item."""
-    linhas = _linha_completa(indice, "t.secao_id = ? AND t.parte = 'exercicio' AND t.numero <= ?", (secao_id, numero))
-    if not linhas:
+    """Exercício `numero` da seção, com o texto inteiro do trecho. Exercícios curtos foram juntados ao seguinte e a
+    leitura às vezes troca a ordem, então vale o trecho com esse número; senão, o trecho em que ele aparece como item."""
+    linhas = _linha_completa(indice, "t.secao_id = ? AND t.parte = 'exercicio' AND t.numero IS NOT NULL", (secao_id,))
+    por_numero: dict[int, list[sqlite3.Row]] = {}
+    for l in linhas:
+        por_numero.setdefault(l["numero"], []).append(l)
+    item = re.compile(_ITEM_NO_TEXTO.format(numero))
+    partes = por_numero.get(numero) or next(
+        (ps for _, ps in sorted(por_numero.items(), reverse=True) if item.search("\n".join(p["texto"] for p in ps))), None)
+    if not partes:
         return None
-    maior = max(l["numero"] for l in linhas)
-    partes = [l for l in linhas if l["numero"] == maior]
     texto = "\n".join(l["texto"] for l in partes)
-    if not re.search(_ITEM_NO_TEXTO.format(numero), texto):
-        return None
     return dataclasses.replace(_resultado(partes[0], texto, 0.0), pagina_fim=partes[-1]["pagina_fim"])
 
 

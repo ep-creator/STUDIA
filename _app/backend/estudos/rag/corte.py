@@ -74,7 +74,8 @@ def _pecas(linhas: list[tuple[int, str]]) -> list[tuple[int, str]]:
 
 
 def _itens(linhas: list[tuple[int, str]], em_sequencia: bool) -> list[tuple[int | None, list[tuple[int, str]]]]:
-    """Linhas → itens numerados. Com `em_sequencia`, só abre item o número seguinte, ou um 1 que reinicia a contagem
+    """Linhas → itens numerados. Com `em_sequencia`, abre item um número ainda não visto e perto do maior já visto (até
+    10 acima ou até 20 abaixo: a leitura às vezes troca um item ou uma coluna de lugar), ou um 1 que reinicia a contagem
     (só quando o próximo item numerado é 2: um rodapé "1. Dicas…" no fim da página não reinicia)."""
     itens: list[tuple[int | None, list[tuple[int, str]]]] = []
     numeros = [int(m.group(1)) if (m := _ITEM.match(l)) else None for _, l in linhas]
@@ -84,14 +85,22 @@ def _itens(linhas: list[tuple[int, str]], em_sequencia: bool) -> list[tuple[int 
         seguinte[i] = proximo
         if numeros[i] is not None:
             proximo = numeros[i]
-    ultimo = 0
+    ultimo, vistos = 0, set()
     for i, (pagina, linha) in enumerate(linhas):
         n = numeros[i]
         reinicia = n == 1 and seguinte[i] == 2
-        abre = n is not None and ((n == ultimo + 1 or reinicia) if em_sequencia else n > ultimo)
+        if n is None:
+            abre = False
+        elif not em_sequencia:
+            abre = n > ultimo
+        elif reinicia and 1 in vistos:
+            abre, vistos, ultimo = True, set(), 0
+        else:
+            abre = n not in vistos and (ultimo - 20 <= n <= ultimo + 10)
         if abre:
             itens.append((n, [(pagina, linha)]))
-            ultimo = n
+            vistos.add(n)
+            ultimo = max(ultimo, n)
         elif itens:
             itens[-1][1].append((pagina, linha))
         else:

@@ -6,7 +6,7 @@ PAGINAS = [
     (2, "Exercícios\n10.3\n1. As Homeworks Hints estão disponíveis\n1. Esboce r = 2.\n2. Esboce a cardioide r = 1 + cos t, "
         "com bastante texto para passar de duzentos caracteres " + "x" * 200 + "\n"
         "10.4\nÁreas em coordenadas polares\nNesta seção deduziremos a fórmula da área."),
-    (3, "Mais teoria da área.\nExercícios 10.4\n1. Calcule a área " + "y" * 220 + "\n5. termo solto\n2. Ache a área 2. de dentro " + "z" * 220),
+    (3, "Mais teoria da área.\nExercícios 10.4\n1. Calcule a área " + "y" * 220 + "\n25. termo solto\n2. Ache a área 2. de dentro " + "z" * 220),
 ]
 
 
@@ -26,7 +26,7 @@ def test_numeracao_reinicia_e_ignora_fora_de_sequencia():
     assert "Homeworks" in ex103[0].texto and "Esboce r = 2" in ex103[0].texto and "cardioide" in ex103[0].texto
     ex104 = [t for t in ts if t.secao_id == 2 and t.parte == "exercicio"]
     assert [t.numero for t in ex104] == [1, 2]
-    assert "5. termo solto" in ex104[0].texto and "2. de dentro" in ex104[1].texto   # fora de sequência não abre
+    assert "25. termo solto" in ex104[0].texto and "2. de dentro" in ex104[1].texto   # longe do último não abre
     assert ex104[0].pagina == 3
 
 
@@ -82,3 +82,20 @@ def test_rodape_numerado_nao_reinicia_a_contagem():
     ts = cortar_livro(paginas, [SecaoCorte(1, "10.4", "Áreas", 1, 2)], 1600)
     numeros = [t.numero for t in ts if t.parte == "exercicio"]
     assert numeros[-2:] == [55, 56] and numeros.count(1) == 1
+
+
+def _exercicios(ordem):
+    corpo = "\n".join(f"{n}. exercício {n} " + "e" * 210 for n in ordem)
+    ts = cortar_livro([(1, "14.7 Máximos\nteoria.\n14.7 Exercícios\n" + corpo)], [SecaoCorte(1, "14.7", "Máximos", 1, 1)], 1600)
+    return [t.numero for t in ts if t.parte == "exercicio"]
+
+
+def test_item_fora_de_ordem_nao_derruba_a_numeracao():
+    # leitura com um item trocado (Stewart 14.7: "1, 4, 2, 3, 5…") e colunas fora de ordem (14.8: "22, 29, 31, 23, 25")
+    assert _exercicios([1, 4, 2, 3, 5, 6, 7]) == [1, 4, 2, 3, 5, 6, 7]
+    colunas = list(range(1, 23)) + [29, 31, 23, 25]
+    assert _exercicios(colunas) == colunas
+
+
+def test_numero_repetido_ou_longe_nao_abre_exercicio():
+    assert _exercicios([1, 2, 3, 1, 40, 4]) == [1, 2, 3, 4]   # "1." repetido (sem 2 depois) e um salto de 40

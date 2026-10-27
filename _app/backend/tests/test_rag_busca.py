@@ -152,3 +152,20 @@ def test_consulta_ignora_uso_privado(cenario):
     _, com = buscar_modo(cenario["indice"], "polares" + chr(0xE001))
     _, sem = buscar_modo(cenario["indice"], "polares")
     assert com and [r.trecho_id for r in com] == [r.trecho_id for r in sem]
+
+
+def test_exercicio_de_acha_o_numero_fora_de_ordem(con, materia):
+    from estudos.rag.busca import exercicio_de
+    criar_pdf(materia.pasta / "fontes/livros/o.pdf", ["capa", "2.1 Tema\nteoria\n2.1 Exercícios\n" + "\n".join(
+        f"{n}. exercício número {n} " + "z" * 210 for n in (1, 4, 2, 3, 5))])
+    with operacao(con, "o", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/o.pdf")
+        livros.criar(op, f, "principal")
+        s21 = livros.criar_secao(op, f, "2.1", "Tema", 2, 2)
+    sincronizar(con, materia.pasta)
+    indice = abrir_indice(materia.pasta)
+    try:
+        assert all(f"exercício número {n}" in exercicio_de(indice, s21, n).trecho for n in (1, 2, 3, 4, 5))
+        assert exercicio_de(indice, s21, 6) is None
+    finally:
+        indice.close()
