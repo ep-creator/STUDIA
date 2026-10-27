@@ -26,6 +26,13 @@ _NOMES_MARCA = {"err": "errei", "dub": "dúvida", "ok": "acertei"}
 class Pedaco:
     rotulo: str
     texto: str
+    # de onde veio (para a avaliação conferir as respostas aceitas e a tela abrir a citação)
+    fonte_id: int | None = None
+    pagina: int | None = None
+    pagina_fim: int | None = None
+    documento_id: int | None = None
+    secao_codigo: str | None = None
+    titulo: str = ""
 
 
 def nome_fonte(con: sqlite3.Connection, fonte_id: int) -> str:
@@ -42,6 +49,11 @@ def rotulo_de(con: sqlite3.Connection, r: Resultado) -> str:
     return f"[{r.titulo}]"
 
 
+def _do_resultado(con: sqlite3.Connection, indice: sqlite3.Connection, r: Resultado) -> Pedaco:
+    return Pedaco(rotulo_de(con, r), _texto_do_trecho(indice, r.trecho_id), r.fonte_id, r.pagina, r.pagina_fim,
+                  r.documento_id, r.secao_codigo, r.titulo)
+
+
 def _texto_do_trecho(indice: sqlite3.Connection, trecho_id: int) -> str:
     linha = indice.execute("SELECT texto FROM trecho WHERE id = ?", (trecho_id,)).fetchone()
     return linha["texto"] if linha else ""
@@ -56,11 +68,15 @@ def _documento(con: sqlite3.Connection, raiz: Path, rotulo: str, onde: str, valo
         corpo = documentos.ler_corpo(raiz, doc)
     except OSError:
         return []
-    return [Pedaco(f"[{rotulo} {doc.titulo}]", corpo[:_MAX_CARACTERES_DOCUMENTO])]
+    return [Pedaco(f"[{rotulo} {doc.titulo}]", corpo[:_MAX_CARACTERES_DOCUMENTO], documento_id=doc.id,
+                   secao_codigo=doc.secao_codigo, titulo=doc.titulo)]
 
 
-def _indice(con: sqlite3.Connection, raiz: Path):
-    """Índice pronto para ler, ou None quando está sendo refeito (versão antiga no disco)."""
+def _indice(con: sqlite3.Connection, raiz: Path, caminho: Path | None = None):
+    """Índice pronto para ler, ou None quando está sendo refeito (versão antiga no disco). `caminho`: um índice já
+    sincronizado por quem chamou (a avaliação usa um temporário, para não mexer no da matéria)."""
+    if caminho is not None:
+        return abrir_indice(raiz, caminho)
     if indice_desatualizado(raiz):
         return None
     sincronizar(con, raiz, esperar=False)
@@ -72,14 +88,14 @@ def _secao_da_lista(con: sqlite3.Connection, lista_id: int):
                        "WHERE ls.lista_id = ? ORDER BY s.id LIMIT 1", (lista_id,)).fetchone()
 
 
-def _de_questao(con: sqlite3.Connection, raiz: Path, questao_id: int) -> list[Pedaco]:
+def _de_questao(con: sqlite3.Connection, raiz: Path, questao_id: int, caminho: Path | None) -> list[Pedaco]:
     q = con.execute("SELECT q.*, l.codigo AS lista_codigo, l.id AS lid FROM questao q JOIN lista l ON l.id = q.lista_id "
                     "WHERE q.id = ?", (questao_id,)).fetchone()
     if q is None:
         raise ValueError(f"questão {questao_id} não encontrada")
     pedacos = [Pedaco(f"[Lista {q['lista_codigo']} #{q['rotulo']}]", q["enunciado_md"] or "(enunciado só no PDF da lista)")]
     secao = _secao_da_lista(con, q["lid"])
-    indice = _indice(con, raiz)
+    indice = _indice(con, raiz, caminho)
     if indice is None:
         pedacos.append(Pedaco("aviso", _AVISO_INDICE))
     else:
@@ -90,23 +106,23 @@ def _de_questao(con: sqlite3.Connection, raiz: Path, questao_id: int) -> list[Pe
                     resp = resposta_de(indice, secao["id"], int(q["rotulo"]))
                     texto = ex.trecho + (f"\n\nResposta do gabarito do livro: {resp.trecho}" if resp else "")
                     rotulo = f"[{nome_fonte(con, ex.fonte_id)} {secao['codigo']} exercício {q['rotulo']} p. {ex.pagina}]"
-                    pedacos.append(Pedaco(rotulo, texto))
+                    pedacos.append(Pedaco(rotulo, texto, ex.fonte_id, ex.pagina, ex.pagina_fim, None, secao["codigo"], ex.titulo))
             consulta = " ".join(filter(None, [q["enunciado_md"], secao["titulo"] if secao else ""]))
             _, achados = buscar_modo(indice, consulta, secao_id=secao["id"] if secao else None, limite=_TRECHOS_TEORIA,
                                      partes=["teoria"])
-            pedacos += [Pedaco(rotulo_de(con, r), _texto_do_trecho(indice, r.trecho_id)) for r in achados]
+            pedacos += [_do_resultado(con, indice, r) for r in achados]
     if secao:
         pedacos += _documento(con, raiz, "resumo", "tipo = 'resumo' AND secao_id", secao["id"])
     pedacos += _documento(con, raiz, "resolução", "tipo = 'resolucao' AND questao_id", questao_id)
     return pedacos
 
 
-def _de_secao(con: sqlite3.Connection, raiz: Path, secao_id: int) -> list[Pedaco]:
+def _de_secao(con: sqlite3.Connection, raiz: Path, secao_id: int, caminho: Path | None) -> list[Pedaco]:
     secao = con.execute("SELECT id, codigo, titulo FROM secao_livro WHERE id = ?", (secao_id,)).fetchone()
     if secao is None:
         raise ValueError(f"seção {secao_id} não encontrada")
     pedacos = [Pedaco(f"[seção {secao['codigo']}]", f"{secao['codigo']} {secao['titulo']}")]
-    indice = _indice(con, raiz)
+    indice = _indice(con, raiz, caminho)
     if indice is None:
         pedacos.append(Pedaco("aviso", _AVISO_INDICE))
     else:
@@ -117,9 +133,10 @@ def _de_secao(con: sqlite3.Connection, raiz: Path, secao_id: int) -> list[Pedaco
                 if total > _MAX_CARACTERES_SECAO:
                     break
                 total += len(t["texto"])
-                pedacos.append(Pedaco(f"[{nome_fonte(con, t['fonte_id'])} p. {t['pagina']}]", t["texto"]))
+                pedacos.append(Pedaco(f"[{nome_fonte(con, t['fonte_id'])} p. {t['pagina']}]", t["texto"], t["fonte_id"],
+                                      t["pagina"], t["pagina"], None, secao["codigo"]))
             _, slides = buscar_modo(indice, secao["titulo"], tipos=["slides"], limite=_TRECHOS_TEORIA, partes=["teoria"])
-            pedacos += [Pedaco(rotulo_de(con, r), _texto_do_trecho(indice, r.trecho_id)) for r in slides]
+            pedacos += [_do_resultado(con, indice, r) for r in slides]
     return pedacos + _documento(con, raiz, "resumo", "tipo = 'resumo' AND secao_id", secao_id)
 
 
@@ -149,13 +166,13 @@ def _geral(con: sqlite3.Connection) -> list[Pedaco]:
     return pedacos or [Pedaco("[matéria]", "Nenhuma marcação, prova ou tópico cadastrado ainda.")]
 
 
-def montar_contexto(con: sqlite3.Connection, raiz: Path, alvo: str, papel: str) -> list[Pedaco]:
+def montar_contexto(con: sqlite3.Connection, raiz: Path, alvo: str, papel: str, caminho_indice: Path | None = None) -> list[Pedaco]:
     """Alvo "questao:<id>", "secao:<id>" ou "geral"."""
     tipo, _, valor = alvo.partition(":")
     if tipo == "questao" and valor.isdigit():
-        return _de_questao(con, raiz, int(valor))
+        return _de_questao(con, raiz, int(valor), caminho_indice)
     if tipo == "secao" and valor.isdigit():
-        return _de_secao(con, raiz, int(valor))
+        return _de_secao(con, raiz, int(valor), caminho_indice)
     if alvo == "geral":
         return _geral(con)
     raise ValueError(f"alvo inválido: {alvo}")
