@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from estudos.importacao.idioma import sem_acento
 from estudos.rag.trechos import _PARAGRAFO, TrechoNovo, _agrupar, _cortar
 
-LIMITE_TEORIA = 1600       # caracteres por trecho de teoria (escolhido pela avaliação)
+LIMITE_TEORIA = 1200       # caracteres por trecho de teoria (escolhido pela avaliação do passo 1 da B2)
 _MIN_EXERCICIO = 200       # exercício mais curto que isso se junta ao seguinte
 _ITEM = re.compile(r"^\s*(\d{1,3})\.(\s|$)")                     # "1. texto" ou "1." sozinho (Stewart)
 _CABECALHO_EXERCICIOS = re.compile(r"^([\d.]+\s+)?exercicios(\s+[\d.]+)?[\s=\-–—_]*$")  # "14.2 Exercícios", "Exercícios 14.2"
