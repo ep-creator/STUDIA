@@ -13,8 +13,8 @@ PAGINAS_LIVRO = [
     "continuação de coordenadas polares com área de setores.",
     "1.2 Integrais triplas\nintegrais triplas em coordenadas cilíndricas.",
     "mais sobre integrais triplas e mudança de ordem.",
-    "exercícios de integrais triplas para resolver em casa.",
-    "Respostas dos exercícios ímpares 1.1 e 1.2",
+    "Exercícios 1.2\n1. exercícios de integrais triplas para resolver em casa.\n2. Mude a ordem de integração.",
+    "Respostas dos exercícios ímpares\n1.1\n1. r = 2 é um círculo\n1.2\n1. resposta da integral tripla",
     "respostas continuação com valores numéricos",
 ]
 
@@ -64,7 +64,7 @@ def test_segunda_sincronizacao_nao_abre_pdf(con, materia, base, monkeypatch):
     def proibido(*_a, **_k):
         raise AssertionError("não deveria abrir PDF")
 
-    monkeypatch.setattr(indexador, "abrir_pdf", proibido)
+    monkeypatch.setattr(indexador, "ler_paginas_limpas", proibido)
     r = sincronizar(con, materia.pasta)
     assert (r.indexadas, r.removidas) == (0, 0)
 
@@ -101,6 +101,30 @@ def test_livro_sem_secoes_por_pagina(con, materia):
     sincronizar(con, materia.pasta)
     trechos = _trechos(materia, fonte_id=f)
     assert trechos and all(t["tipo"] == "livro" and t["secao_id"] is None for t in trechos)
+    assert all(t["parte"] == "teoria" and t["numero"] is None for t in trechos)  # sem seções: igual a antes do corte
+
+
+def test_livro_com_secoes_grava_partes(con, materia, base):
+    sincronizar(con, materia.pasta)
+    livro = _trechos(materia, fonte_id=base["livro"])
+    codigos = {s.id: s.codigo for s in livros.listar_secoes(con, base["livro"])}
+    assert {t["parte"] for t in livro} == {"teoria", "exercicio", "resposta"}
+    [exercicio] = [t for t in livro if t["parte"] == "exercicio"]
+    assert codigos[exercicio["secao_id"]] == "1.2" and exercicio["numero"] == 1 and exercicio["pagina"] == 6
+    respostas = sorted((codigos[t["secao_id"]], t["numero"]) for t in livro if t["parte"] == "resposta")
+    assert respostas == [("1.1", 1), ("1.2", 1)]
+    assert all(t["tipo"] == "gabarito" for t in livro if t["parte"] == "resposta")
+
+
+def test_gabarito_sem_formato_entra_como_antes(con, materia):
+    criar_pdf(materia.pasta / "fontes/livros/g.pdf", ["capa", "1.1 Polares\nteoria", "Respostas sem código nenhum aqui"])
+    with operacao(con, "g", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/g.pdf")
+        livros.criar(op, f, "principal", gabarito_pdf_ini=3, gabarito_pdf_fim=3)
+        livros.criar_secao(op, f, "1.1", "Polares", 2, 2)
+    sincronizar(con, materia.pasta)
+    gabarito = [t for t in _trechos(materia, fonte_id=f) if t["tipo"] == "gabarito"]
+    assert gabarito and all(t["parte"] == "resposta" and t["numero"] is None for t in gabarito)
 
 
 def test_pdf_sem_texto_vira_aviso(con, materia):
@@ -164,3 +188,27 @@ def test_livro_sem_secoes_usa_o_nome_do_arquivo(con, materia):
         livros.criar(op, f, "complementar")
     sincronizar(con, materia.pasta)
     assert {t["titulo"] for t in _trechos(materia, fonte_id=f)} == {"Stewart vol 1"}
+
+
+def test_indexador_avisa_simbolos_sem_traducao(con, materia, base, monkeypatch):
+    original = indexador.ler_paginas_limpas
+    monkeypatch.setattr(indexador, "ler_paginas_limpas", lambda caminho: (original(caminho)[0], 3))
+    r = sincronizar(con, materia.pasta)
+    assert any("3 símbolos sem tradução" in a for a in r.avisos)
+
+
+def test_paginas_so_do_capitulo_continuam_no_indice(con, materia):
+    # Guidorizzi cap. 16: o capítulo tem páginas próprias antes da única subseção cadastrada (16.5)
+    criar_pdf(materia.pasta / "fontes/livros/c.pdf", ["capa", "16 Máximos e mínimos\ntexto próprio do capítulo",
+                                                     "mais texto do capítulo 16", "16.5 Lagrange\nmultiplicadores"])
+    with operacao(con, "c", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/c.pdf")
+        livros.criar(op, f, "principal")
+        cap = livros.criar_secao(op, f, "16", "Máximos e mínimos", 2, 4, nivel=1)
+        sub = livros.criar_secao(op, f, "16.5", "Lagrange", 4, 4, nivel=2)
+    sincronizar(con, materia.pasta)
+    trechos = _trechos(materia, fonte_id=f)
+    texto_cap = " ".join(t["texto"] for t in trechos if t["secao_id"] == cap)
+    assert "texto próprio do capítulo" in texto_cap and "mais texto do capítulo 16" in texto_cap
+    assert any("multiplicadores" in t["texto"] for t in trechos if t["secao_id"] == sub)
+    assert not any("multiplicadores" in t["texto"] for t in trechos if t["secao_id"] == cap)   # sem repetir a subseção

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from estudos.workspace import ARQUIVO_DB
 
-VERSAO_INDICE = 3   # 2: trecho.vetor e tabela meta; 3: trecho.pagina_fim
+VERSAO_INDICE = 5   # 2: vetor e meta; 3: pagina_fim; 4: parte e numero; 5: texto pela leitura limpa dos PDFs
 PASTA_INDICE = ".indice"
 _ARQUIVO = "indice.db"
 
@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS trecho (
     pagina INTEGER,
     pagina_fim INTEGER,        -- última página coberta (o trecho pode juntar páginas curtas)
     ordem INTEGER NOT NULL,
+    parte TEXT NOT NULL DEFAULT 'teoria',  -- 'teoria', 'exercicio' ou 'resposta'
+    numero INTEGER,            -- número do exercício ou da resposta
     vetor BLOB                 -- embedding normalizado (float32); NULL sem embeddings
 );
 CREATE TABLE IF NOT EXISTS meta (
@@ -39,6 +41,7 @@ CREATE TABLE IF NOT EXISTS meta (
 );
 CREATE INDEX IF NOT EXISTS idx_trecho_origem ON trecho (origem);
 CREATE INDEX IF NOT EXISTS idx_trecho_secao ON trecho (secao_id);
+CREATE INDEX IF NOT EXISTS idx_trecho_parte ON trecho (parte);
 CREATE VIRTUAL TABLE IF NOT EXISTS trecho_fts USING fts5(
     titulo, texto, content='trecho', content_rowid='id', tokenize='unicode61 remove_diacritics 2'
 );
@@ -91,6 +94,23 @@ def _preparar(con: sqlite3.Connection) -> None:
     con.execute("PRAGMA journal_mode=WAL")  # leitores não esperam enquanto a indexação escreve
     con.executescript(_SCHEMA)
     con.execute(f"PRAGMA user_version = {VERSAO_INDICE}")
+
+
+def indice_desatualizado(raiz: Path, caminho: Path | None = None) -> bool:
+    """O arquivo do índice existe e é de outra versão (será refeito do zero, o que leva minutos). Só lê."""
+    caminho = caminho or caminho_indice(raiz)
+    if not caminho.is_file():
+        return False
+    try:
+        con = sqlite3.connect(f"{caminho.resolve().as_uri()}?mode=ro", uri=True)
+        try:
+            versao = con.execute("PRAGMA user_version").fetchone()[0]
+            tem_tabelas = con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0] > 0
+        finally:
+            con.close()
+    except sqlite3.DatabaseError:  # corrompido: o caminho de sempre descarta e refaz
+        return False
+    return tem_tabelas and versao != VERSAO_INDICE
 
 
 def descartar_indice(raiz: Path, caminho: Path | None = None) -> None:

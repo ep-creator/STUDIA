@@ -56,3 +56,30 @@ Um resultado que contém o enunciado (a página da lista ou dos exercícios do l
 | hibrida:small | 73% | 100% | 75% | 69% | 88% | 69% | — | 68% (n=12) | 0.55 | 336.09 | 111.8 |
 | vetor:base | 71% | 100% | 75% | 65% | 88% | 65% | — | 60% (n=12) | 0.52 | 881.41 | 118.2 |
 | hibrida:base | 80% | 100% | 80% | 76% | 90% | 76% | — | 68% (n=12) | 0.65 | 881.41 | 288.2 |
+
+## B2 · passo 1: teoria separada dos exercícios (2026-10-26)
+
+Índice com o livro cortado em teoria, exercícios e respostas; a busca e a avaliação olham só a teoria (os exercícios
+do livro aparecem num grupo à parte). Mesmo gabarito da versão 3, com `--geradas` (161 perguntas), modo texto.
+"acerto@20" mostra se o erro é de ordem (resposta certa entre os 20 primeiros) ou de recuperação.
+
+| limite da teoria | acerto@5 | acerto@20 | exata | parafrase | questao | de claude | de gerada | links | MRR@10 |
+|---|---|---|---|---|---|---|---|---|---|
+| base (versão 3) | 78% | — | 100% | 65% | 77% | 82% | 77% | 56% (n=12) | 0.61 |
+| 800 | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 64% (n=12) | 0.65 |
+| **1.200 (escolhido)** | **80%** | **91%** | 100% | 70% | **78%** | 85% | 78% | 56% (n=12) | 0.62 |
+| 1.600 | 76% | 92% | 100% | 60% | 75% | 80% | 75% | 56% (n=12) | 0.60 |
+
+Decisão: 1.200 caracteres — maior acerto de questão somado nas duas matérias, sem piorar os links.
+
+## B2 · passo 2: leitura limpa dos PDFs (2026-10-27)
+
+Mesmo gabarito e configuração do passo 1 (limite 1.200), índice com a leitura por fonte e posição.
+
+| configuração | acerto@5 | acerto@20 | exata | parafrase | questao | de claude | de gerada | links | MRR@10 | indexação (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| passo 1 | 80% | 91% | 100% | 70% | 78% | 85% | 78% | 56% (n=12) | 0.62 | 29 |
+| passo 2 | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 56% (n=12) | 0.58 | 90–250 |
+| depois da revisão final | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 64% (n=12) | 0.58 | 90–280 |
+
+Decisão e motivo: spec da peça B2, §9.

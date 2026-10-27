@@ -67,6 +67,27 @@ def test_secao_completa(cenario):
     texto = secao_completa(cenario["indice"], cenario["s12"])
     assert texto.index("integrais triplas em coordenadas") < texto.index("exercícios de integrais triplas")
     assert "Coordenadas polares" not in texto
+    assert "resposta da integral tripla" not in texto   # o gabarito não entra no texto da seção
+
+
+def test_filtro_por_parte(cenario):
+    teoria = buscar(cenario["indice"], "integrais triplas", partes=["teoria"])
+    assert teoria and all(r.parte == "teoria" for r in teoria)
+    todas = buscar(cenario["indice"], "integrais triplas")
+    assert {"teoria", "exercicio"} <= {r.parte for r in todas}
+    [ex] = buscar(cenario["indice"], "integrais triplas", partes=["exercicio"])
+    assert ex.numero == 1 and ex.secao_id == cenario["s12"]
+
+
+def test_resposta_e_exercicio_de(cenario):
+    from estudos.rag.busca import exercicio_de, resposta_de
+    ex = exercicio_de(cenario["indice"], cenario["s12"], 2)   # o 2 é curto e foi junto com o 1
+    assert ex is not None and ex.parte == "exercicio" and "Mude a ordem" in ex.trecho
+    assert exercicio_de(cenario["indice"], cenario["s12"], 9) is None
+    assert exercicio_de(cenario["indice"], cenario["s11"], 1) is None
+    r = resposta_de(cenario["indice"], cenario["s12"], 1)
+    assert r is not None and "resposta da integral tripla" in r.trecho
+    assert resposta_de(cenario["indice"], cenario["s12"], 3) is None
 
 
 def test_cao_e_coes_casam():
@@ -123,3 +144,28 @@ def test_sem_vetores_cai_para_texto(cenario):
 def test_consulta_vazia_ou_so_palavras_vazias_nao_traz_nada(com_vetores, modo, consulta):
     cenario, e = com_vetores
     assert buscar_modo(cenario["indice"], consulta, modo=modo, embeddings=e)[1] == []
+
+
+def test_consulta_ignora_uso_privado(cenario):
+    # a busca por palavras só considera letras e números: caractere de uso privado na consulta não muda nada
+    from estudos.rag.busca import buscar_modo
+    _, com = buscar_modo(cenario["indice"], "polares" + chr(0xE001))
+    _, sem = buscar_modo(cenario["indice"], "polares")
+    assert com and [r.trecho_id for r in com] == [r.trecho_id for r in sem]
+
+
+def test_exercicio_de_acha_o_numero_fora_de_ordem(con, materia):
+    from estudos.rag.busca import exercicio_de
+    criar_pdf(materia.pasta / "fontes/livros/o.pdf", ["capa", "2.1 Tema\nteoria\n2.1 Exercícios\n" + "\n".join(
+        f"{n}. exercício número {n} " + "z" * 210 for n in (1, 4, 2, 3, 5))])
+    with operacao(con, "o", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/o.pdf")
+        livros.criar(op, f, "principal")
+        s21 = livros.criar_secao(op, f, "2.1", "Tema", 2, 2)
+    sincronizar(con, materia.pasta)
+    indice = abrir_indice(materia.pasta)
+    try:
+        assert all(f"exercício número {n}" in exercicio_de(indice, s21, n).trecho for n in (1, 2, 3, 4, 5))
+        assert exercicio_de(indice, s21, 6) is None
+    finally:
+        indice.close()

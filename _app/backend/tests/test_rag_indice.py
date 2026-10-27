@@ -53,6 +53,16 @@ def test_versao_antiga_e_recriada(materia):
     con.close()
 
 
+def test_indice_v3_e_refeito_como_v4(materia):
+    con = abrir_indice(materia.pasta)
+    con.execute("PRAGMA user_version = 3")
+    con.close()
+    con = abrir_indice(materia.pasta)
+    colunas = {r["name"] for r in con.execute("PRAGMA table_info(trecho)")}
+    assert {"parte", "numero"} <= colunas and VERSAO_INDICE >= 4
+    con.close()
+
+
 def test_caminho_alternativo(materia, tmp_path):
     destino = tmp_path / "outro" / "indice.db"
     con = abrir_indice(materia.pasta, destino)

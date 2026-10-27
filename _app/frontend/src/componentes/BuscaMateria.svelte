@@ -3,7 +3,7 @@
   // (PDF na página; texto no bloco ## que casou). Teclado: setas andam, Enter abre, Esc fecha.
   import { onDestroy, tick, untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
-  import type { ResultadoBusca } from '../api/tipos'
+  import type { ExercicioLivro, ResultadoBusca } from '../api/tipos'
   import { slugTitulo } from '../markdown'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash } from '../rotas/rota'
@@ -27,6 +27,7 @@
   let escopo = $state<'unidade' | 'materia'>('unidade')
   let filtro = $state<Filtro>('tudo')
   let resultados = $state<Resultado[]>([])
+  let exercicios = $state<ExercicioLivro[]>([]) // exercícios do livro, à parte da teoria, com a resposta do gabarito
   let montando = $state(false)
   let buscou = $state(false)
   let ativo = $state(0)
@@ -38,14 +39,19 @@
 
   const grupoDe = (r: Resultado) => (Object.keys(TIPOS) as (keyof typeof TIPOS)[]).find((g) => TIPOS[g].includes(r.tipo)) ?? 'outros'
   const agrupados = $derived(
-    GRUPOS.map(([g, nome]) => ({ nome, itens: resultados.filter((r) => grupoDe(r) === g) })).filter((g) => g.itens.length),
+    [
+      ...GRUPOS.map(([g, nome]) => ({ nome, itens: resultados.filter((r) => grupoDe(r) === g) })),
+      { nome: 'Exercícios do livro', itens: exercicios.map((e) => e.exercicio) },
+    ].filter((g) => g.itens.length),
   )
+  const respostaDe = $derived(new Map(exercicios.map((e) => [e.exercicio.trecho_id, e.resposta])))
   const ordem = $derived(agrupados.flatMap((g) => g.itens))
 
   async function buscar() {
     const q = consulta.trim()
     if (!valeBuscar(q)) {
       resultados = []
+      exercicios = []
       buscou = false
       return
     }
@@ -56,11 +62,13 @@
       const r = await requisitar<ResultadoBusca>('GET', `/api/materias/${uid}/busca?${params}`)
       if (q !== consulta.trim()) return // chegou depois de outra digitação
       resultados = r.resultados
+      exercicios = r.exercicios ?? []
       montando = (r.sincronizacao.avisos ?? []).some((a) => a.includes('andamento'))
       buscou = true
       ativo = 0
     } catch {
       resultados = []
+      exercicios = []
       buscou = true
     }
   }
@@ -167,6 +175,7 @@
               {#if r.por === 'sentido'}<span class="sentido" title="Achado pelo sentido, sem palavras em comum com a busca">pelo sentido</span>{/if}
             </div>
             <div class="trecho">{@html destacar(r.trecho)}</div>
+            {#if respostaDe.get(r.trecho_id)}<div class="resposta"><strong>Resposta:</strong> {respostaDe.get(r.trecho_id)?.trecho}</div>{/if}
           </div>
         {/each}
       {/each}
@@ -205,6 +214,7 @@
     letter-spacing: 0.04em; color: var(--destaque); border: 1px solid color-mix(in srgb, var(--destaque) 50%, transparent);
   }
   .item.ativo .titulo { color: var(--destaque); }
+  .resposta { font-size: 0.82rem; margin-top: 0.2rem; color: var(--texto); }
   .trecho { font-size: 0.85rem; color: var(--suave); margin-top: 0.15rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .trecho :global(mark) { background: none; color: var(--texto); font-weight: 600; }
   .vazio { padding: 0.8rem 0.6rem; display: grid; gap: 0.5rem; justify-items: start; }

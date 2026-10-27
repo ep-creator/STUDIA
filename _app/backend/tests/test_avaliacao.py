@@ -172,3 +172,36 @@ def test_questao_ignora_o_resultado_que_contem_o_proprio_enunciado(con, materia,
     perguntas = [PerguntaBusca("Calcule a integral dupla em polares.", "questao", ("fonte:lista",), None, "gerada")]
     [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
     assert linha.acerto5 == 0   # a única "resposta" era a própria lista: não vale
+
+
+def test_mede_so_a_teoria(con, materia, cenario_busca, tmp_path):
+    # "resolver em casa" só está no exercício 1 da 1.2: o grupo de exercícios não conta como resposta
+    perguntas = [PerguntaBusca("resolver em casa", "exata", ("secao:1.2",), None)]
+    [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
+    assert linha.acerto5 == 0
+
+
+def test_acerto20_busca_20_resultados(con, materia, cenario_busca, tmp_path, monkeypatch):
+    import estudos.avaliacao.busca as av
+    pedidos = []
+    original = av.buscar_modo
+
+    def espiao(*args, **kwargs):
+        pedidos.append(kwargs["limite"])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(av, "buscar_modo", espiao)
+    perguntas = [PerguntaBusca("coordenadas polares", "exata", ("secao:1.1",), None)]
+    [linha] = avaliar(con, materia.pasta, perguntas, [Configuracao("texto", "texto", None)], tmp_path / "t")
+    assert min(pedidos) >= 20 and linha.acerto20 == 1.0 >= linha.acerto5
+    assert "acerto@20" in tabela_busca([linha])
+
+
+def test_limite_teoria_chega_ao_indice(con, materia, cenario_busca, tmp_path, monkeypatch):
+    import estudos.avaliacao.busca as av
+    recebidos = []
+    original = av.sincronizar
+    monkeypatch.setattr(av, "sincronizar", lambda *a, **k: recebidos.append(k.get("limite_teoria")) or original(*a, **k))
+    avaliar(con, materia.pasta, [PerguntaBusca("polares", "exata", ("secao:1.1",), None)],
+            [Configuracao("texto", "texto", None)], tmp_path / "t", limite_teoria=800)
+    assert recebidos == [800]

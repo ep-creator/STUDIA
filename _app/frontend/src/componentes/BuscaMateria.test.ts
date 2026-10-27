@@ -115,3 +115,28 @@ test('resultado que veio só pelo sentido ganha a etiqueta "pelo sentido"', asyn
   const etiquetas = screen.getAllByText('pelo sentido')
   expect(etiquetas).toHaveLength(1)
 })
+
+function motorComExercicios(resultados: Resultado[], exercicios: unknown[]) {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+    resultados, exercicios, modo: 'texto', sincronizacao: { indexadas: 0, removidas: 0, trechos: 10, avisos: [], tempo_ms: 1 },
+  }), { status: 200, headers: { 'content-type': 'application/json' } })))
+}
+
+test('exercícios do livro aparecem num grupo à parte, com a resposta, e abrem o livro na página', async () => {
+  const ex = livro({ trecho_id: 50, parte: 'exercicio', numero: 23, pagina: 411, trecho: '23. Use coordenadas [polares] para achar o volume' })
+  motorComExercicios([livro()], [{ exercicio: ex, resposta: livro({ trecho_id: 51, parte: 'resposta', trecho: '23. 4π/3' }) }])
+  abrir()
+  await userEvent.type(screen.getByRole('combobox', { name: /Buscar na matéria/ }), 'polares')
+  expect(await screen.findByText('Exercícios do livro', { selector: '.grupo' })).toBeInTheDocument()
+  expect(screen.getByText(/4π\/3/)).toBeInTheDocument()
+  await userEvent.keyboard('{ArrowDown}{Enter}')
+  expect(pedido.fonte).toEqual({ id: 1, pagina: 411 })
+})
+
+test('sem exercícios, o grupo não aparece', async () => {
+  motorComExercicios([livro()], [])
+  abrir()
+  await userEvent.type(screen.getByRole('combobox', { name: /Buscar na matéria/ }), 'polares')
+  expect(await screen.findByText('Livros', { selector: '.grupo' })).toBeInTheDocument()
+  expect(screen.queryByText('Exercícios do livro')).toBeNull()
+})

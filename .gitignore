@@ -43,3 +43,6 @@ _app/frontend/playwright-report/
 
 # Modelos de embeddings baixados (Fase 6)
 _app/.modelos/
+
+# amostras de páginas reais (texto de livros e slides de terceiros): só locais, nunca no repositório
+_app/backend/tests/fixtures/paginas/
