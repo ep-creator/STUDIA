@@ -12,6 +12,7 @@
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
+  import { abrirNoPainel } from '../estado/ia.svelte'
 
   let { painel }: { painel: Painel } = $props()
 
@@ -162,7 +163,12 @@
     {#if documento}
       <header>
         <h2>{documento.titulo}</h2>
-        {#if !editando}<button class="botao" onclick={() => (editando = true)}>✎ Editar</button>{/if}
+        <div class="acoes">
+          {#if documento.secao_id !== null && !editando}
+            <button class="botao" onclick={() => abrirNoPainel(`secao:${documento!.secao_id}`, 'resumidor', 'resumir')}>✦ Resumir a seção</button>
+          {/if}
+          {#if !editando}<button class="botao" onclick={() => (editando = true)}>✎ Editar</button>{/if}
+        </div>
       </header>
       <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
       {#if TIPOS_COM_SECAO.includes(documento.tipo) && !editando}

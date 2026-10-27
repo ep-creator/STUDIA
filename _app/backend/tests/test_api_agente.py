@@ -109,3 +109,8 @@ def test_pedido_simultaneo_na_mesma_conversa(api):
     finally:
         rota._ocupadas.discard(chave)
     assert eventos[0]["tipo"] == "erro" and "respondendo" in eventos[0]["dados"]["detalhe"]
+
+
+def test_estado_em_demonstracao_nao_pede_chave(api, monkeypatch):
+    monkeypatch.setenv("ESTUDOS_AGENTE_FALSO", "1")
+    assert api["cliente"].get("/api/agente/estado").json()["chave_configurada"] is True

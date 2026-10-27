@@ -126,7 +126,8 @@ def pacote(alvo: str, papel: str, atalho: str | None = None, ctx: Contexto = Dep
 
 @router.get("/api/agente/estado")
 def estado(settings: Settings = Depends(obter_settings)) -> EstadoAgente:
-    return {"chave_configurada": ler_chave(settings.app_dir) is not None, "modelo": settings.agente_modelo,
+    demonstracao = os.environ.get("ESTUDOS_AGENTE_FALSO") == "1"   # responde sem chave: não pede a chave na tela
+    return {"chave_configurada": demonstracao or ler_chave(settings.app_dir) is not None, "modelo": settings.agente_modelo,
             "total_mes": conversas.total_do_mes(settings.workspace, datetime.date.today()), "teto": settings.teto_mensal_brl}
 
 

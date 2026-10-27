@@ -80,7 +80,7 @@ test('questão que é exercício do livro mostra "Ver no livro" com o enunciado 
 test('sem exercício no índice, "Ver no livro" não aparece', async () => {
   const chamadas = motorDoLivro(404)
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  await vi.waitFor(() => expect(chamadas.length).toBe(1))
+  await vi.waitFor(() => expect(chamadas.filter((u) => u.includes('/exercicios/')).length).toBe(1))
   expect(screen.queryByRole('button', { name: /Ver no livro/ })).toBeNull()
 })
 
@@ -89,5 +89,21 @@ test('rótulo que não é número, lista de outra seção ou sem seção: nem pe
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: questao(3, '22a'), marca: null, secao: SECAO, onmarcar: vi.fn() })
   render(DetalheQuestao, { uid: 'u1', lista: lista(2, 'L2', [q]), questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, onmarcar: vi.fn() })
-  expect(chamadas).toEqual([])
+  expect(chamadas.filter((u) => u.includes('/exercicios/'))).toEqual([])
+})
+
+test('o painel do tutor recebe a questão aberta e os atalhos N1–N4', async () => {
+  const chamadas: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    chamadas.push(url)
+    const json = (d: unknown) => new Response(JSON.stringify(d), { status: 200, headers: { 'content-type': 'application/json' } })
+    if (url.includes('/agente/conversa')) return json({ id: 1, alvo: 'questao:2', papel: 'tutor', mensagens: [] })
+    if (url.endsWith('/api/agente/estado')) return json({ chave_configurada: true, modelo: 'g', total_mes: 0, teto: 20 })
+    throw new Error(`rota não simulada: ${url}`)
+  }))
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, onmarcar: vi.fn() })
+  for (const nome of ['N1 Dica', 'N2 Caminho', 'N3 Esboço', 'N4 Resolução']) {
+    expect(await screen.findByRole('button', { name: nome })).toBeInTheDocument()
+  }
+  expect(chamadas.some((u) => u.includes('/agente/conversa?alvo=questao%3A2&papel=tutor'))).toBe(true)
 })

@@ -5,7 +5,7 @@
   import { nomeUnidade } from './apresentacao'
   import Avisos from './componentes/Avisos.svelte'
   import BarraLateral from './componentes/BarraLateral.svelte'
-  import EspacoIA from './componentes/EspacoIA.svelte'
+  import PainelIA from './componentes/PainelIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import { ia } from './estado/ia.svelte'
@@ -150,7 +150,10 @@
       <button class="botao" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
         {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
       </button>
-      {#if ia.aberta}<EspacoIA contexto="geral" />{/if}
+      {#if ia.aberta}
+        <PainelIA uid={rota.uid} alvo={ia.alvo ?? 'geral'} papel={ia.papel ?? 'estrategista'}
+          atalhos={ia.papel === 'resumidor' ? ['resumir'] : ia.papel === 'tutor' ? ['N1', 'N2', 'N3', 'N4'] : ['plano']} />
+      {/if}
     </div>
   </div>
 {/if}

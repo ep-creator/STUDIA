@@ -4,7 +4,7 @@
   import { erro } from '../estado/avisos.svelte'
   import { ia } from '../estado/ia.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
-  import EspacoIA from './EspacoIA.svelte'
+  import PainelIA from './PainelIA.svelte'
   import Markdown from './Markdown.svelte'
 
   let { uid, lista, questao, marca, secao, resolucao = null, onmarcar }: {
@@ -106,7 +106,7 @@
     </section>
   {/if}
 
-  <EspacoIA contexto="tutor" />
+  <PainelIA {uid} alvo={`questao:${questao.id}`} papel="tutor" atalhos={['N1', 'N2', 'N3', 'N4']} />
 </aside>
 
 <style>
