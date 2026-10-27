@@ -55,3 +55,12 @@ gabarito da versão 3 (44 perguntas), modo texto.
 
 O que caiu: o acerto geral (70 → 68%, uma pergunta) e a página exata (75 → 62%, uma de 8) — trechos menores
 espalham uma explicação por mais de um trecho. Questão (o uso principal) sobe de 75 para 80% e os links de 29 para 33%.
+
+## B2 · passo 2: leitura limpa dos PDFs (2026-10-27)
+
+| configuração | acerto@5 | acerto@20 | exata | parafrase | questao | trecho | links | MRR@10 | indexação (s) |
+|---|---|---|---|---|---|---|---|---|---|
+| passo 1 | 68% | 84% | 93% | 10% | 80% | 62% (n=8) | 33% (n=12) | 0.49 | 5 |
+| passo 2 | 66% | 86% | 86% | 10% | 80% | 25% (n=8) | 38% (n=12) | 0.48 | 89–153 |
+
+A página exata caiu por 2 de 8 perguntas que passaram da posição 5 para a 6. Decisão e motivo: spec da peça B2, §9.

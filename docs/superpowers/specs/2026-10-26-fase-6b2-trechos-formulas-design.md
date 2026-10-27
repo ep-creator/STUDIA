@@ -176,3 +176,42 @@ sobraram, sem reordenador.
 - Refazer o OCR do Guidorizzi e o sumário do Boulos.
 - Fórmulas empilhadas montadas por inteiro (reconhecer a imagem, opção B).
 - Usar a leitura nova na importação de livros e listas.
+
+## 9. Resultado (2026-10-27)
+
+### 9.1 Números (modo texto; Cálculo com `--geradas`, 161 perguntas; Geometria, 44)
+
+| | Cálculo: geral / questão / paráfrase / links | Geometria: geral / exata / questão / trecho / links |
+|---|---|---|
+| base (peça B, v3) | 78% / 77% / 65% / 56% | 70% / 100% / 75% / 75% / 29% |
+| passo 1: trechos (limite 1.200) | **80% / 78%** / 70% / 56% | 68% / 93% / **80%** / 62% / **33%** |
+| passo 2: + leitura limpa | 78% / 77% / 65% / 56% | 66% / 86% / **80%** / 25% / **38%** |
+
+- **Passo 1 entrou** (critério cumprido): o acerto das perguntas de questão sobe nas duas matérias e os links não pioram.
+- **Passo 2 não cumpriu o critério numérico** (baixa uma ou duas perguntas por matéria). Comparando pergunta a pergunta a
+  leitura antiga e a limpa num mesmo gabarito, não há defeito: a ordem e as fronteiras dos trechos mudaram e umas
+  perguntas sobem (5→3, 14→10, 3→1) enquanto outras descem (2→5, 1→3); a queda da página exata da Geometria são 2 de 8
+  perguntas que passaram da posição 5 para a 6. **Fica**, pelo que a spec pedia dela (§2): o texto que a busca devolve
+  (para a pessoa e para a IA) passa a ter os símbolos certos e as frases inteiras, e o "Ver no livro" depende dela —
+  com a leitura antiga a numeração dos exercícios do Stewart se perdia (colunas embaralhadas).
+- **"Ver no livro"**: das 204 questões das listas do Cálculo que são exercício do Stewart, 187 são achadas (91%); 50
+  vêm com a resposta (o Stewart só responde os ímpares).
+- **Tempo**: ler o Stewart vol. 2 inteiro leva ~20 s (a leitura antiga, ~7 s); indexar a matéria inteira, de 90 s a
+  250 s conforme a carga da máquina (antes, ~30 s). Dentro do limite de 10 minutos da peça B.
+
+### 9.2 Decisão sobre o reordenador (§6.3)
+
+Das perguntas que erram no top 5, a resposta está no top 20 em **68%** (Cálculo: 78% → 93%) e em **59%** (Geometria:
+66% → 86%). A maioria dos erros é de **ordem**, não de recuperação: o reordenador tem espaço para ganhar e merece spec
+própria (desligado por padrão até provar ganho na mesma avaliação).
+
+### 9.3 Achados e limites
+
+- Leitura limpa: tabelas por **nome do glifo** para as MathematicalPi (o código muda entre PDFs, o nome não) e por
+  letra para LTSGreek, TECHMath, MATH e CMEX10; o glifo "t" da Times-Italic-TT do Stewart desenha "g" (nome errado na
+  própria fonte) e fica "t"; frações e integrais empilhadas saem em linhas separadas; 54 símbolos do Stewart ficam sem
+  tradução.
+- Grades de itens na mesma linha (9 | 10) saem por coluna; a numeração aceita item fora de ordem (janela de +10/−20).
+- O título da 14.5 no PDF ("Regra da Cadeia") não casa com o cadastro ("A Regra da Cadeia"): a seção começa na página.
+- O Guidorizzi é escaneado com OCR (texto com erros de leitura): nada desta peça conserta isso.
+- As amostras de páginas reais usadas nos testes ficam só no computador do usuário (o repositório é público).

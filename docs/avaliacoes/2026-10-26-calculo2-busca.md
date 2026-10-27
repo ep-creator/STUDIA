@@ -71,3 +71,14 @@ do livro aparecem num grupo à parte). Mesmo gabarito da versão 3, com `--gerad
 | 1.600 | 76% | 92% | 100% | 60% | 75% | 80% | 75% | 56% (n=12) | 0.60 |
 
 Decisão: 1.200 caracteres — maior acerto de questão somado nas duas matérias, sem piorar os links.
+
+## B2 · passo 2: leitura limpa dos PDFs (2026-10-27)
+
+Mesmo gabarito e configuração do passo 1 (limite 1.200), índice com a leitura por fonte e posição.
+
+| configuração | acerto@5 | acerto@20 | exata | parafrase | questao | de claude | de gerada | links | MRR@10 | indexação (s) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| passo 1 | 80% | 91% | 100% | 70% | 78% | 85% | 78% | 56% (n=12) | 0.62 | 29 |
+| passo 2 | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 56% (n=12) | 0.58 | 90–250 |
+
+Decisão e motivo: spec da peça B2, §9.
