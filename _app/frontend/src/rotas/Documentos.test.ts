@@ -72,7 +72,7 @@ test('"Resumir a seção" abre o resumidor da seção no painel', async () => {
   vi.stubGlobal('fetch', vi.fn(async (url: string) => {
     const json = (dados: unknown) => new Response(JSON.stringify(dados), { status: 200, headers: { 'content-type': 'application/json' } })
     if (url.endsWith('/documentos/7')) return json({ ...comSecao, corpo: '# Extremos', versao: 'v1' })
-    if (url.endsWith('/fontes')) return json([])
+    if (url.endsWith('/fontes') || url.endsWith('/secoes')) return json([])
     return json({ ligados: 0 })
   }))
   await userEvent.click(await screen.findByRole('button', { name: 'Extremos' }))
