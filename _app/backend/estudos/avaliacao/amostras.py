@@ -16,7 +16,7 @@ from estudos.importacao.pdf import traducoes_da_pagina
 def spans_da_pagina(pagina: pymupdf.Page) -> list[dict]:
     return [
         {"font": s["font"], "size": round(s["size"], 2), "bbox": [round(v, 2) for v in s["bbox"]], "text": s["text"]}
-        for bloco in pagina.get_text("dict")["blocks"] for linha in bloco.get("lines", []) for s in linha["spans"]
+        for bloco in pagina.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"] for linha in bloco.get("lines", []) for s in linha["spans"]
         if s["text"].strip()
     ]
 

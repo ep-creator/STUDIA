@@ -190,3 +190,30 @@ def test_simbolos_traduzidos_na_pagina_do_stewart():
 def test_espaco_largo_do_stewart_depois_da_virgula():
     # a Times-Roman do Stewart desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ")
     assert linhas([s("r = sen 2,Mr = cos 2, Mas não aqui", 100, 100, 400, 112)]) == ["r = sen 2, r = cos 2, Mas não aqui"]
+
+
+def test_leitura_limpa_nao_pede_as_imagens(tmp_path, monkeypatch):
+    # em PDF escaneado o modo "dict" com imagens custa ~70x mais (devolve os bytes de cada imagem) e elas não são usadas
+    import pymupdf
+    caminho = criar_pdf(tmp_path / "a.pdf", ["texto da página"])
+    pedidos = []
+    original = pymupdf.Page.get_text
+
+    def espiao(self, opcao="text", *args, **kwargs):
+        if opcao == "dict":
+            pedidos.append(kwargs.get("flags"))
+        return original(self, opcao, *args, **kwargs)
+
+    monkeypatch.setattr(pymupdf.Page, "get_text", espiao)
+    ler_paginas_limpas(caminho, {})
+    assert pedidos and all(f is not None and not f & pymupdf.TEXT_PRESERVE_IMAGES for f in pedidos)
+
+
+def test_pagina_densa_e_rapida():
+    # página de exercícios do Stewart: ~3 mil pedaços pequenos; a montagem não pode ser quadrática
+    import time
+    spans = [s(f"p{i}", x0 + 14 * (i % 16), 20 + 9 * (i // 16) % 760, x0 + 14 * (i % 16) + 12, 28 + 9 * (i // 16) % 760, tamanho=7)
+             for x0 in (30, 320) for i in range(1500)]
+    inicio = time.perf_counter()
+    montar_texto(spans, LARGURA, ALTURA, {})
+    assert time.perf_counter() - inicio < 1.0

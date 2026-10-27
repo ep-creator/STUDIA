@@ -109,6 +109,7 @@ _MARGEM_ESTREITA = 0.35   # coluna mais estreita que isso (fração do bloco) é
 _TITULO = 1.2             # fonte 20% maior que a mediana do bloco: título (pode passar por cima de um vão)
 _LINHAS_PARA_ICONE = 10   # blocos com 10 linhas de altura ou mais: glifo solto (≤ 2 letras) não fecha vão de coluna
 _LINHAS_PARA_MARGEM = 3   # só blocos com ao menos 3 linhas de altura reordenam margens (uma fórmula partida não)
+_GRUPOS_RECENTES = 8       # linhas abertas em que um pedaço novo ainda pode entrar
 _SOBREPOSICAO = 0.5       # dois pedaços estão na mesma linha se se sobrepõem em metade da altura do menor
 _PEQUENO = 0.8            # pedaço menor que 80% do maior da linha, acima ou abaixo do centro: expoente ou índice
 _SOBRE = str.maketrans("0123456789+-−ni", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁻ⁿⁱ")
@@ -162,16 +163,23 @@ def _base(grupo: list[dict]) -> dict:
 def _linhas(spans: list[dict]) -> list[str]:
     """Pedaços de uma coluna → linhas: mesma altura juntam, da esquerda para a direita; expoentes e índices grudam."""
     grupos: list[list[dict]] = []
+    bases: list[dict] = []   # base de cada grupo, atualizada ao entrar pedaço (recalcular a cada vez é quadrático)
     for s in sorted(spans, key=lambda s: ((s["bbox"][1] + s["bbox"][3]) / 2, s["bbox"][0])):
         y0, y1 = s["bbox"][1], s["bbox"][3]
-        for g in grupos:
-            base = _base(g)
+        # os pedaços vêm por altura: só os grupos mais recentes podem ser da mesma linha (frações empilhadas
+        # intercalam algumas linhas; 8 grupos cobrem isso)
+        achou = False
+        for k in range(max(0, len(grupos) - _GRUPOS_RECENTES), len(grupos)):
+            base = bases[k]
             sobra = min(y1, base["bbox"][3]) - max(y0, base["bbox"][1])
             if sobra > _SOBREPOSICAO * min(y1 - y0, base["bbox"][3] - base["bbox"][1]):
-                g.append(s)
+                grupos[k].append(s)
+                bases[k] = _base([base, s])
+                achou = True
                 break
-        else:
+        if not achou:
             grupos.append([s])
+            bases.append(s)
     linhas = []
     for g in sorted(grupos, key=lambda g: min(s["bbox"][1] for s in g)):
         g = _encaixar(g)
@@ -221,8 +229,8 @@ def _cortar_xy(spans: list[dict], largura: float, altura: float, h_mediana: floa
     x0, x1 = min(s["bbox"][0] for s in spans), max(s["bbox"][2] for s in spans)
     y0, y1 = min(s["bbox"][1] for s in spans), max(s["bbox"][3] for s in spans)
     alto = (y1 - y0) >= _LINHAS_PARA_ICONE * h_mediana
-    livres = [s for s in spans if _pode_cruzar(s, corpo, alto)]
-    colunas = _vaos([(s["bbox"][0], s["bbox"][2]) for s in spans if s not in livres], x0, x1, _VAO_COLUNA * largura)
+    presos = [s for s in spans if not _pode_cruzar(s, corpo, alto)]
+    colunas = _vaos([(s["bbox"][0], s["bbox"][2]) for s in presos], x0, x1, _VAO_COLUNA * largura)
     if colunas:
         limites = [x0 - 1, *colunas, x1 + 1]
         cruza = lambda s: any(s["bbox"][0] < c < s["bbox"][2] for c in colunas)  # título por cima da margem
@@ -255,7 +263,8 @@ def montar_texto(spans: list[dict], largura: float, altura: float, tabelas: dict
         return "", sem_traducao
     topo = [s for s in uteis if s["bbox"][3] <= _FAIXA_BORDA * altura]
     rodape = [s for s in uteis if s["bbox"][1] >= (1 - _FAIXA_BORDA) * altura]
-    meio = [s for s in uteis if s not in topo and s not in rodape]
+    nas_bordas = {id(s) for s in topo + rodape}
+    meio = [s for s in uteis if id(s) not in nas_bordas]
     alturas = sorted(s["bbox"][3] - s["bbox"][1] for s in meio) or [1.0]
     h_mediana = alturas[len(alturas) // 2]
     tamanhos = sorted(s["size"] for s in meio) or [1.0]
@@ -315,7 +324,8 @@ def ler_paginas_limpas(caminho: Path, tabelas: dict[str, dict[str, str]] | None 
         textos, total = [], 0
         for p in doc:
             try:
-                spans = [s for b in p.get_text("dict")["blocks"] for l in b.get("lines", []) for s in l["spans"]]
+                blocos = p.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)["blocks"]  # sem imagens: em PDF escaneado custam ~70x
+                spans = [s for b in blocos for l in b.get("lines", []) for s in l["spans"]]
                 texto, n = montar_texto(spans, p.rect.width, p.rect.height,
                                         tabelas if tabelas is not None else traducoes_da_pagina(doc, p))
                 total += n
