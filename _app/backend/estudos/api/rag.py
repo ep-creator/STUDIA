@@ -10,8 +10,8 @@ from estudos.api.respostas import ExercicioLivro, ResultadoBusca, ResumoSincroni
 from estudos.erros import NaoEncontrado
 from estudos.ia.embeddings import obter_embeddings
 from estudos.rag.busca import buscar_modo, exercicio_de, resposta_de, secao_completa
-from estudos.rag.indexador import agendar_sincronizacao, sincronizar
-from estudos.rag.indice import abrir_indice, descartar_indice, eh_corrupcao
+from estudos.rag.indexador import ResumoSincronizacao as Resumo, agendar_sincronizacao, sincronizar
+from estudos.rag.indice import abrir_indice, descartar_indice, eh_corrupcao, indice_desatualizado
 from estudos.workspace import ARQUIVO_DB
 
 router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["busca"])
@@ -30,6 +30,8 @@ def busca(
     """modo: "texto", "vetor" ou "hibrida" (padrão: o do config). Sem embeddings disponíveis, a busca é por texto e a
     resposta diz o modo efetivamente usado."""
     embeddings = obter_embeddings(ctx.settings)
+    if _refazendo(ctx, embeddings):
+        return {"resultados": [], "exercicios": [], "sincronizacao": asdict(Resumo(avisos=[_EM_ANDAMENTO])), "modo": "texto"}
     resumo = sincronizar(ctx.con, ctx.materia.pasta, esperar=False)
     if embeddings is not None and _faltam_vetores(ctx):
         # gerar os vetores leva minutos na primeira vez: vai para segundo plano e a busca segue com o que já existe
@@ -38,7 +40,7 @@ def busca(
     def consultar(indice):
         efetivo, resultados = buscar_modo(
             indice, q, unidade=unidade, secao_id=secao_id, tipos=tipo, limite=limite, modo=modo or ctx.settings.busca,
-            embeddings=embeddings, partes=["teoria"])
+            embeddings=embeddings, partes=_partes(tipo))
         exercicios = []
         if not tipo or "livro" in tipo:  # exercícios do livro, à parte (com a resposta do gabarito quando há)
             _, achados = buscar_modo(indice, q, unidade=unidade, secao_id=secao_id, limite=_EXERCICIOS, modo=efetivo,
@@ -52,6 +54,21 @@ def busca(
 
 
 _EXERCICIOS = 3
+_EM_ANDAMENTO = "índice da busca sendo refeito em segundo plano (em andamento); os resultados voltam em alguns minutos"
+
+
+def _refazendo(ctx: Contexto, embeddings=None) -> bool:
+    """Índice de uma versão antiga (depois de atualizar o app): refazer leva minutos, então vai para segundo plano e
+    quem pediu não espera."""
+    if not indice_desatualizado(ctx.materia.pasta):
+        return False
+    agendar_sincronizacao(ctx.materia.pasta, ctx.materia.pasta / ARQUIVO_DB, embeddings=embeddings)
+    return True
+
+
+def _partes(tipos: list[str] | None) -> list[str]:
+    """Resultados são a teoria; o gabarito (com ou sem número) entra quando o filtro pede gabarito."""
+    return ["teoria", "resposta"] if tipos and "gabarito" in tipos else ["teoria"]
 
 
 def _com_resposta(indice, exercicio) -> ExercicioLivro:
@@ -94,6 +111,8 @@ def texto_da_secao(secao_id: int, ctx: Contexto = Depends(contexto_dep)) -> Text
     secao = ctx.con.execute("SELECT id, codigo, titulo FROM secao_livro WHERE id = ?", (secao_id,)).fetchone()
     if secao is None:
         raise NaoEncontrado(f"Seção {secao_id} não encontrada")
+    if _refazendo(ctx):
+        return {"secao_id": secao["id"], "codigo": secao["codigo"], "titulo": secao["titulo"], "texto": ""}
     sincronizar(ctx.con, ctx.materia.pasta, esperar=False)
     texto = _com_indice(ctx, lambda indice: secao_completa(indice, secao_id))
     return {"secao_id": secao["id"], "codigo": secao["codigo"], "titulo": secao["titulo"], "texto": texto}
@@ -102,6 +121,8 @@ def texto_da_secao(secao_id: int, ctx: Contexto = Depends(contexto_dep)) -> Text
 @router.get("/secoes/{secao_id}/exercicios/{numero}")
 def exercicio_do_livro(secao_id: int, numero: int, ctx: Contexto = Depends(contexto_dep)) -> ExercicioLivro:
     """Exercício `numero` da seção do livro (enunciado original) e a resposta do gabarito, quando há."""
+    if _refazendo(ctx):
+        raise NaoEncontrado("O índice da busca está sendo refeito; o exercício aparece em alguns minutos")
     sincronizar(ctx.con, ctx.materia.pasta, esperar=False)
     exercicio = _com_indice(ctx, lambda indice: exercicio_de(indice, secao_id, numero))
     if exercicio is None:

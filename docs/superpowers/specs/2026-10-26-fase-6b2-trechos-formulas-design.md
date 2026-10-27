@@ -74,7 +74,8 @@ como na peça B.
 ### 3.3 Busca
 
 - `buscar`/`buscar_modo` ganham `partes: list[str] | None` (padrão: todas); o `Resultado` ganha `parte` e `numero`.
-- A API `GET /busca` devolve dois grupos: `teoria` (ranking atual, só `parte = 'teoria'`) e `exercicios` (os 3
+- A API `GET /busca` devolve dois grupos: `teoria` (ranking atual, só `parte = 'teoria'`; com o filtro de tipo
+  `gabarito`, o filtro "Livros" da paleta, entram também as respostas do gabarito) e `exercicios` (os 3
   melhores de `parte = 'exercicio'`, cada um com a resposta quando existe um trecho `resposta` com a mesma seção e
   número).
 - A paleta (`BuscaMateria`) mostra os dois grupos: "Teoria" e "Exercícios do livro". O exercício abre o livro na
@@ -128,7 +129,10 @@ listas que já estão no banco casarem com o texto limpo. Os enunciados não sã
 |---|---|
 | Página com erro na leitura detalhada | essa página usa a leitura atual |
 | Seção sem título de exercícios ou numeração que não fecha | seção inteira como teoria |
-| Gabarito com formato não reconhecido | respostas ficam fora; o exercício aparece sem resposta |
+| Gabarito com formato não reconhecido | entra inteiro como respostas sem número (aparece com o filtro de gabarito); o exercício aparece sem resposta |
+| Resposta decimal sozinha na linha ("2.6") | não é cabeçalho: no gabarito, um código só abre seção se vem depois do anterior |
+| Índice de versão antiga (depois de atualizar o app) | refeito em segundo plano; a busca responde na hora com o aviso "em andamento" |
+| Capítulo com páginas que nenhuma subseção cobre | essas páginas ficam com o capítulo |
 | Fonte sem tabela | texto como hoje, aviso com a contagem de símbolos sem tradução |
 | Índice v3 no disco | refeito na próxima sincronização |
 
@@ -190,8 +194,8 @@ sobraram, sem reordenador.
 - **Passo 1 entrou** (critério cumprido): o acerto das perguntas de questão sobe nas duas matérias e os links não pioram.
 - **Passo 2 não cumpriu o critério numérico** (baixa uma ou duas perguntas por matéria). Comparando pergunta a pergunta a
   leitura antiga e a limpa num mesmo gabarito, não há defeito: a ordem e as fronteiras dos trechos mudaram e umas
-  perguntas sobem (5→3, 14→10, 3→1) enquanto outras descem (2→5, 1→3); a queda da página exata da Geometria são 2 de 8
-  perguntas que passaram da posição 5 para a 6. **Fica**, pelo que a spec pedia dela (§2): o texto que a busca devolve
+  perguntas sobem (5→3, 14→10, 3→1) enquanto outras descem (2→5, 1→3); a queda da página exata da Geometria são 3 de 8
+  perguntas (de 5 para 2 acertos), duas delas passando da posição 5 para a 6. **Fica**, pelo que a spec pedia dela (§2): o texto que a busca devolve
   (para a pessoa e para a IA) passa a ter os símbolos certos e as frases inteiras, e o "Ver no livro" depende dela —
   com a leitura antiga a numeração dos exercícios do Stewart se perdia (colunas embaralhadas).
 - **"Ver no livro"**: das 204 questões das listas do Cálculo que são exercício do Stewart, 187 são achadas (91%); 50

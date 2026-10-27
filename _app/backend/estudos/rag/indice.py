@@ -96,6 +96,23 @@ def _preparar(con: sqlite3.Connection) -> None:
     con.execute(f"PRAGMA user_version = {VERSAO_INDICE}")
 
 
+def indice_desatualizado(raiz: Path, caminho: Path | None = None) -> bool:
+    """O arquivo do índice existe e é de outra versão (será refeito do zero, o que leva minutos). Só lê."""
+    caminho = caminho or caminho_indice(raiz)
+    if not caminho.is_file():
+        return False
+    try:
+        con = sqlite3.connect(f"{caminho.resolve().as_uri()}?mode=ro", uri=True)
+        try:
+            versao = con.execute("PRAGMA user_version").fetchone()[0]
+            tem_tabelas = con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0] > 0
+        finally:
+            con.close()
+    except sqlite3.DatabaseError:  # corrompido: o caminho de sempre descarta e refaz
+        return False
+    return tem_tabelas and versao != VERSAO_INDICE
+
+
 def descartar_indice(raiz: Path, caminho: Path | None = None) -> None:
     _apagar(caminho or caminho_indice(raiz))
 

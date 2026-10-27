@@ -188,8 +188,14 @@ def test_simbolos_traduzidos_na_pagina_do_stewart():
 
 
 def test_espaco_largo_do_stewart_depois_da_virgula():
-    # a Times-Roman do Stewart desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ")
-    assert linhas([s("r = sen 2,Mr = cos 2, Mas não aqui", 100, 100, 400, 112)]) == ["r = sen 2, r = cos 2, Mas não aqui"]
+    # a Times-Roman do Stewart desenha "M" em branco como espaço largo nas fórmulas, num pedaço separado da vírgula
+    spans = [s("r = sen 2,", 100, 100, 160, 112), s("Mr = cos 2", 160, 100, 220, 112)]
+    assert linhas(spans) == ["r = sen 2, r = cos 2"]
+
+
+def test_m_de_verdade_depois_da_virgula_fica():
+    assert linhas([s("os pontos (A,M,B) e o ponto M", 100, 100, 300, 112, "BodoniSvtyTwoITCTT-Book")]) ==         ["os pontos (A,M,B) e o ponto M"]
+    assert linhas([s("(A,", 100, 100, 120, 112, "STIXGeneral-Italic"), s("M,B)", 120, 100, 150, 112, "STIXGeneral-Italic")]) ==         ["(A,M,B)"]
 
 
 def test_leitura_limpa_nao_pede_as_imagens(tmp_path, monkeypatch):

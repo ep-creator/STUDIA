@@ -62,14 +62,20 @@ def _inserir(indice: sqlite3.Connection, origem: str, trechos: list[TrechoNovo],
 
 
 def _folhas(con: sqlite3.Connection, fonte_id: int) -> list[SecaoCorte]:
-    """Seções sem subseções, em ordem de página (o capítulo não repete o texto das subseções)."""
-    secoes = livros.listar_secoes(con, fonte_id)
-
-    def tem_filha(s) -> bool:
-        return any(o.nivel > s.nivel and s.pagina_pdf_ini <= o.pagina_pdf_ini <= s.pagina_pdf_fim for o in secoes)
-
-    return [SecaoCorte(s.id, s.codigo, s.titulo, s.pagina_pdf_ini, s.pagina_pdf_fim)
-            for s in sorted(secoes, key=lambda s: (s.pagina_pdf_ini, -s.nivel)) if not tem_filha(s)]
+    """Faixas de página de cada seção, em ordem: cada página fica com a seção mais funda que a contém (o capítulo não
+    repete o texto das subseções, mas as páginas que só ele cobre continuam com ele)."""
+    dona: dict[int, object] = {}
+    for s in sorted(livros.listar_secoes(con, fonte_id), key=lambda s: (s.nivel, s.pagina_pdf_ini)):
+        for pagina in range(s.pagina_pdf_ini, s.pagina_pdf_fim + 1):
+            dona[pagina] = s
+    faixas: list[SecaoCorte] = []
+    for pagina in sorted(dona):
+        s = dona[pagina]
+        if faixas and faixas[-1].id == s.id and faixas[-1].pagina_fim == pagina - 1:
+            faixas[-1] = dataclasses.replace(faixas[-1], pagina_fim=pagina)
+        else:
+            faixas.append(SecaoCorte(s.id, s.codigo, s.titulo, pagina, pagina))
+    return faixas
 
 
 def _indexar_livro(indice, con, origem: str, fonte_id: int, doc: DocumentoPdf, titulo: str, limite_teoria: int) -> int:

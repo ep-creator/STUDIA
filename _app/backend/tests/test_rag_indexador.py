@@ -195,3 +195,20 @@ def test_indexador_avisa_simbolos_sem_traducao(con, materia, base, monkeypatch):
     monkeypatch.setattr(indexador, "ler_paginas_limpas", lambda caminho: (original(caminho)[0], 3))
     r = sincronizar(con, materia.pasta)
     assert any("3 símbolos sem tradução" in a for a in r.avisos)
+
+
+def test_paginas_so_do_capitulo_continuam_no_indice(con, materia):
+    # Guidorizzi cap. 16: o capítulo tem páginas próprias antes da única subseção cadastrada (16.5)
+    criar_pdf(materia.pasta / "fontes/livros/c.pdf", ["capa", "16 Máximos e mínimos\ntexto próprio do capítulo",
+                                                     "mais texto do capítulo 16", "16.5 Lagrange\nmultiplicadores"])
+    with operacao(con, "c", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/c.pdf")
+        livros.criar(op, f, "principal")
+        cap = livros.criar_secao(op, f, "16", "Máximos e mínimos", 2, 4, nivel=1)
+        sub = livros.criar_secao(op, f, "16.5", "Lagrange", 4, 4, nivel=2)
+    sincronizar(con, materia.pasta)
+    trechos = _trechos(materia, fonte_id=f)
+    texto_cap = " ".join(t["texto"] for t in trechos if t["secao_id"] == cap)
+    assert "texto próprio do capítulo" in texto_cap and "mais texto do capítulo 16" in texto_cap
+    assert any("multiplicadores" in t["texto"] for t in trechos if t["secao_id"] == sub)
+    assert not any("multiplicadores" in t["texto"] for t in trechos if t["secao_id"] == cap)   # sem repetir a subseção

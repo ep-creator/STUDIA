@@ -118,9 +118,12 @@ _SEM_TRADUCAO = re.compile(r"[-\x00-\x08\x0b-\x1f]")   # uso privado e con
 _PREFIXO_FONTE = re.compile(r"^[A-Z]{6}\+")
 
 
-# Stewart: a Times-Roman desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ"), e a vírgula vem em
-# outro pedaço; em texto corrido depois de vírgula sempre vem espaço, então ",M" colado no que segue é esse espaço
-_ESPACO_LARGO = re.compile(r",M(?=\S)")
+def _espaco_largo(texto_da_linha: str, span: dict, parte: str) -> str:
+    """Stewart: a Times-Roman desenha "M" em branco como espaço largo nas fórmulas ("2θ,Mr = cos 2θ"); ele abre um
+    pedaço próprio logo depois da vírgula. Um "M" de verdade ("(A,M,B)") vem no mesmo pedaço ou em outra fonte."""
+    if parte.startswith("M") and texto_da_linha.endswith(",") and _PREFIXO_FONTE.sub("", span["font"]) == "Times-Roman":
+        return " " + parte[1:]
+    return parte
 
 
 def _traduzir(span: dict, tabelas: dict[str, dict[str, str]]) -> tuple[str, int]:
@@ -187,7 +190,7 @@ def _linhas(spans: list[dict]) -> list[str]:
         meio, altura = (base["bbox"][1] + base["bbox"][3]) / 2, base["bbox"][3] - base["bbox"][1]
         texto, fim = "", None
         for s in sorted(g, key=lambda s: s["bbox"][0]):
-            parte = s["texto"]
+            parte = _espaco_largo(texto, s, s["texto"])
             centro = (s["bbox"][1] + s["bbox"][3]) / 2
             pequeno = s["size"] < _PEQUENO * base["size"]
             if pequeno and centro < meio - 0.15 * altura:
@@ -270,7 +273,7 @@ def montar_texto(spans: list[dict], largura: float, altura: float, tabelas: dict
     tamanhos = sorted(s["size"] for s in meio) or [1.0]
     corpo = tamanhos[len(tamanhos) // 2]
     linhas = _linhas(topo) + _cortar_xy(meio, largura, altura, h_mediana, corpo) + _linhas(rodape)
-    return _ESPACO_LARGO.sub(", ", limpar_texto("\n".join(linhas))), sem_traducao
+    return limpar_texto("\n".join(linhas)), sem_traducao
 
 
 _DIFERENCAS = re.compile(r"/Differences\s*\[(.*?)\]", re.S)

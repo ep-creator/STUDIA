@@ -50,7 +50,7 @@ def test_gabarito_liga_resposta_ao_exercicio():
 
 
 def test_gabarito_com_codigo_desconhecido():
-    ts = cortar_gabarito([(9, "99.9\n1. nada\n10.4\n1. π/2")], {"10.4": 2}, 1600)
+    ts = cortar_gabarito([(9, "9.9\n1. nada\n10.4\n1. π/2")], {"10.4": 2}, 1600)   # 9.9 não cadastrada, na ordem do livro
     assert [(t.secao_id, t.numero) for t in ts] == [(2, 1)]
 
 
@@ -99,3 +99,12 @@ def test_item_fora_de_ordem_nao_derruba_a_numeracao():
 
 def test_numero_repetido_ou_longe_nao_abre_exercicio():
     assert _exercicios([1, 2, 3, 1, 40, 4]) == [1, 2, 3, 4]   # "1." repetido (sem 2 depois) e um salto de 40
+
+
+def test_resposta_decimal_sozinha_nao_e_cabecalho_do_gabarito():
+    # Stewart: "2.6" (uma resposta) sozinha na linha não fecha a seção 10.3; código de seção não cadastrada mais
+    # adiante (10.5) fecha, para as respostas dela não irem para a anterior
+    paginas = [(9, "10.3\n1.\n2.6\n3. x\n10.4\n1. y\n3.₂\n5. z\n10.5\n1. de seção não cadastrada\n14.1\n1. w\n0.2\n3. v")]
+    ts = cortar_gabarito(paginas, {"10.3": 1, "10.4": 2, "14.1": 3}, 1600)
+    assert [(t.secao_id, t.numero) for t in ts] == [(1, 1), (1, 3), (2, 1), (2, 5), (3, 1), (3, 3)]
+    assert "2.6" in ts[0].texto

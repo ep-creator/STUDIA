@@ -169,13 +169,17 @@ def cortar_livro(paginas: list[tuple[int, str]], secoes: list[SecaoCorte], limit
 
 
 def cortar_gabarito(paginas: list[tuple[int, str]], codigos: dict[str, int], limite: int) -> list[TrechoNovo]:
-    """Respostas por seção (linha só com o código) e número; seções desconhecidas ficam fora."""
+    """Respostas por seção (linha só com o código) e número; seções desconhecidas ficam fora. O gabarito vem na ordem do
+    livro: um código só abre seção se vem depois do anterior ("2.6" sozinho na linha dentro da 10.3 é uma resposta)."""
     blocos: list[tuple[str, list[tuple[int, str]]]] = []
     atual: str | None = None
+    anterior: tuple[int, ...] = ()
     for pagina, texto in paginas:
         for linha in (texto or "").split("\n"):
             cabecalho = _CABECALHO_GABARITO.match(_normal(linha))
-            if cabecalho:
+            ordem = tuple(int(p) for p in cabecalho.group(1).split(".")) if cabecalho else ()
+            if cabecalho and ordem > anterior:
+                anterior = ordem
                 atual = cabecalho.group(1) if cabecalho.group(1) in codigos else None
                 if atual is not None:
                     blocos.append((atual, []))
