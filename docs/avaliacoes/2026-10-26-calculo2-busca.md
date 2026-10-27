@@ -80,5 +80,6 @@ Mesmo gabarito e configuração do passo 1 (limite 1.200), índice com a leitura
 |---|---|---|---|---|---|---|---|---|---|---|
 | passo 1 | 80% | 91% | 100% | 70% | 78% | 85% | 78% | 56% (n=12) | 0.62 | 29 |
 | passo 2 | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 56% (n=12) | 0.58 | 90–250 |
+| depois da revisão final | 78% | 93% | 100% | 65% | 77% | 82% | 77% | 64% (n=12) | 0.58 | 90–280 |
 
 Decisão e motivo: spec da peça B2, §9.

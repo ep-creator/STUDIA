@@ -190,7 +190,11 @@ sobraram, sem reordenador.
 | base (peça B, v3) | 78% / 77% / 65% / 56% | 70% / 100% / 75% / 75% / 29% |
 | passo 1: trechos (limite 1.200) | **80% / 78%** / 70% / 56% | 68% / 93% / **80%** / 62% / **33%** |
 | passo 2: + leitura limpa | 78% / 77% / 65% / 56% | 66% / 86% / **80%** / 25% / **38%** |
+| depois da revisão final | 78% / 77% / 65% / **64%** | 68% / 93% / **80%** / 25% / **38%** |
 
+- **Revisão final** (2026-10-27): as páginas que só o capítulo cobre voltaram ao índice (Guidorizzi cap. 16, Santos
+  5.2), respostas decimais do gabarito não cortam mais a seção, o gabarito aparece com o filtro de gabarito e o índice
+  antigo é refeito em segundo plano. Com isso os links do Cálculo vão a 64% e a Geometria volta a 68% / 93% na exata.
 - **Passo 1 entrou** (critério cumprido): o acerto das perguntas de questão sobe nas duas matérias e os links não pioram.
 - **Passo 2 não cumpriu o critério numérico** (baixa uma ou duas perguntas por matéria). Comparando pergunta a pergunta a
   leitura antiga e a limpa num mesmo gabarito, não há defeito: a ordem e as fronteiras dos trechos mudaram e umas
