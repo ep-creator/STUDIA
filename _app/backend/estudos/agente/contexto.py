@@ -28,7 +28,7 @@ class Pedaco:
     texto: str
 
 
-def _nome_fonte(con: sqlite3.Connection, fonte_id: int) -> str:
+def nome_fonte(con: sqlite3.Connection, fonte_id: int) -> str:
     linha = con.execute("SELECT titulo, caminho FROM fonte WHERE id = ?", (fonte_id,)).fetchone()
     if linha is None:
         return "fonte"
@@ -38,7 +38,7 @@ def _nome_fonte(con: sqlite3.Connection, fonte_id: int) -> str:
 def rotulo_de(con: sqlite3.Connection, r: Resultado) -> str:
     """Rótulo de citação de um resultado da busca: "[<livro ou slides> p. N]" ou "[<título do texto>]"."""
     if r.fonte_id is not None:
-        return f"[{_nome_fonte(con, r.fonte_id)} p. {r.pagina}]" if r.pagina else f"[{_nome_fonte(con, r.fonte_id)}]"
+        return f"[{nome_fonte(con, r.fonte_id)} p. {r.pagina}]" if r.pagina else f"[{nome_fonte(con, r.fonte_id)}]"
     return f"[{r.titulo}]"
 
 
@@ -89,7 +89,7 @@ def _de_questao(con: sqlite3.Connection, raiz: Path, questao_id: int) -> list[Pe
                 if ex is not None:
                     resp = resposta_de(indice, secao["id"], int(q["rotulo"]))
                     texto = ex.trecho + (f"\n\nResposta do gabarito do livro: {resp.trecho}" if resp else "")
-                    rotulo = f"[{_nome_fonte(con, ex.fonte_id)} {secao['codigo']} exercício {q['rotulo']} p. {ex.pagina}]"
+                    rotulo = f"[{nome_fonte(con, ex.fonte_id)} {secao['codigo']} exercício {q['rotulo']} p. {ex.pagina}]"
                     pedacos.append(Pedaco(rotulo, texto))
             consulta = " ".join(filter(None, [q["enunciado_md"], secao["titulo"] if secao else ""]))
             _, achados = buscar_modo(indice, consulta, secao_id=secao["id"] if secao else None, limite=_TRECHOS_TEORIA,
@@ -117,7 +117,7 @@ def _de_secao(con: sqlite3.Connection, raiz: Path, secao_id: int) -> list[Pedaco
                 if total > _MAX_CARACTERES_SECAO:
                     break
                 total += len(t["texto"])
-                pedacos.append(Pedaco(f"[{_nome_fonte(con, t['fonte_id'])} p. {t['pagina']}]", t["texto"]))
+                pedacos.append(Pedaco(f"[{nome_fonte(con, t['fonte_id'])} p. {t['pagina']}]", t["texto"]))
             _, slides = buscar_modo(indice, secao["titulo"], tipos=["slides"], limite=_TRECHOS_TEORIA, partes=["teoria"])
             pedacos += [Pedaco(rotulo_de(con, r), _texto_do_trecho(indice, r.trecho_id)) for r in slides]
     return pedacos + _documento(con, raiz, "resumo", "tipo = 'resumo' AND secao_id", secao_id)
