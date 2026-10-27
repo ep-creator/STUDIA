@@ -39,12 +39,14 @@ class Turno:
 
 
 class ErroModelo(Exception):
-    """motivo: sem_chave, chave_invalida, indisponivel, limite_de_uso ou tempo_esgotado."""
+    """motivo: sem_chave, chave_invalida, pedido_invalido, indisponivel, limite_de_uso, tempo_esgotado ou
+    resposta_invalida. `uso`: os tokens que o modelo já contou antes de cair (entram no custo)."""
 
-    def __init__(self, motivo: str, detalhe: str = "") -> None:
+    def __init__(self, motivo: str, detalhe: str = "", uso: "Uso | None" = None) -> None:
         super().__init__(f"{motivo}: {detalhe}" if detalhe else motivo)
         self.motivo = motivo
         self.detalhe = detalhe
+        self.uso = uso
 
 
 class Modelo(Protocol):
@@ -67,9 +69,12 @@ def _conteudo(turno: Turno) -> dict:
     return {"role": "user", "parts": [{"functionResponse": {"name": n, "response": r}} for n, r in turno.resultados]}
 
 
-def _motivo_http(status: int) -> str:
-    if status in (400, 401, 403):
+def _motivo_http(status: int, corpo: str) -> str:
+    # O Gemini responde 400 tanto para chave errada quanto para pedido recusado; só o corpo diz qual é.
+    if status in (401, 403) or (status == 400 and ("API_KEY_INVALID" in corpo or "API key not valid" in corpo)):
         return "chave_invalida"
+    if status == 400:
+        return "pedido_invalido"
     if status == 429:
         return "limite_de_uso"
     return "indisponivel"
@@ -93,7 +98,7 @@ class Gemini:
             ) as resposta:
                 if resposta.status_code >= 400:
                     resposta.read()
-                    raise ErroModelo(_motivo_http(resposta.status_code), resposta.text[:300])
+                    raise ErroModelo(_motivo_http(resposta.status_code, resposta.text), resposta.text[:300])
                 for linha in resposta.iter_lines():
                     if not linha.startswith("data:"):
                         continue
@@ -108,10 +113,15 @@ class Gemini:
                     if "usageMetadata" in evento:
                         u = evento["usageMetadata"]
                         uso = Uso(u.get("promptTokenCount", 0), u.get("candidatesTokenCount", 0) + u.get("thoughtsTokenCount", 0))
+        except ErroModelo as e:
+            e.uso = e.uso or uso
+            raise
         except httpx.TimeoutException as e:
-            raise ErroModelo("tempo_esgotado", str(e)) from None
+            raise ErroModelo("tempo_esgotado", str(e), uso) from None
         except httpx.TransportError as e:
-            raise ErroModelo("indisponivel", str(e)) from None
+            raise ErroModelo("indisponivel", str(e), uso) from None
+        except (ValueError, KeyError, TypeError) as e:  # linha SSE malformada ou parte sem os campos esperados
+            raise ErroModelo("resposta_invalida", str(e)[:200], uso) from None
         if uso is not None:
             yield uso
 

@@ -30,7 +30,18 @@ export async function conversar(uid: string, pedido: PedidoAgente, aoEvento: (e:
   const decodificador = new TextDecoder()
   let resto = ''
   for (;;) {
-    const { value, done } = await leitor.read()
+    if (sinal?.aborted) {
+      void leitor.cancel().catch(() => {})
+      return
+    }
+    let lido: ReadableStreamReadResult<Uint8Array>
+    try {
+      lido = await leitor.read()
+    } catch (e) {
+      if (sinal?.aborted) return   // a tela trocou de conversa no meio
+      throw e
+    }
+    const { value, done } = lido
     resto += decodificador.decode(value ?? new Uint8Array(), { stream: !done })
     const linhas = resto.split('\n')
     resto = linhas.pop() ?? ''

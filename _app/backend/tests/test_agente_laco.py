@@ -124,3 +124,52 @@ def test_erro_no_meio_guarda_o_parcial(con, materia, ajustes, questao_do_livro):
     assert _tipos(saidas) == ["texto", "erro"] and saidas[-1].dados["motivo"] == "indisponivel"
     mensagens = conversas.mensagens(con, conversas.conversa_ativa(con, alvo, "tutor").id)
     assert mensagens[-1].autor == "agente" and mensagens[-1].texto == "Começando "
+
+
+def test_excecao_inesperada_na_ferramenta_vira_resultado(con, materia, ajustes, questao_do_livro, monkeypatch):
+    from estudos.agente import ferramentas
+    original = ferramentas.FERRAMENTAS["salvar_resolucao"]
+
+    def trava(ambiente, args):
+        raise PermissionError("arquivo aberto em outro programa")
+
+    monkeypatch.setitem(ferramentas.FERRAMENTAS, "salvar_resolucao", dataclasses.replace(original, executar=trava))
+    saidas, modelo = _rodar(con, materia, ajustes, f"questao:{questao_do_livro}", "tutor",
+                            [[Chamada("salvar_resolucao", {"texto": "x"})], [Texto("não gravei")]])
+    _, resultado = modelo.pedidos[1][1][-1].resultados[0]
+    assert "erro" in resultado and _tipos(saidas)[-1] == "fim"
+
+
+def test_excecao_inesperada_no_modelo_fecha_com_erro_e_guarda(con, materia, ajustes, questao_do_livro):
+    alvo = f"questao:{questao_do_livro}"
+
+    class Quebra(ModeloFalso):
+        def responder(self, sistema, turnos, ferramentas):
+            yield Uso(100, 50)
+            yield Texto("Parcial ")
+            raise RuntimeError("linha SSE malformada")
+
+    saidas = list(responder(_ambiente(con, materia, ajustes, alvo), Quebra([]), carregar_papel("tutor"), "oi", False,
+                            materia.pasta.parent, HOJE))
+    assert _tipos(saidas) == ["texto", "erro"] and saidas[-1].dados["motivo"] == "interno"
+    ultima = conversas.mensagens(con, conversas.conversa_ativa(con, alvo, "tutor").id)[-1]
+    assert ultima.autor == "agente" and ultima.texto == "Parcial " and ultima.custo_brl > 0
+
+
+def test_desconexao_grava_parcial_e_custo(con, materia, ajustes, questao_do_livro):
+    alvo = f"questao:{questao_do_livro}"
+    modelo = ModeloFalso([[Uso(100, 50), Texto("Começo "), Texto("resto")]], nome="gemini-3.8-flash")
+    gerador = responder(_ambiente(con, materia, ajustes, alvo), modelo, carregar_papel("tutor"), "oi", False,
+                        materia.pasta.parent, HOJE)
+    assert next(gerador).tipo == "texto"
+    gerador.close()                                   # a pessoa recarregou a página no meio da resposta
+    ultima = conversas.mensagens(con, conversas.conversa_ativa(con, alvo, "tutor").id)[-1]
+    assert ultima.autor == "agente" and ultima.texto == "Começo " and ultima.custo_brl > 0
+
+
+def test_uso_ja_recebido_conta_quando_o_modelo_cai(con, materia, ajustes, questao_do_livro):
+    alvo = f"questao:{questao_do_livro}"
+    erro = ErroModelo("indisponivel", "caiu")
+    erro.uso = Uso(2000, 1000)
+    _rodar(con, materia, ajustes, alvo, "tutor", [[Texto("Começ"), erro]])
+    assert conversas.mensagens(con, conversas.conversa_ativa(con, alvo, "tutor").id)[-1].custo_brl > 0

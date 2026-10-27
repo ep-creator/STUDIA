@@ -51,6 +51,17 @@ def responder(
     ferramentas = declaracoes(papel.ferramentas)
     resposta: list[str] = []
     entrada = saida = 0
+    guardada = False
+
+    def guardar() -> float:
+        """Guarda a resposta (ou o pedaço que chegou) com o custo, uma vez só."""
+        nonlocal guardada
+        custo = custo_brl(ajustes, modelo.nome, entrada, saida)
+        if not guardada and (resposta or entrada or saida):
+            conversas.adicionar(con, conversa.id, "agente", "".join(resposta), entrada, saida, custo, modelo.nome)
+        guardada = True
+        return custo
+
     try:
         for rodada in range(ajustes.max_rodadas + 1):
             texto_rodada: list[str] = []
@@ -82,12 +93,18 @@ def responder(
                 resultados.append((c.nome, resultado))
             turnos = turnos + [Turno("modelo", "".join(texto_rodada) or None, chamadas), Turno("ferramenta", resultados=resultados)]
     except ErroModelo as e:
-        custo = custo_brl(ajustes, modelo.nome, entrada, saida)
-        if resposta:  # o que já chegou fica guardado
-            conversas.adicionar(con, conversa.id, "agente", "".join(resposta), entrada, saida, custo, modelo.nome)
+        if e.uso is not None:  # tokens que o modelo já contou antes de cair também custam
+            entrada, saida = entrada + e.uso.entrada, saida + e.uso.saida
+        guardar()
         yield Saida("erro", {"motivo": e.motivo, "detalhe": e.detalhe})
         return
-    custo = custo_brl(ajustes, modelo.nome, entrada, saida)
-    conversas.adicionar(con, conversa.id, "agente", "".join(resposta), entrada, saida, custo, modelo.nome)
+    except Exception as e:  # erro inesperado: a tela recebe `erro` em vez de um corte mudo, e o custo fica
+        guardar()
+        yield Saida("erro", {"motivo": "interno", "detalhe": f"{type(e).__name__}: {e}"[:300]})
+        return
+    finally:  # página recarregada no meio (o gerador é fechado): o que chegou fica guardado com o custo
+        if not guardada:
+            guardar()
+    custo = guardar()
     yield Saida("fim", {"custo_brl": custo, "total_mes": conversas.total_do_mes(workspace, hoje),
                         "tokens_entrada": entrada, "tokens_saida": saida})

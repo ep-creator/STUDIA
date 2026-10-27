@@ -31,6 +31,7 @@
   let falha = $state<{ texto: string; pedido: PedidoAgente } | null>(null)
   let escrita = $state('')
   let fontes: FonteResumo[] | null = null
+  let corrente: AbortController | null = null   // a resposta em andamento; trocar de alvo a corta
 
   const reais = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`
 
@@ -47,6 +48,10 @@
   $effect(() => {
     void alvo
     void papel
+    corrente?.abort()
+    corrente = null
+    respondendo = false
+    aviso = null
     confirmar = null
     falha = null
     void carregar().then(() => {
@@ -79,6 +84,8 @@
 
   async function enviar(p: PedidoAgente) {
     if (respondendo) return
+    const controle = new AbortController()
+    corrente = controle
     respondendo = true
     falha = null
     confirmar = null
@@ -86,16 +93,21 @@
     itens.push({ autor: 'agente', texto: '' })
     try {
       await conversar(uid, p, (e) => {
+        if (controle.signal.aborted) return   // resposta de outra questão: não entra nesta conversa
         if (e.tipo === 'confirmar') confirmar = { pedido: p, total: e.dados.total_mes, teto: e.dados.teto }
         else if (e.tipo === 'erro') falha = { texto: textoDoErro(e.dados.motivo, e.dados.detalhe), pedido: p }
         else aoEvento(e)
-      })
+      }, controle.signal)
     } catch (e) {
+      if (controle.signal.aborted) return
       falha = { texto: e instanceof Error ? e.message : String(e), pedido: p }
     } finally {
-      respondendo = false
-      aviso = null
-      itens = itens.filter((i) => i.autor !== 'agente' || i.texto)   // tira a bolha vazia de quem não chegou a responder
+      if (corrente === controle) corrente = null
+      if (!controle.signal.aborted) {   // cortada: a troca de alvo já zerou o painel
+        respondendo = false
+        aviso = null
+        itens = itens.filter((i) => i.autor !== 'agente' || i.texto)   // tira a bolha vazia de quem não chegou a responder
+      }
     }
   }
 
@@ -106,6 +118,9 @@
     }
     if (motivo === 'chave_invalida') return 'O Gemini recusou a chave. Confira a chave configurada.'
     if (motivo === 'ocupado') return detalhe
+    if (motivo === 'pedido_invalido') return `O Gemini recusou o pedido: ${detalhe}`
+    if (motivo === 'resposta_invalida') return `O Gemini mandou uma resposta que não consegui ler (${detalhe}).`
+    if (motivo === 'interno' || motivo === 'alvo') return `Algo deu errado no app: ${detalhe}`
     return `Não consegui falar com o Gemini (${motivo === 'limite_de_uso' ? 'limite de uso' : motivo === 'tempo_esgotado' ? 'demorou demais' : 'fora do ar'}).`
   }
 

@@ -6,6 +6,8 @@ variáveis do pedido); só então vira expressão SymPy com um dicionário de no
 separado com tempo limite; integral que não fecha de forma simbólica cai para a integração numérica.
 """
 
+import builtins
+import keyword
 import multiprocessing
 import re
 from typing import Any
@@ -17,7 +19,12 @@ _MAX_CARACTERES = 500
 _CARACTERES = re.compile(r"^[0-9A-Za-z +\-*/^().,=]*$")
 _PONTO_EM_NOME = re.compile(r"[A-Za-z]\.|\.[A-Za-z]")   # x.real, ().__class__: acesso a atributo
 _NOME = re.compile(r"[A-Za-z][A-Za-z0-9]*")
-_VARIAVEL = re.compile(r"^[A-Za-z][A-Za-z0-9]{0,11}$")
+# Variável: uma letra (com até 2 dígitos: x, y1) ou o nome de uma letra grega. Nada de nomes livres: o SymPy avalia
+# a expressão como Python, e uma "variável" chamada eval, chr ou for viraria código.
+_VARIAVEL = re.compile(r"^[A-Za-z][0-9]{0,2}$")
+_GREGAS = {"alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "kappa", "lam", "mu", "nu", "xi",
+           "rho", "sigma", "tau", "phi", "chi", "psi", "omega"}
+_PROIBIDOS = set(keyword.kwlist) | set(keyword.softkwlist) | set(dir(builtins)) | {"Integer", "Float", "Rational", "Symbol"}
 _TEMPO_SIMBOLICO_S = 5
 _TEMPO_NUMERICO_S = 5
 
@@ -34,6 +41,8 @@ def _conferir(texto: Any, variaveis: list[str]) -> str:
     if not _CARACTERES.match(texto) or _PONTO_EM_NOME.search(texto):
         raise EntradaInvalida("expressão inválida: só números, variáveis, operadores e funções matemáticas")
     for nome in _NOME.findall(texto):
+        if nome in _PROIBIDOS:
+            raise EntradaInvalida(f"nome não permitido: {nome}")
         if nome not in FUNCOES and nome not in variaveis:
             raise EntradaInvalida(f"nome desconhecido: {nome}")
     return texto
@@ -44,9 +53,10 @@ def _validar(pedido: dict) -> dict:
     if not isinstance(pedido, dict) or pedido.get("operacao") not in OPERACOES:
         raise EntradaInvalida(f"operação deve ser uma de: {', '.join(sorted(OPERACOES))}")
     variaveis = pedido.get("variaveis") or []
-    if not isinstance(variaveis, list) or not all(isinstance(v, str) and _VARIAVEL.match(v) and v not in FUNCOES
-                                                   for v in variaveis):
-        raise EntradaInvalida("variáveis devem ser nomes simples (x, y, theta)")
+    if not isinstance(variaveis, list) or len(variaveis) > 6 or not all(
+            isinstance(v, str) and (_VARIAVEL.match(v) or v in _GREGAS) and v not in FUNCOES and v not in _PROIBIDOS
+            for v in variaveis):
+        raise EntradaInvalida("variáveis devem ser uma letra (x, y1) ou o nome de uma letra grega (theta, phi)")
     limpo: dict = {"operacao": pedido["operacao"], "variaveis": variaveis}
     if pedido["operacao"] == "resolver":
         expressoes = pedido.get("expressoes") or []
@@ -81,6 +91,7 @@ def _analisar(texto: str, variaveis: list[str]):
     nomes = {n: getattr(sympy, n) for n in ("Integer", "Float", "Rational", "Symbol")}
     nomes |= {n: getattr(sympy, n) for n in FUNCOES - {"ln"}}
     nomes["ln"] = sympy.log
+    nomes["__builtins__"] = {}   # sem isso o eval do SymPy injeta os builtins do Python
     simbolos = {v: sympy.Symbol(v, real=True) for v in variaveis}
     if "=" in texto:
         esquerda, direita = texto.split("=", 1)

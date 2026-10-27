@@ -119,3 +119,49 @@ test('erro do Gemini mostra o motivo e Tentar de novo', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
   expect(await screen.findByText(/Use polares/)).toBeInTheDocument()
 })
+
+test('trocar de questão no meio da resposta corta a antiga e não mistura as conversas', async () => {
+  motor()
+  let fluxo!: ReadableStreamDefaultController<Uint8Array>
+  let sinal: AbortSignal | null | undefined
+  let iniciado = false
+  const base = vi.mocked(fetch).getMockImplementation()!
+  vi.mocked(fetch).mockImplementation(async (url, init = {}) => {
+    if (String(url).includes('/agente/mensagem') && !iniciado) {
+      iniciado = true
+      sinal = init.signal
+      return new Response(new ReadableStream<Uint8Array>({ start: (c) => { fluxo = c } }), { status: 200 })
+    }
+    return base(url as string, init)
+  })
+  const linha = (e: unknown) => new TextEncoder().encode(JSON.stringify(e) + '\n')
+  const { rerender } = abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N2 Caminho/ }))
+  await waitFor(() => expect(iniciado).toBe(true))
+  fluxo.enqueue(linha({ tipo: 'texto', dados: { texto: 'Da questão cinco' } }))
+  expect(await screen.findByText(/Da questão cinco/)).toBeInTheDocument()
+
+  await rerender({ uid: 'u1', alvo: 'questao:6', papel: 'tutor', atalhos: ['N1', 'N2', 'N3', 'N4'] })
+  expect(sinal?.aborted).toBe(true)
+  fluxo.enqueue(linha({ tipo: 'texto', dados: { texto: 'VAZOU' } }))
+  await new Promise((r) => setTimeout(r, 20))
+  expect(screen.queryByText(/VAZOU/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Da questão cinco/)).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /N1 Dica/ })).toBeEnabled()
+})
+
+test('pedido recusado pelo Gemini não manda trocar a chave e mostra o detalhe', async () => {
+  motor({ respostas: [[{ tipo: 'erro', dados: { motivo: 'pedido_invalido', detalhe: 'Invalid JSON payload received.' } }]] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N3 Esboço/ }))
+  expect(await screen.findByText(/recusou o pedido.*Invalid JSON payload received/i)).toBeInTheDocument()
+  expect(screen.queryByText(/chave/i)).not.toBeInTheDocument()
+})
+
+test('erro interno do app mostra o detalhe em vez de "fora do ar"', async () => {
+  motor({ respostas: [[{ tipo: 'erro', dados: { motivo: 'interno', detalhe: 'PermissionError: arquivo travado' } }]] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N3 Esboço/ }))
+  expect(await screen.findByText(/PermissionError: arquivo travado/)).toBeInTheDocument()
+  expect(screen.queryByText(/fora do ar/)).not.toBeInTheDocument()
+})

@@ -56,7 +56,12 @@ def test_gemini_le_texto_chamada_e_uso_do_sse():
 
 
 @pytest.mark.parametrize("resposta, motivo", [
-    (httpx.Response(400, json={"error": {"message": "API key not valid"}}), "chave_invalida"),
+    (httpx.Response(400, json={"error": {"message": "API key not valid. Please pass a valid API key.",
+                                         "details": [{"reason": "API_KEY_INVALID"}]}}), "chave_invalida"),
+    # revisão final: 400 sem ser de chave (pedido grande demais, esquema de ferramenta recusado) não é chave inválida
+    (httpx.Response(400, json={"error": {"message": "Invalid JSON payload received.", "status": "INVALID_ARGUMENT"}}),
+     "pedido_invalido"),
+    (httpx.Response(401, json={"error": {"message": "unauthenticated"}}), "chave_invalida"),
     (httpx.Response(403, json={"error": {"message": "forbidden"}}), "chave_invalida"),
     (httpx.Response(429, json={"error": {"message": "quota"}}), "limite_de_uso"),
     (httpx.Response(503, json={"error": {"message": "overloaded"}}), "indisponivel"),
@@ -75,3 +80,23 @@ def test_modelo_falso_roteiriza_rodadas():
     with pytest.raises(ErroModelo):
         list(falso.responder("s", [Turno("usuario", "2")], []))
     assert len(falso.pedidos) == 2 and falso.pedidos[0][1][0].texto == "1"
+
+
+class _CaiNoMeio(httpx.SyncByteStream):
+    def __iter__(self):
+        yield _sse({"candidates": [{"content": {"parts": [{"text": "Com"}]}}],
+                    "usageMetadata": {"promptTokenCount": 500, "candidatesTokenCount": 40}})
+        raise httpx.ReadError("conexão caiu")
+
+
+def test_queda_no_meio_leva_o_uso_ja_recebido():
+    g = _gemini(httpx.Response(200, stream=_CaiNoMeio()), [])
+    with pytest.raises(ErroModelo) as erro:
+        list(g.responder("s", [Turno("usuario", "oi")], FERRAMENTAS))
+    assert erro.value.motivo == "indisponivel" and erro.value.uso == Uso(500, 40)
+
+
+def test_sse_malformado_vira_erro_do_modelo():
+    g = _gemini(httpx.Response(200, content=b"data: {nao e json\r\n\r\n"), [])
+    with pytest.raises(ErroModelo):
+        list(g.responder("s", [Turno("usuario", "oi")], FERRAMENTAS))

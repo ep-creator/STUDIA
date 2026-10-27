@@ -226,3 +226,5 @@ def executar(ambiente: Ambiente, permitidas: list[str], nome: str, argumentos: d
         return {"erro": str(e)}
     except (ValueError, KeyError, TypeError, sqlite3.DatabaseError) as e:
         return {"erro": f"não consegui: {e}"}
+    except Exception as e:  # arquivo travado por outro programa, disco cheio…: o modelo segue, a resposta não quebra
+        return {"erro": f"não consegui: {type(e).__name__}: {e}"[:300]}

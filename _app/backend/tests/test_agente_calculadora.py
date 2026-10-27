@@ -60,3 +60,21 @@ def test_calculadora_tem_tempo_limite():
                   "limites": [["0", "1"]]})
     assert time.perf_counter() - inicio < 12
     assert r.get("numerico") is not None or "erro" in r
+
+
+@pytest.mark.parametrize("variaveis, expressao", [
+    # revisão final: nomes declarados como variáveis passavam pela lista branca e o SymPy os avaliava como Python
+    (["x", "eval", "chr", "for", "in"], "sin(*(eval(chr(55)+chr(42)+chr(54)) for x in (x,)))"),
+    (["x", "lambda"], "x"),
+    (["x", "print"], "print(x)"),
+    (["x", "Symbol"], "Symbol(x)"),
+    (["x", "if", "else"], "x if x else x"),
+])
+def test_variaveis_hostis_sao_recusadas(variaveis, expressao):
+    r = calcular({"operacao": "avaliar", "expressao": expressao, "variaveis": variaveis})
+    assert "erro" in r and "resultado" not in r
+
+
+def test_nomes_de_variaveis_matematicas_continuam_valendo():
+    r = calcular({"operacao": "derivada", "expressao": "theta^2 + x1*phi", "variaveis": ["theta", "x1", "phi"], "ordem": ["theta"]})
+    assert r["resultado"] == "2*theta"
