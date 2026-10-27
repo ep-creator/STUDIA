@@ -72,3 +72,13 @@ def test_paginas_entre_secoes_nao_cadastradas_ficam_fora():
 def test_gabarito_com_cabecalho_exercicios_maiusculo():
     ts = cortar_gabarito([(9, "EXERCÍCIOS 10.4\n1.\n(a) 100\n3. π/2\nEXERCÍCIOS 9.9\n1. fora")], {"10.4": 2}, 1600)
     assert [(t.secao_id, t.numero) for t in ts] == [(2, 1), (2, 3)] and "(a) 100" in ts[0].texto
+
+
+def test_rodape_numerado_nao_reinicia_a_contagem():
+    corpo = "\n".join(f"{n}. r = sen {n}θ " + "w" * 210 for n in (53, 54))
+    paginas = [(1, "10.4 Áreas\nteoria.\n10.4 Exercícios\n" + "\n".join(f"{n}. item {n} " + "v" * 210 for n in range(1, 53))
+                + "\n" + corpo + "\n1. AsHomework Hints estão disponíveis em www.stewartcalculus.com"),
+               (2, "55. r = cos θ " + "k" * 210 + "\n56. r = 1 " + "q" * 210)]
+    ts = cortar_livro(paginas, [SecaoCorte(1, "10.4", "Áreas", 1, 2)], 1600)
+    numeros = [t.numero for t in ts if t.parte == "exercicio"]
+    assert numeros[-2:] == [55, 56] and numeros.count(1) == 1

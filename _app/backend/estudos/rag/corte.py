@@ -74,13 +74,21 @@ def _pecas(linhas: list[tuple[int, str]]) -> list[tuple[int, str]]:
 
 
 def _itens(linhas: list[tuple[int, str]], em_sequencia: bool) -> list[tuple[int | None, list[tuple[int, str]]]]:
-    """Linhas → itens numerados. Com `em_sequencia`, só abre item o número seguinte (ou 1, que reinicia)."""
+    """Linhas → itens numerados. Com `em_sequencia`, só abre item o número seguinte, ou um 1 que reinicia a contagem
+    (só quando o próximo item numerado é 2: um rodapé "1. Dicas…" no fim da página não reinicia)."""
     itens: list[tuple[int | None, list[tuple[int, str]]]] = []
+    numeros = [int(m.group(1)) if (m := _ITEM.match(l)) else None for _, l in linhas]
+    seguinte = [None] * len(numeros)  # próximo número de item depois de cada linha
+    proximo = None
+    for i in range(len(numeros) - 1, -1, -1):
+        seguinte[i] = proximo
+        if numeros[i] is not None:
+            proximo = numeros[i]
     ultimo = 0
-    for pagina, linha in linhas:
-        m = _ITEM.match(linha)
-        n = int(m.group(1)) if m else None
-        abre = n is not None and ((n == ultimo + 1 or n == 1) if em_sequencia else n > ultimo)
+    for i, (pagina, linha) in enumerate(linhas):
+        n = numeros[i]
+        reinicia = n == 1 and seguinte[i] == 2
+        abre = n is not None and ((n == ultimo + 1 or reinicia) if em_sequencia else n > ultimo)
         if abre:
             itens.append((n, [(pagina, linha)]))
             ultimo = n
