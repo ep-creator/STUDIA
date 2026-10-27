@@ -19,6 +19,8 @@ from estudos.rag.indexador import sincronizar
 from estudos.rag.indice import abrir_indice, descartar_indice
 
 _LIMITE = 10
+_FUNDO = 20          # quantos resultados a avaliação olha (acerto@20 mostra se o erro é de ordem)
+_PARTES = ["teoria"]  # o grupo de exercícios do livro é mostrado à parte: não conta como resposta
 _PALAVRA = re.compile(r"[a-z0-9]+")
 _ESTILOS_DE_QUESTAO = ("questao", "duvida")
 
@@ -74,6 +76,7 @@ class LinhaBusca:
     memoria_mb: float
     relacionados: float | None = None   # fração média dos esperados entre os 10 primeiros (links entre documentos)
     n_relacionados: int = 0
+    acerto20: float | None = None       # resposta aceita entre os 20 primeiros
 
 
 def _posicao(nomes, resultados: list[Resultado], aceitas, trecho: bool) -> int | None:
@@ -133,7 +136,8 @@ def _medir_relacionados(con, indice, raiz, itens, config, embeddings, nomes) -> 
         if achado is None:
             raise ValueError(f"relacionado sem ponto de partida na matéria: {item.de!r}")
         texto, origem = achado
-        _, resultados = buscar_modo(indice, texto, limite=_LIMITE + 5, modo=config.modo, embeddings=embeddings)
+        _, resultados = buscar_modo(indice, texto, limite=_LIMITE + 5, modo=config.modo, embeddings=embeddings,
+                                    partes=_PARTES)
         resultados = [r for r in resultados if r.origem != origem][:_LIMITE]
         esperados = [ler_aceita(e) for e in item.esperados]
         fontes, documentos = nomes
@@ -143,7 +147,8 @@ def _medir_relacionados(con, indice, raiz, itens, config, embeddings, nomes) -> 
 
 
 def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao, caminho: Path, provedores,
-           ja_indexados: dict[Path, float], relacionados: list[ItemRelacionado] = ()) -> LinhaBusca:
+           ja_indexados: dict[Path, float], relacionados: list[ItemRelacionado] = (),
+           limite_teoria: int | None = None) -> LinhaBusca:
     """`ja_indexados`: índices desta rodada (caminho → segundos para indexar); o mesmo modelo não é indexado duas vezes."""
     embeddings = _provedor(config.modelo, provedores)
     tracemalloc.start()
@@ -152,7 +157,7 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
     else:
         descartar_indice(raiz, caminho)
         inicio = time.perf_counter()
-        sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings)
+        sincronizar(con, raiz, caminho_indice_=caminho, embeddings=embeddings, limite_teoria=limite_teoria)
         indexacao = ja_indexados[caminho] = time.perf_counter() - inicio
     indice = abrir_indice(raiz, caminho)
     nomes = _nomes(con)
@@ -162,10 +167,10 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
         for p, aceitas_p in zip(perguntas, aceitas):
             t0 = time.perf_counter()
             de_questao = p.estilo in _ESTILOS_DE_QUESTAO
-            efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_LIMITE * 2 if de_questao else _LIMITE,
-                                              modo=config.modo, embeddings=embeddings)
+            efetivo, resultados = buscar_modo(indice, p.texto, unidade=p.unidade, limite=_FUNDO * 2 if de_questao else _FUNDO,
+                                              modo=config.modo, embeddings=embeddings, partes=_PARTES)
             if de_questao:  # a página onde a questão está impressa não é a resposta: o que vale é a explicação
-                resultados = _sem_a_propria_questao(indice, resultados, _enunciado(p))[:_LIMITE]
+                resultados = _sem_a_propria_questao(indice, resultados, _enunciado(p))[:_FUNDO]
             if efetivo != config.modo:
                 raise ValueError(f"{config.nome}: a busca caiu para {efetivo!r} (sem vetores no índice?)")
             tempos.append((time.perf_counter() - t0) * 1000)
@@ -193,17 +198,19 @@ def _medir(con, raiz: Path, perguntas: list[PerguntaBusca], config: Configuracao
         memoria_mb=round(pico / 2**20, 1),
         relacionados=relacionados_frac,
         n_relacionados=n_relacionados,
+        acerto20=acerto_em(posicoes, _FUNDO),
     )
 
 
 def avaliar(
     con: sqlite3.Connection, raiz: Path, perguntas: list[PerguntaBusca], configuracoes: list[Configuracao], pasta_temp: Path,
     provedores: dict[str, Embeddings] | None = None, relacionados: list[ItemRelacionado] = (),
+    limite_teoria: int | None = None,
 ) -> list[LinhaBusca]:
     """`provedores` (nome → Embeddings) substitui os modelos reais, para os testes. Configurações do mesmo modelo
     ("vetor" e "hibrida") usam o mesmo índice temporário e repetem o tempo de indexação medido na primeira."""
     pasta_temp.mkdir(parents=True, exist_ok=True)
     ja_indexados: dict[Path, float] = {}
     return [_medir(con, raiz, perguntas, c, pasta_temp / f"indice-{(c.modelo or 'texto').replace('/', '-')}.db",
-                   provedores or {}, ja_indexados, relacionados)
+                   provedores or {}, ja_indexados, relacionados, limite_teoria)
             for c in configuracoes]

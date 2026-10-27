@@ -14,9 +14,9 @@ from estudos.rag.trechos import _PARAGRAFO, TrechoNovo, _agrupar, _cortar
 
 LIMITE_TEORIA = 1600       # caracteres por trecho de teoria (escolhido pela avaliação)
 _MIN_EXERCICIO = 200       # exercício mais curto que isso se junta ao seguinte
-_ITEM = re.compile(r"^\s*(\d{1,3})\.\s")
-_CABECALHO_EXERCICIOS = re.compile(r"^exercicios(\s+[\d.]+)?[\s=\-–—_]*$")
-_CODIGO = re.compile(r"^\d+(\.\d+)*$")
+_ITEM = re.compile(r"^\s*(\d{1,3})\.(\s|$)")                     # "1. texto" ou "1." sozinho (Stewart)
+_CABECALHO_EXERCICIOS = re.compile(r"^([\d.]+\s+)?exercicios(\s+[\d.]+)?[\s=\-–—_]*$")  # "14.2 Exercícios", "Exercícios 14.2"
+_CABECALHO_GABARITO = re.compile(r"^(?:exercicios\s+)?(\d+(?:\.\d+)+)(?:\s+exercicios)?$")  # "14.1", "EXERCÍCIOS 14.1"
 
 
 @dataclass(frozen=True)
@@ -132,14 +132,18 @@ def _numerar(trechos: list[TrechoNovo]) -> list[TrechoNovo]:
 
 
 def cortar_livro(paginas: list[tuple[int, str]], secoes: list[SecaoCorte], limite: int) -> list[TrechoNovo]:
-    """`secoes` são as folhas, em ordem de página. Cada trecho sai com a seção, a parte e (exercícios) o número."""
-    linhas = [(p, l) for p, texto in paginas for l in (texto or "").split("\n")]
+    """`secoes` são as folhas, em ordem de página. Cada trecho sai com a seção, a parte e (exercícios) o número.
+    Páginas fora de todas as seções (capítulos não cadastrados entre duas seções) ficam fora."""
+    dentro = {p for s in secoes for p in range(s.pagina_ini, s.pagina_fim + 1)}
+    linhas = [(p, l) for p, texto in paginas if p in dentro for l in (texto or "").split("\n")]
     if not secoes or not linhas:
         return []
     inicios = _inicios(linhas, secoes) + [len(linhas)]
     trechos: list[TrechoNovo] = []
     for k, s in enumerate(secoes):
-        trecho_linhas = linhas[inicios[k]:inicios[k + 1]]
+        # até onde vai: as páginas da seção e, se a seguinte começa no meio de uma página, o topo dessa página
+        ultima = max(s.pagina_fim, secoes[k + 1].pagina_ini if k + 1 < len(secoes) else s.pagina_fim)
+        trecho_linhas = [(p, l) for p, l in linhas[inicios[k]:inicios[k + 1]] if p <= ultima]
         titulo = f"{s.codigo} {s.titulo}"
         teoria, exercicios = _separar_exercicios(trecho_linhas, s.codigo)
         trechos += [dataclasses.replace(t, secao_id=s.id) for t in _agrupar(_pecas(teoria), titulo, limite)]
@@ -153,9 +157,9 @@ def cortar_gabarito(paginas: list[tuple[int, str]], codigos: dict[str, int], lim
     atual: str | None = None
     for pagina, texto in paginas:
         for linha in (texto or "").split("\n"):
-            limpa = linha.strip()
-            if _CODIGO.match(limpa) and "." in limpa:
-                atual = limpa if limpa in codigos else None
+            cabecalho = _CABECALHO_GABARITO.match(_normal(linha))
+            if cabecalho:
+                atual = cabecalho.group(1) if cabecalho.group(1) in codigos else None
                 if atual is not None:
                     blocos.append((atual, []))
             elif atual is not None:

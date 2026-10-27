@@ -64,6 +64,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gravar", action="store_true", help="grava a tabela em docs/avaliacoes/")
     parser.add_argument("--geradas", action="store_true",
                         help="busca: acrescenta perguntas geradas dos enunciados das questões (resposta = seção da lista)")
+    parser.add_argument("--limite-teoria", type=int, default=None,
+                        help="busca: caracteres por trecho de teoria no índice temporário (padrão: o do código)")
     args = parser.parse_args(argv)
     sys.stdout.reconfigure(encoding="utf-8")
     pasta = WORKSPACE / args.materia
@@ -88,7 +90,8 @@ def main(argv: list[str] | None = None) -> int:
     with closing(conectar(pasta / ARQUIVO_DB)) as con, tempfile.TemporaryDirectory() as temp:
         if args.geradas:
             perguntas += perguntas_das_questoes(con)
-        linhas = avaliar(con, pasta, perguntas, configs, Path(temp), relacionados=relacionados)
+        linhas = avaliar(con, pasta, perguntas, configs, Path(temp), relacionados=relacionados,
+                         limite_teoria=args.limite_teoria)
     tabela = tabela_busca(linhas)
     print(f"{len(perguntas)} perguntas · {arquivo.name}\n\n{tabela}")
     if args.gravar:

@@ -15,12 +15,12 @@ def tabela_busca(linhas: list[LinhaBusca]) -> str:
     """Colunas fixas + uma por estilo e por origem presentes; "trecho" = página/bloco exato (n = perguntas com trecho)."""
     estilos = sorted({e for l in linhas for e in l.por_estilo})
     origens = sorted({o for l in linhas for o in l.por_origem})
-    nomes = ["configuração", "acerto@5", *estilos, *(f"de {o}" for o in origens), "trecho", "links", "MRR@10",
+    nomes = ["configuração", "acerto@5", "acerto@20", *estilos, *(f"de {o}" for o in origens), "trecho", "links", "MRR@10",
              "indexação (s)", "busca p95 (ms)"]
     cabecalho = "| " + " | ".join(nomes) + " |\n|" + "---|" * len(nomes) + "\n"
     corpo = "".join(
         "| " + " | ".join([
-            l.nome, _pct(l.acerto5), *(_pct(l.por_estilo[e]) if e in l.por_estilo else "—" for e in estilos),
+            l.nome, _pct(l.acerto5), _pct(l.acerto20) if l.acerto20 is not None else "—", *(_pct(l.por_estilo[e]) if e in l.por_estilo else "—" for e in estilos),
             *(_pct(l.por_origem[o]) if o in l.por_origem else "—" for o in origens),
             f"{_pct(l.acerto5_trecho)} (n={l.n_trecho})" if l.acerto5_trecho is not None else "—",
             f"{_pct(l.relacionados)} (n={l.n_relacionados})" if l.relacionados is not None else "—",

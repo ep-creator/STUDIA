@@ -52,3 +52,23 @@ def test_gabarito_liga_resposta_ao_exercicio():
 def test_gabarito_com_codigo_desconhecido():
     ts = cortar_gabarito([(9, "99.9\n1. nada\n10.4\n1. π/2")], {"10.4": 2}, 1600)
     assert [(t.secao_id, t.numero) for t in ts] == [(2, 1)]
+
+
+def test_formatos_do_stewart_codigo_antes_e_numero_sozinho():
+    paginas = [(1, "14.2 Limites\nTeoria de limites.\n14.2 Exercícios\n1.\nCalcule o limite " + "a" * 210 + "\n2.\nMostre que não existe " + "b" * 210)]
+    ts = cortar_livro(paginas, [SecaoCorte(7, "14.2", "Limites", 1, 1)], 1600)
+    ex = [t for t in ts if t.parte == "exercicio"]
+    assert [t.numero for t in ex] == [1, 2] and ex[1].texto.startswith("2.")
+    assert not any("Exercícios" in t.texto for t in ts)
+
+
+def test_paginas_entre_secoes_nao_cadastradas_ficam_fora():
+    paginas = [(1, "10.4 Áreas\nteoria da área."), (2, "10.5 Cônicas\ntexto de seção não cadastrada."), (3, "14.1 Funções\nteoria de funções.")]
+    ts = cortar_livro(paginas, [SecaoCorte(1, "10.4", "Áreas", 1, 1), SecaoCorte(2, "14.1", "Funções", 3, 3)], 1600)
+    assert not any("não cadastrada" in t.texto for t in ts)
+    assert {t.secao_id for t in ts} == {1, 2}
+
+
+def test_gabarito_com_cabecalho_exercicios_maiusculo():
+    ts = cortar_gabarito([(9, "EXERCÍCIOS 10.4\n1.\n(a) 100\n3. π/2\nEXERCÍCIOS 9.9\n1. fora")], {"10.4": 2}, 1600)
+    assert [(t.secao_id, t.numero) for t in ts] == [(2, 1), (2, 3)] and "(a) 100" in ts[0].texto
