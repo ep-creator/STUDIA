@@ -170,8 +170,14 @@ class ResumoImportacao(TypedDict):
     indexacao: str
 
 
+class ExercicioLivro(TypedDict):
+    exercicio: Resultado
+    resposta: Resultado | None       # do gabarito do livro, quando há
+
+
 class ResultadoBusca(TypedDict):
-    resultados: list[Resultado]
+    resultados: list[Resultado]       # só teoria
+    exercicios: list[ExercicioLivro]  # exercícios do livro mais parecidos (até 3), à parte
     sincronizacao: ResumoSincronizacao
     modo: str          # modo efetivamente usado ("texto" quando não há embeddings)
 
@@ -186,5 +192,5 @@ class TextoSecao(TypedDict):
 __all__ = [
     "Criado", "Ok", "ResumoMateria", "MateriaCriada", "Painel", "Marcado", "FonteResumo", "DocumentoComCorpo",
     "DetalheHistorico", "Desfeito", "ImportacaoSaida", "ResumoImportacao", "ResultadoBusca", "TextoSecao",
-    "SecaoLivro", "GrupoHistorico", "ResumoSincronizacao",
+    "SecaoLivro", "GrupoHistorico", "ResumoSincronizacao", "ExercicioLivro",
 ]

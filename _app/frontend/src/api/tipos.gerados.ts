@@ -619,6 +619,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/secoes/{secao_id}/exercicios/{numero}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Exercicio Do Livro
+         * @description Exercício `numero` da seção do livro (enunciado original) e a resposta do gabarito, quando há.
+         */
+        get: operations["exercicio_do_livro_api_materias__materia_uid__secoes__secao_id__exercicios__numero__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/fontes": {
         parameters: {
             query?: never;
@@ -795,6 +815,11 @@ export interface components {
              * @default
              */
             descricao: string;
+        };
+        /** ExercicioLivro */
+        ExercicioLivro: {
+            exercicio: components["schemas"]["Resultado"];
+            resposta: components["schemas"]["Resultado"] | null;
         };
         /** FonteResumo */
         FonteResumo: {
@@ -1149,11 +1174,22 @@ export interface components {
              * @default texto
              */
             por: string;
+            /** Pagina Fim */
+            pagina_fim?: number | null;
+            /**
+             * Parte
+             * @default teoria
+             */
+            parte: string;
+            /** Numero */
+            numero?: number | null;
         };
         /** ResultadoBusca */
         ResultadoBusca: {
             /** Resultados */
             resultados: components["schemas"]["Resultado"][];
+            /** Exercicios */
+            exercicios: components["schemas"]["ExercicioLivro"][];
             sincronizacao: components["schemas"]["ResumoSincronizacao"];
             /** Modo */
             modo: string;
@@ -2945,6 +2981,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TextoSecao"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exercicio_do_livro_api_materias__materia_uid__secoes__secao_id__exercicios__numero__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                secao_id: number;
+                numero: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExercicioLivro"];
                 };
             };
             /** @description Validation Error */

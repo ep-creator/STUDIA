@@ -72,3 +72,42 @@ def test_cli(ambiente, capsys):
     assert cli([str(materia.pasta)]) == 0
     assert "trechos" in capsys.readouterr().out
     assert cli([str(materia.pasta / "nao-existe")]) == 2
+
+
+@pytest.fixture
+def com_exercicios(ambiente):
+    cliente, base, materia, _ = ambiente
+    criar_pdf(materia.pasta / "fontes/livros/l.pdf", [
+        "capa", "1.1 Polares\nÁrea de regiões em coordenadas polares.",
+        "1.1 Exercícios\n1. Calcule a área dentro da cardioide.\n2. Calcule a área da rosácea de quatro pétalas.",
+        "Respostas\nEXERCÍCIOS 1.1\n1. 3 sobre 2"])
+    with closing(conectar(materia.db)) as con, operacao(con, "livro", materia.pasta) as op:
+        f = fontes.registrar(op, "livro", "fontes/livros/l.pdf")
+        livros.criar(op, f, "principal", gabarito_pdf_ini=4, gabarito_pdf_fim=4)
+        secao = livros.criar_secao(op, f, "1.1", "Polares", 2, 3)
+    return cliente, base, secao
+
+
+def test_busca_devolve_teoria_e_exercicios(com_exercicios):
+    cliente, base, _ = com_exercicios
+    dados = cliente.get(f"{base}/busca", params={"q": "área cardioide polares"}).json()
+    assert dados["resultados"] and all(r["parte"] == "teoria" for r in dados["resultados"])
+    [ex] = dados["exercicios"]
+    assert ex["exercicio"]["parte"] == "exercicio" and ex["exercicio"]["pagina"] == 3
+    assert "3 sobre 2" in ex["resposta"]["trecho"]
+    so_listas = cliente.get(f"{base}/busca", params={"q": "área cardioide", "tipo": "lista"}).json()
+    assert so_listas["exercicios"] == []
+
+
+def test_exercicio_do_livro(com_exercicios):
+    cliente, base, secao = com_exercicios
+    r = cliente.get(f"{base}/secoes/{secao}/exercicios/2")
+    assert r.status_code == 200
+    dados = r.json()
+    assert "rosácea" in dados["exercicio"]["trecho"] and dados["resposta"] is None   # o 2 é curto: veio junto com o 1
+
+
+def test_exercicio_inexistente_404(com_exercicios):
+    cliente, base, secao = com_exercicios
+    assert cliente.get(f"{base}/secoes/{secao}/exercicios/9").status_code == 404
+    assert cliente.get(f"{base}/secoes/9999/exercicios/1").status_code == 404

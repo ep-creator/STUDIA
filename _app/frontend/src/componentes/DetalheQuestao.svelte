@@ -1,6 +1,6 @@
 <script lang="ts">
   import { requisitar, urlArquivo } from '../api/cliente'
-  import type { Documento, DocumentoComCorpo, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
+  import type { Documento, DocumentoComCorpo, ExercicioLivro, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
   import { ia } from '../estado/ia.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
@@ -28,6 +28,18 @@
     verResolucao = false
     corpo = null
   })
+  // Lista "14.1" questão "22" é o exercício 22 da seção 14.1 do livro: o índice tem o enunciado original e a resposta
+  let doLivro = $state<ExercicioLivro | null>(null)
+  let verLivro = $state(false)
+  $effect(() => {
+    const q = questao, s = secao, codigo = lista.codigo
+    doLivro = null
+    verLivro = false
+    if (!s || s.codigo !== codigo || !/^\d+$/.test(q.rotulo)) return
+    requisitar<ExercicioLivro>('GET', `/api/materias/${uid}/secoes/${s.secao_id}/exercicios/${q.rotulo}`)
+      .then((e) => { if (questao.id === q.id) doLivro = e }, () => {}) // 404: não está no índice, o botão não aparece
+  })
+
   async function mostrarResolucao() {
     verResolucao = !verResolucao
     if (verResolucao) ia.aberta = false // a resolução precisa de espaço: a área de IA se recolhe
@@ -64,6 +76,25 @@
     <a class="botao" href={urlArquivo(uid, secao.caminho, pagina)} target="_blank" rel="noopener">📖 Abrir o livro na p. {pagina}</a>
   {/if}
 
+  {#if doLivro && secao}
+    <section class="resolucao">
+      <button class="botao" aria-expanded={verLivro} onclick={() => (verLivro = !verLivro)}>
+        {verLivro ? 'Esconder o enunciado do livro' : 'Ver no livro'}
+      </button>
+      {#if verLivro}
+        <div class="texto livro">
+          <p>{doLivro.exercicio.trecho}</p>
+          {#if doLivro.resposta}<p class="suave"><strong>Resposta do livro:</strong> {doLivro.resposta.trecho}</p>{/if}
+          {#if doLivro.exercicio.pagina}
+            <a class="botao" href={urlArquivo(uid, secao.caminho, doLivro.exercicio.pagina)} target="_blank" rel="noopener">
+              Abrir no livro na p. {doLivro.exercicio.pagina}
+            </a>
+          {/if}
+        </div>
+      {/if}
+    </section>
+  {/if}
+
   {#if resolucao}
     <section class="resolucao">
       <button class="botao" aria-expanded={verResolucao} onclick={() => void mostrarResolucao()}>
@@ -87,6 +118,7 @@
   .texto :global(h1) { font-size: 1.15rem; margin: 0 0 0.5rem; }
   .texto :global(h2), .texto :global(h3) { font-size: 1rem; margin: 0.9rem 0 0.35rem; }
   h3, p { margin: 0; }
+  .livro { display: grid; gap: 0.6rem; white-space: pre-line; }
   .marcas { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .botao[aria-pressed='true'].ok { background: var(--ok); color: #fff; border-color: var(--ok); }
   .botao[aria-pressed='true'].err { background: var(--err); color: #fff; border-color: var(--err); }
