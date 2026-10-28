@@ -43,6 +43,13 @@
   <hr />
   <ul>
     <li>
+      <a class:ativa={rota.tela === 'assistente'} aria-current={rota.tela === 'assistente' ? 'page' : undefined}
+        href={montarHash({ tela: 'assistente', uid: rota.uid })}>Assistente</a>
+    </li>
+  </ul>
+  <hr />
+  <ul>
+    <li>
       <a class:ativa={rota.tela === 'importar'} href={montarHash({ tela: 'importar', uid: rota.uid })}>
         Importar {#if pendencias > 0}<span class="selo" aria-label={`${pendencias} pendentes`}>{pendencias}</span>{/if}
       </a>

@@ -8,7 +8,7 @@
   import PainelIA from './componentes/PainelIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
-  import { ia } from './estado/ia.svelte'
+  import { atalhosDoPapel, ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
   import BuscaMateria from './componentes/BuscaMateria.svelte'
   import { busca } from './estado/busca.svelte'
@@ -23,6 +23,7 @@
   import Formulario from './rotas/Formulario.svelte'
   import Historico from './rotas/Historico.svelte'
   import Importacao from './rotas/Importacao.svelte'
+  import Assistente from './rotas/Assistente.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
   import Painel from './rotas/Painel.svelte'
@@ -139,6 +140,8 @@
           <Importacao {painel} />
         {:else if rota.tela === 'historico'}
           <Historico uid={rota.uid} />
+        {:else if rota.tela === 'assistente'}
+          <Assistente uid={rota.uid} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}
@@ -152,7 +155,7 @@
       </button>
       {#if ia.aberta}
         <PainelIA uid={rota.uid} alvo={ia.alvo ?? 'geral'} papel={ia.papel ?? 'estrategista'}
-          atalhos={ia.papel === 'resumidor' ? ['resumir'] : ia.papel === 'tutor' ? ['N1', 'N2', 'N3', 'N4'] : ['plano']} />
+          atalhos={atalhosDoPapel(ia.papel ?? 'estrategista')} />
       {/if}
     </div>
   </div>
