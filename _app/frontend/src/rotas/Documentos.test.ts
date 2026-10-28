@@ -80,3 +80,11 @@ test('"Resumir a seção" abre o resumidor da seção no painel', async () => {
   expect({ aberta: ia.aberta, alvo: ia.alvo, papel: ia.papel, pendente: ia.pendente })
     .toEqual({ aberta: true, alvo: 'secao:42', papel: 'resumidor', pendente: 'resumir' })
 })
+
+test('não há botão de criar documento à mão', async () => {
+  motor()
+  render(Documentos, { painel: painel({ documentos: [resumo] }) })
+  await screen.findByRole('button', { name: 'Extremos' })
+  expect(screen.queryByRole('button', { name: /novo documento/i })).toBeNull()
+  expect(screen.queryByLabelText('Título do documento')).toBeNull()
+})

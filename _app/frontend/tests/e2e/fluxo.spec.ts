@@ -76,10 +76,20 @@ test('marcar e desfazer', async ({ page }) => {
 })
 
 test('editar resumo e ver a diferença', async ({ page }) => {
+  // a tela não cria documentos à mão: o resumo nasce pela API (como faria o agente ou a importação)
   await abrirArea(page, '1ª', 'Documentos')
-  await page.getByRole('button', { name: '+ novo documento' }).click()
-  await page.getByLabel('Título do documento').fill('Resumo E2E')
-  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  await page.evaluate(async () => {
+    const uid = location.hash.split('/')[2]
+    const painel = await (await fetch(`/api/materias/${uid}/painel`)).json()
+    const unidade = painel.unidades.find((u: { numero: number }) => u.numero === 1)
+    await fetch(`/api/materias/${uid}/documentos`, {
+      method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tipo: 'resumo', titulo: 'Resumo E2E', unidade_id: unidade.id, nome_arquivo: 'resumo-e2e.md', corpo: '', versao_esperada: '' }),
+    })
+  })
+  await page.reload()
+  await page.getByRole('button', { name: 'Resumo E2E' }).click()
+  await page.getByRole('button', { name: 'editar' }).click()
   await page.getByRole('textbox', { name: 'Texto do documento' }).fill('Primeira linha com $x^2$')
   await page.getByRole('button', { name: 'Salvar', exact: true }).click()
   await expect(page.getByRole('status').getByText('Documento salvo')).toBeVisible()
