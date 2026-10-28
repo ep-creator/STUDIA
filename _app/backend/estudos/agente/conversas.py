@@ -30,6 +30,15 @@ class Mensagem:
     criada_em: str
 
 
+@dataclass(frozen=True)
+class ResumoConversa:
+    id: int
+    alvo: str
+    papel: str
+    rotulo: str
+    atualizada_em: str
+
+
 def _agora() -> str:
     return datetime.datetime.now().isoformat(timespec="seconds")
 
@@ -88,3 +97,28 @@ def estimativa(workspace: Path) -> float:
     recentes = _por_materia(workspace, "SELECT custo_brl FROM mensagem WHERE autor = 'agente' AND custo_brl > 0 "
                                         "ORDER BY criada_em DESC, id DESC LIMIT 10", ())
     return max(recentes) if recentes else _ESTIMATIVA_PADRAO
+
+
+def _rotulo(con: sqlite3.Connection, alvo: str) -> str:
+    """Nome curto do alvo para a lista de conversas; alvo apagado fica com o próprio alvo."""
+    if alvo == "geral":
+        return "Geral"
+    tipo, _, ident = alvo.partition(":")
+    if tipo == "questao" and ident.isdigit():
+        l = con.execute("SELECT l.codigo, q.rotulo FROM questao q JOIN lista l ON l.id = q.lista_id WHERE q.id = ?",
+                        (int(ident),)).fetchone()
+        if l:
+            return f"{l['codigo']} #{l['rotulo']}"
+    if tipo == "secao" and ident.isdigit():
+        l = con.execute("SELECT codigo, titulo FROM secao_livro WHERE id = ?", (int(ident),)).fetchone()
+        if l:
+            return f"{l['codigo']} {l['titulo']}"
+    return alvo
+
+
+def ativas(con: sqlite3.Connection) -> list[ResumoConversa]:
+    """Conversas ativas que já têm mensagem, da usada mais recentemente para a mais antiga."""
+    linhas = con.execute(
+        "SELECT c.id, c.alvo, c.papel, MAX(m.criada_em) AS ultima FROM conversa c JOIN mensagem m ON m.conversa_id = c.id "
+        "WHERE c.ativa = 1 GROUP BY c.id ORDER BY ultima DESC, c.id DESC").fetchall()
+    return [ResumoConversa(l["id"], l["alvo"], l["papel"], _rotulo(con, l["alvo"]), l["ultima"]) for l in linhas]

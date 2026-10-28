@@ -59,3 +59,47 @@ def test_estimativa_padrao_e_pelo_maior_recente(tmp_path):
         for v in (0.01, 0.08, 0.02):
             conversas.adicionar(con, c.id, "agente", "x", custo_brl=v)
     assert conversas.estimativa(tmp_path) == 0.08
+
+
+def _questao(con, materia, codigo="14.1", rotulo="22"):
+    from estudos.historico import operacao
+    from estudos.modelos import QuestaoEntrada
+    from estudos.repos import listas, unidades
+    with operacao(con, "base", materia.pasta) as op:
+        lid = listas.criar(op, codigo, "Funções", unidades.criar(op, 1))
+        listas.sincronizar_questoes(op, lid, [QuestaoEntrada(rotulo, enunciado_md="Esboce.")])
+    return listas.listar_questoes(con, lid)[0].id
+
+
+def _mensagem_em(con, alvo, papel, quando):
+    c = conversas.conversa_ativa(con, alvo, papel)
+    mid = conversas.adicionar(con, c.id, "voce", "oi")
+    con.execute("UPDATE mensagem SET criada_em = ? WHERE id = ?", (quando, mid))
+    return c
+
+
+def test_ativas_lista_so_conversas_com_mensagem_mais_recentes_primeiro(con, materia):
+    qid = _questao(con, materia)
+    _mensagem_em(con, "geral", "estrategista", "2026-10-27T10:00:00")
+    _mensagem_em(con, f"questao:{qid}", "tutor", "2026-10-28T09:00:00")
+    conversas.conversa_ativa(con, "questao:9999", "tutor")   # aberta, mas sem mensagem
+    r = conversas.ativas(con)
+    assert [(c.rotulo, c.papel) for c in r] == [("14.1 #22", "tutor"), ("Geral", "estrategista")]
+    assert r[0].alvo == f"questao:{qid}" and r[0].atualizada_em == "2026-10-28T09:00:00"
+
+
+def test_rotulo_de_alvo_apagado_cai_para_o_alvo(con):
+    _mensagem_em(con, "questao:999", "tutor", "2026-10-28T09:00:00")
+    _mensagem_em(con, "secao:999", "resumidor", "2026-10-27T09:00:00")
+    assert [c.rotulo for c in conversas.ativas(con)] == ["questao:999", "secao:999"]
+
+
+def test_rotulo_de_secao_tem_codigo_e_titulo(con, materia, cenario_busca):
+    _mensagem_em(con, f"secao:{cenario_busca['s11']}", "resumidor", "2026-10-28T09:00:00")
+    assert [c.rotulo for c in conversas.ativas(con)] == ["1.1 Coordenadas polares"]
+
+
+def test_conversa_recomecada_some_da_lista_ate_ter_mensagem(con):
+    _mensagem_em(con, "geral", "estrategista", "2026-10-28T09:00:00")
+    conversas.recomecar(con, "geral", "estrategista")
+    assert conversas.ativas(con) == []

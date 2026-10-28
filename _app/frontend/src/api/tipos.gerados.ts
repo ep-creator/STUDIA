@@ -710,6 +710,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/agente/conversas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista De Conversas */
+        get: operations["lista_de_conversas_api_materias__materia_uid__agente_conversas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/agente/conversa/recomecar": {
         parameters: {
             query?: never;
@@ -801,6 +818,19 @@ export interface components {
         ChaveAgente: {
             /** Chave */
             chave: string;
+        };
+        /** ConversaResumo */
+        ConversaResumo: {
+            /** Id */
+            id: number;
+            /** Alvo */
+            alvo: string;
+            /** Papel */
+            papel: string;
+            /** Rotulo */
+            rotulo: string;
+            /** Atualizada Em */
+            atualizada_em: string;
         };
         /** ConversaSaida */
         ConversaSaida: {
@@ -3330,6 +3360,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConversaSaida"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lista_de_conversas_api_materias__materia_uid__agente_conversas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaResumo"][];
                 };
             };
             /** @description Validation Error */

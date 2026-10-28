@@ -22,7 +22,7 @@ from estudos.agente.papeis import ATALHOS, carregar_papel
 from estudos.agente.segredos import gravar_chave, ler_chave
 from estudos.api.deps import Contexto, contexto_dep, materia_dep, obter_settings
 from estudos.api.esquemas import AlvoAgente, ChaveAgente, PedidoAgente
-from estudos.api.respostas import ConversaSaida, EstadoAgente, Ok, PacoteContexto
+from estudos.api.respostas import ConversaResumo, ConversaSaida, EstadoAgente, Ok, PacoteContexto
 from estudos.config import Settings
 from estudos.db.conexao import conectar
 from estudos.erros import DadoInvalido
@@ -104,6 +104,11 @@ def _conversa(ctx: Contexto, alvo: str, papel: str, nova: bool = False) -> Conve
 def conversa(alvo: str, papel: str, ctx: Contexto = Depends(contexto_dep)) -> ConversaSaida:
     AlvoAgente(alvo=alvo, papel=papel)
     return _conversa(ctx, alvo, papel)
+
+
+@router.get(_BASE + "/conversas")
+def lista_de_conversas(ctx: Contexto = Depends(contexto_dep)) -> list[ConversaResumo]:
+    return [asdict(c) for c in conversas.ativas(ctx.con)]
 
 
 @router.post(_BASE + "/conversa/recomecar")

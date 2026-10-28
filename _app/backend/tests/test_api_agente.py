@@ -114,3 +114,16 @@ def test_pedido_simultaneo_na_mesma_conversa(api):
 def test_estado_em_demonstracao_nao_pede_chave(api, monkeypatch):
     monkeypatch.setenv("ESTUDOS_AGENTE_FALSO", "1")
     assert api["cliente"].get("/api/agente/estado").json()["chave_configurada"] is True
+
+
+def test_rota_de_conversas(api):
+    c = api["cliente"]
+    c.post(api["base"] + "/conversa/recomecar", json={"alvo": f"questao:{api['questao']}", "papel": "tutor"})
+    with closing(conectar(abrir_materia(api["settings"].workspace, api["uid"]).db)) as con:
+        from estudos.agente import conversas
+        cid = conversas.conversa_ativa(con, f"questao:{api['questao']}", "tutor").id
+        conversas.adicionar(con, cid, "voce", "oi")
+    r = c.get(api["base"] + "/conversas")
+    assert r.status_code == 200
+    [linha] = r.json()
+    assert set(linha) == {"id", "alvo", "papel", "rotulo", "atualizada_em"} and linha["rotulo"] == "L1 #3"

@@ -178,6 +178,14 @@ class MensagemSaida(TypedDict):
     criada_em: str
 
 
+class ConversaResumo(TypedDict):
+    id: int
+    alvo: str
+    papel: str
+    rotulo: str          # "Geral", "14.1 #22" ou "15.4 Integrais duplas"
+    atualizada_em: str
+
+
 class ConversaSaida(TypedDict):
     id: int
     alvo: str
