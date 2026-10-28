@@ -203,3 +203,10 @@ test('pedido que falhou não empilha: o próximo atalho substitui a bolha e o av
   expect(screen.queryByText('N1 Dica')).toBeNull()
   expect(screen.getByText('N2 Caminho')).toBeInTheDocument()
 })
+
+test('chave recusada oferece o atalho para trocar a chave', async () => {
+  motor({ respostas: [[{ tipo: 'erro', dados: { motivo: 'chave_invalida', detalhe: 'API key not valid' } }]] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: 'N1 Dica' }))
+  expect(await screen.findByRole('link', { name: 'trocar a chave' })).toHaveAttribute('href', '#/m/u1/assistente')
+})
