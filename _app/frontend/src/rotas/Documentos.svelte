@@ -147,13 +147,13 @@
 
 <div class="documentos">
   <aside>
-    <button class="botao" onclick={() => (criando = !criando)}>＋ Novo documento</button>
+    <button class="acao-texto novo" onclick={() => (criando = !criando)}>+ novo documento</button>
     {#if criando}
       <form class="novo" onsubmit={criar}>
         <input aria-label="Título do documento" placeholder="Título" bind:value={novoTitulo} required />
         <Seletor rotulo="Tipo do documento" variante="compacto" valor={novoTipo} onmudar={(v) => (novoTipo = v)}
           opcoes={[{ valor: 'resumo', rotulo: 'Resumo' }, { valor: 'anotacao', rotulo: 'Anotação' }, { valor: 'resolucao', rotulo: 'Resolução' }, { valor: 'plano', rotulo: 'Plano' }]} />
-        <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
+        <button class="acao-suave" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
       </form>
     {/if}
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />
@@ -165,9 +165,9 @@
         <h2>{documento.titulo}</h2>
         <div class="acoes">
           {#if documento.secao_id !== null && !editando}
-            <button class="botao" onclick={() => abrirNoPainel(`secao:${documento!.secao_id}`, 'resumidor', 'resumir')}>✦ Resumir a seção</button>
+            <button class="acao-suave" onclick={() => abrirNoPainel(`secao:${documento!.secao_id}`, 'resumidor', 'resumir')}>Resumir a seção</button>
           {/if}
-          {#if !editando}<button class="botao" onclick={() => (editando = true)}>✎ Editar</button>{/if}
+          {#if !editando}<button class="acao-texto" onclick={() => (editando = true)}>editar</button>{/if}
         </div>
       </header>
       <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
@@ -180,8 +180,8 @@
         {#if sugestao}
           <div class="sugestao" role="status">
             <span>Ligar à seção {sugestao.codigo} — {sugestao.titulo}?</span>
-            <button class="botao primario" onclick={() => void escolherSecao(sugestao!.secao_id)}>Sim</button>
-            <button class="botao" onclick={() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()}>Escolher outra</button>
+            <button class="acao-suave" onclick={() => void escolherSecao(sugestao!.secao_id)}>Sim</button>
+            <button class="acao-texto" onclick={() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()}>Escolher outra</button>
           </div>
         {/if}
       {/if}

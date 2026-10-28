@@ -59,7 +59,7 @@ test('editando, a seção não pode ser trocada (trocar regravaria o .md e perde
   render(Documentos, { painel: painel({ documentos: [resumo] }) })
   await userEvent.click(await screen.findByRole('button', { name: 'Extremos' }))
   expect(await screen.findByText(/Ligar à seção 14\.7/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Editar/ }))
+  await userEvent.click(screen.getByRole('button', { name: /editar/i }))
   expect(screen.queryByText(/Ligar à seção 14\.7/)).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /^Seção do livro/ })).not.toBeInTheDocument()
 })

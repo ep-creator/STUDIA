@@ -101,7 +101,7 @@
   .conta { margin-left: auto; font-size: 0.72rem; color: var(--suave); }
 
   .item { padding: 0.2rem 0.4rem; }
-  .item.ativo { background: var(--cartao); font-weight: 600; }
+  .item.ativo { font-weight: 600; }
   .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque); }
   .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   .ia {

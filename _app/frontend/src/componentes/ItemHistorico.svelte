@@ -25,11 +25,11 @@
 </script>
 
 <li class:desfeito={grupo.desfeito_em} class:ehDesfazer>
-  <div class="linha">
+  <div class="linha linha-acoes">
     <span class="quando"><b>{hora}</b> <span class="suave">{dia}</span></span>
     <span class="descricao">{ehDesfazer ? `↩ ${grupo.descricao}` : grupo.descricao}{#if grupo.desfeito_em}<span class="suave"> · desfeito</span>{/if}</span>
-    <button class="botao" onclick={verDiferenca} aria-expanded={aberto}>{aberto ? 'Fechar' : 'Detalhes'}</button>
-    {#if ultimo}<button class="botao primario" onclick={ondesfazer}>↩ Desfazer</button>{/if}
+    <span class="acoes-linha" class:fixas={aberto}><button class="acao-texto" onclick={verDiferenca} aria-expanded={aberto}>{aberto ? 'fechar' : 'detalhes'}</button></span>
+    {#if ultimo}<button class="acao-texto desfazer" onclick={ondesfazer}>↶ desfazer</button>{/if}
   </div>
   {#if aberto && detalhe}
     {#each detalhe.arquivos as a (a.caminho)}<Diferenca caminho={a.caminho} antes={a.antes} depois={a.depois} />{/each}
@@ -40,10 +40,14 @@
 </li>
 
 <style>
-  li { border-top: 1px solid color-mix(in srgb, var(--borda) 25%, transparent); padding: 0.5rem 0; }
-  .linha { display: flex; align-items: center; gap: 0.75rem; }
-  .quando { width: 6.5rem; flex: none; }
+  li { border-bottom: 1px solid var(--fio); padding: 0.55rem 0.4rem; }
+  .linha { display: flex; align-items: baseline; gap: 1rem; }
+  .quando { width: 6rem; flex: none; font-size: 0.85rem; }
+  .quando b { font-weight: 500; }
   .descricao { flex: 1; }
+  .acoes-linha { font-size: 0.85rem; }
+  .acoes-linha.fixas { opacity: 1; }
+  .desfazer { color: var(--destaque); font-size: 0.85rem; }
   .desfeito .descricao { text-decoration: line-through; color: var(--suave); }
   .ehDesfazer .descricao { color: var(--suave); }
 </style>

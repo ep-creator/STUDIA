@@ -4,7 +4,7 @@
 
 <div class="vazio">
   <p>{texto}</p>
-  {#if acao}<a class="botao primario" href={acao.href}>{acao.rotulo}</a>{/if}
+  {#if acao}<a class="acao-suave" href={acao.href}>{acao.rotulo}</a>{/if}
 </div>
 
 <style>

@@ -77,3 +77,13 @@ test('fila mostra primeiro o que pede revisão, depois por tipo', async () => {
   await waitFor(() => expect(lista.querySelectorAll('button')).toHaveLength(4))
   expect([...lista.querySelectorAll('.nome')].map((n) => n.textContent)).toEqual(['Boulos.pdf', 'Lista 1.pdf', 'Programa.pdf', 'Aula 1.pdf'])
 })
+
+test('cada arquivo mostra o estado em texto: pronto ou revisar N; área de soltar em uma linha', async () => {
+  motor(fontes, (url, init) => (url.includes('/importacoes?') && (init.method ?? 'GET') === 'GET'
+    ? [200, [imp(10, 1, 2), imp(11, 1, 0)]] : undefined))
+  render(FilaImportacao, { uid: 'ab', selecionada: null, onselecionar: vi.fn(), versao: 0 })
+  const lista = await screen.findByRole('list', { name: 'Arquivos esperando revisão' })
+  await waitFor(() => expect([...lista.querySelectorAll('.estado')].map((e) => e.textContent?.trim())).toEqual(['revisar 2', 'pronto']))
+  expect(screen.getByRole('region', { name: 'Soltar arquivos para importar' })).toHaveTextContent(/Solte os PDFs aqui ou\s*escolha arquivos/)
+  expect(screen.queryByText(/Pode mandar tudo de uma vez/)).toBeNull()
+})
