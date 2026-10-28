@@ -77,6 +77,12 @@ test('questão que é exercício do livro mostra "Ver no livro" com o enunciado 
   expect(screen.getByRole('link', { name: /Abrir no livro na p\. 312/ })).toBeInTheDocument()
 })
 
+test('não há botão solto para abrir o livro na página da seção: o caminho é "Ver no livro"', async () => {
+  motorDoLivro(404)
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  expect(screen.queryByRole('link', { name: /Abrir o livro/ })).toBeNull()
+})
+
 test('sem exercício no índice, "Ver no livro" não aparece', async () => {
   const chamadas = motorDoLivro(404)
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })

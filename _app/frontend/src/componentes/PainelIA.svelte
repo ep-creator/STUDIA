@@ -1,10 +1,10 @@
 <script lang="ts">
   // Painel do assistente: a conversa do alvo (questão, seção ou geral) com os atalhos por cima. A resposta chega aos
   // pedaços; citações viram links que abrem o PDF na página ou o texto; o que o agente grava aparece com Abrir e
-  // Desfazer; o custo fica no rodapé. Sem chave do Gemini, o painel oferece colar a chave e "Copiar o contexto".
+  // Desfazer; o custo fica no rodapé. Sem chave do Gemini, o painel mostra só a caixa da API key.
   import { requisitar } from '../api/cliente'
   import { conversar, type EventoAgente } from '../api/agente'
-  import type { ConversaSaida, EstadoAgente, FonteResumo, GrupoHistorico, PacoteContexto, PedidoAgente } from '../api/tipos'
+  import type { ConversaSaida, EstadoAgente, FonteResumo, GrupoHistorico, PedidoAgente } from '../api/tipos'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { ia } from '../estado/ia.svelte'
@@ -19,6 +19,7 @@
   const NOMES: Record<string, string> = {
     N1: 'N1 Dica', N2: 'N2 Caminho', N3: 'N3 Esboço', N4: 'N4 Resolução', resumir: 'Resumir a seção', plano: 'Plano de revisão',
   }
+  const CURTOS: Record<string, string> = { N1: 'N1', N2: 'N2', N3: 'N3', N4: 'N4' }   // o nome inteiro fica na dica
   type Gravado = { tipo: string; id: number; titulo: string; grupo_id: number; historico?: boolean }
   type Item = { autor: string; texto: string; gravado?: Gravado }
 
@@ -144,16 +145,11 @@
     }
   }
 
-  async function copiarContexto() {
-    try {
-      const r = await requisitar<PacoteContexto>('GET',
-        `/api/materias/${uid}/agente/contexto?alvo=${encodeURIComponent(alvo)}&papel=${papel}${atalhos[0] ? `&atalho=${atalhos[0]}` : ''}`)
-      await navigator.clipboard.writeText(r.texto)
-      avisar('Contexto copiado: cole num chat de IA')
-    } catch (e) {
-      erro(e)
-    }
-  }
+  // A chave salva no outro painel também vale aqui
+  $effect(() => {
+    if (!ia.versaoChave) return
+    requisitar<EstadoAgente>('GET', '/api/agente/estado').then((e) => (estado = e), () => {})
+  })
 
   // O Histórico só desfaz a última ação: o Desfazer daqui vale enquanto a gravação do agente for a última.
   async function desfazerGravado(g: Gravado) {
@@ -204,22 +200,19 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions, a11y_no_noninteractive_element_interactions -->
 <section class="painel-ia" aria-label="Assistente" onclick={clicar}>
   <header>
-    <div class="atalhos">
-      {#each atalhos as a (a)}
-        <button class="botao" disabled={respondendo} onclick={() => atalho(a)}>{NOMES[a] ?? a}</button>
-      {/each}
-    </div>
-    <div class="acoes">
-      <button class="botao discreto" onclick={() => void copiarContexto()}>Copiar o contexto</button>
-      <button class="botao discreto" disabled={respondendo || !itens.length} onclick={() => void recomecar()}>Recomeçar</button>
-    </div>
+    {#each atalhos as a (a)}
+      <button class="botao atalho" aria-label={NOMES[a] ?? a} title={NOMES[a] ?? a} disabled={respondendo} onclick={() => atalho(a)}>
+        {CURTOS[a] ?? NOMES[a] ?? a}
+      </button>
+    {/each}
+    <button class="botao discreto recomecar" disabled={respondendo || !itens.length} onclick={() => void recomecar()}>Recomeçar</button>
   </header>
 
   {#if estado && !estado.chave_configurada}
-    <ConfigurarChave onsalvo={() => void carregar()} />
+    <ConfigurarChave onsalvo={() => ia.versaoChave++} />
   {/if}
 
-  <div class="conversa" aria-live="polite">
+  <div class="conversa" class:vazia={!itens.length && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
     {#each itens as item, i (i)}
       {#if item.gravado}
         {@const g = item.gravado}
@@ -259,19 +252,24 @@
   <form onsubmit={mandar}>
     <textarea aria-label="Mensagem para o assistente" placeholder="Pergunte sobre o que está aberto…" bind:value={escrita} rows="2"
       onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement).requestSubmit() } }}></textarea>
-    <button class="botao primario" type="submit" disabled={respondendo || !escrita.trim()}>Enviar</button>
+    <div class="envio">
+      <span class="suave custo">
+        {#if ultimoCusto !== null}Esta resposta: {reais(ultimoCusto)} · {/if}{#if estado}mês: {reais(estado.total_mes)} de {reais(estado.teto)}{/if}
+      </span>
+      <button class="botao primario" type="submit" disabled={respondendo || !escrita.trim()}>Enviar</button>
+    </div>
   </form>
-  <footer class="suave">
-    {#if ultimoCusto !== null}Esta resposta: {reais(ultimoCusto)} · {/if}{#if estado}mês: {reais(estado.total_mes)} de {reais(estado.teto)}{/if}
-  </footer>
 </section>
 
 <style>
   .painel-ia { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
-  header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4rem; }
-  .atalhos, .acoes { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .painel-ia > * { min-width: 0; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+  .atalho { font-size: 0.85rem; padding: 0.2rem 0.6rem; }
+  .recomecar { margin-left: auto; }
   .discreto { font-size: 0.8rem; padding: 0.15rem 0.5rem; }
-  .conversa { display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; min-height: 4rem; max-height: 60vh; }
+  .conversa { display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; max-height: 60vh; }
+  .conversa.vazia { display: none; }
   .voce { margin: 0; align-self: flex-end; max-width: 85%; background: var(--realce); padding: 0.4rem 0.65rem; border-radius: 10px; white-space: pre-wrap; }
   .agente { line-height: 1.55; overflow-wrap: anywhere; }
   .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.88rem; border-left: 2px solid var(--ok); padding-left: 0.5rem; }
@@ -279,7 +277,8 @@
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
   .alerta { border-left: 2px solid var(--destaque); padding: 0.4rem 0.6rem; background: var(--realce); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
-  form { display: flex; gap: 0.4rem; align-items: flex-end; }
-  textarea { flex: 1; resize: vertical; border: 1px solid var(--borda); border-radius: 6px; padding: 0.35rem 0.5rem; background: var(--fundo); color: var(--texto); font: inherit; }
-  footer { font-size: 0.78rem; }
+  form { display: grid; gap: 0.35rem; }
+  .envio { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .custo { font-size: 0.78rem; }
+  textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--borda); border-radius: 6px; padding: 0.35rem 0.5rem; background: var(--fundo); color: var(--texto); font: inherit; }
 </style>

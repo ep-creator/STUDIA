@@ -147,7 +147,7 @@
       {/if}
     </main>
     <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
-      <button class="botao" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
+      <button class="botao alternar" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
         {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
       </button>
       {#if ia.aberta}
@@ -166,6 +166,7 @@
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
   @media print { main.ajustada { height: auto; display: block; } }
-  .ia { width: 14rem; flex: none; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-  .ia.fechada { width: auto; }
+  .ia { width: 22rem; flex: none; box-sizing: border-box; padding: 1rem 1rem 1rem 0; display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+  .ia.fechada { width: auto; padding-left: 0; }
+  .alternar { align-self: flex-end; font-size: 0.85rem; padding: 0.2rem 0.65rem; }
 </style>

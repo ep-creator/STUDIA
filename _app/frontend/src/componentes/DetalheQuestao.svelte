@@ -18,7 +18,6 @@
   } = $props()
 
   const NOMES: Record<string, string> = { ok: 'Acertei', err: 'Errei', dub: 'Dúvida' }
-  const pagina = $derived(questao.pagina_pdf ?? secao?.pagina_pdf_ini ?? null)
 
   // A resolução fica escondida (para não estragar a tentativa) até pedir; trocar de questão esconde de novo
   let verResolucao = $state(false)
@@ -70,10 +69,6 @@
     <Markdown texto={questao.enunciado_md} />
   {:else}
     <p class="suave">Exercício do livro{secao ? `: seção ${secao.codigo}` : ''}.</p>
-  {/if}
-
-  {#if secao && pagina}
-    <a class="botao" href={urlArquivo(uid, secao.caminho, pagina)} target="_blank" rel="noopener">📖 Abrir o livro na p. {pagina}</a>
   {/if}
 
   {#if doLivro && secao}

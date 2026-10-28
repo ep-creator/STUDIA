@@ -99,16 +99,20 @@ test('teto do mês pede confirmação e reenvia confirmado', async () => {
     .toMatchObject({ atalho: 'N1', confirmado: true }))
 })
 
-test('sem chave: campo para colar a chave e Copiar o contexto', async () => {
+test('sem chave: só a caixa da API key, que salva com Enter', async () => {
   motor({ chave: false })
-  const copiar = vi.fn(async () => {})
-  Object.assign(navigator, { clipboard: { writeText: copiar } })
   abrir()
-  await userEvent.type(await screen.findByLabelText(/Chave do Gemini/), 'AIza-teste')
-  await userEvent.click(screen.getByRole('button', { name: 'Salvar a chave' }))
+  await userEvent.type(await screen.findByPlaceholderText('API key'), 'AIza-teste{Enter}')
   await waitFor(() => expect(pedidos.find((p) => p.metodo === 'PUT')?.corpo).toEqual({ chave: 'AIza-teste' }))
-  await userEvent.click(screen.getByRole('button', { name: /Copiar o contexto/ }))
-  await waitFor(() => expect(copiar).toHaveBeenCalledWith('PACOTE DE CONTEXTO'))
+  expect(screen.queryByText(/Google AI Studio/)).toBeNull()
+})
+
+test('atalhos aparecem curtos (N1…N4) e não há Copiar o contexto', async () => {
+  motor()
+  abrir()
+  const n2 = await screen.findByRole('button', { name: 'N2 Caminho' })
+  expect(n2).toHaveTextContent(/^N2$/)
+  expect(screen.queryByRole('button', { name: /Copiar o contexto/ })).toBeNull()
 })
 
 test('erro do Gemini mostra o motivo e Tentar de novo', async () => {
