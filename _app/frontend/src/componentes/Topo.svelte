@@ -34,15 +34,16 @@
 
 <style>
   .topo { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; margin-bottom: 0.5rem; }
-  .unidades { display: flex; gap: 0.4rem; }
-  .unidades a { text-decoration: none; border: 1.5px solid var(--borda); border-radius: 999px; padding: 0.1rem 0.8rem; }
-  .unidades a.ativa { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
-  .acoes { display: flex; gap: 0.5rem; }
+  .unidades { display: flex; gap: 1.1rem; font-family: var(--fonte-titulo); font-size: 1.05rem; }
+  .unidades a { text-decoration: none; color: var(--suave); padding-bottom: 2px; border-bottom: 1.5px solid transparent; }
+  .unidades a:hover { color: var(--texto); }
+  .unidades a.ativa { color: var(--texto); border-bottom-color: var(--destaque); }
+  .acoes { display: flex; gap: 1.1rem; font-size: 0.9rem; }
   .buscar {
     margin-left: auto; display: flex; align-items: center; gap: 1.5rem; min-width: 15rem; justify-content: space-between;
-    background: transparent; color: var(--suave); border: 1px solid color-mix(in srgb, var(--borda) 60%, transparent);
+    background: var(--leve); color: var(--suave); border: 0;
     border-radius: 999px; padding: 0.3rem 0.5rem 0.3rem 0.9rem; cursor: pointer;
   }
-  .buscar:hover { border-color: var(--destaque); color: var(--destaque); }
-  kbd { font-family: var(--fonte-texto); font-size: 0.72rem; border: 1px solid color-mix(in srgb, var(--borda) 50%, transparent); border-radius: 4px; padding: 0 0.35rem; }
+  .buscar:hover { color: var(--texto); }
+  kbd { font-family: var(--fonte-texto); font-size: 0.72rem; opacity: 0.7; }
 </style>

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/svelte'
+import { render, screen, waitFor, within } from '@testing-library/svelte'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { pedido } from '../estado/pedido.svelte'
@@ -168,4 +168,25 @@ test('erro interno do app mostra o detalhe em vez de "fora do ar"', async () => 
   await userEvent.click(await screen.findByRole('button', { name: /N3 Esboço/ }))
   expect(await screen.findByText(/PermissionError: arquivo travado/)).toBeInTheDocument()
   expect(screen.queryByText(/fora do ar/)).not.toBeInTheDocument()
+})
+
+test('N1–N4 num grupo só e Recomeçar dentro do ···', async () => {
+  motor({ respostas: [RESPOSTA] })
+  abrir()
+  const grupo = await screen.findByRole('group', { name: 'Nível de ajuda' })
+  expect(within(grupo).getAllByRole('button')).toHaveLength(4)
+  expect(screen.queryByRole('button', { name: 'Recomeçar' })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Mais ações' }))
+  expect(screen.getByRole('menuitem', { name: 'Recomeçar' })).toBeInTheDocument()
+})
+
+test('menu ··· fecha com Esc e devolve o foco ao botão', async () => {
+  motor()
+  abrir()
+  const mais = await screen.findByRole('button', { name: 'Mais ações' })
+  await userEvent.click(mais)
+  expect(screen.getByRole('menu')).toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('menu')).toBeNull()
+  expect(mais).toHaveFocus()
 })

@@ -25,5 +25,5 @@
 </form>
 
 <style>
-  input { width: 100%; box-sizing: border-box; border: 1px solid var(--borda); border-radius: 6px; padding: 0.35rem 0.5rem; background: var(--fundo); color: var(--texto); font: inherit; font-size: 0.88rem; }
+  input { width: 100%; box-sizing: border-box; border: 0; border-radius: 8px; padding: 0.45rem 0.7rem; background: var(--leve); color: var(--texto); font: inherit; font-size: 0.88rem; }
 </style>

@@ -35,13 +35,24 @@ test('a resolução da questão fica escondida até pedir, e aparece no próprio
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/documentos/16'))).toBe(true)
 })
 
-test('abrir a resolução recolhe a área de IA para dar espaço', async () => {
+test('ver a resolução não recolhe mais a IA (ela abre por cima da página)', async () => {
   motor()
   const { ia } = await import('../estado/ia.svelte')
   ia.aberta = true
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
   await userEvent.click(screen.getByRole('button', { name: /Ver resolução/ }))
-  expect(ia.aberta).toBe(false)
+  expect(ia.aberta).toBe(true)
+})
+
+test('sem Limpar: clicar na marca ativa desmarca, clicar em outra troca', async () => {
+  motor()
+  const onmarcar = vi.fn()
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: 'ok', secao: null, onmarcar })
+  expect(screen.queryByRole('button', { name: /Limpar/ })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: /Acertei/ }))
+  expect(onmarcar).toHaveBeenLastCalledWith(q.id, null)
+  await userEvent.click(screen.getByRole('button', { name: /Errei/ }))
+  expect(onmarcar).toHaveBeenLastCalledWith(q.id, 'err')
 })
 
 test('sem resolução, o menu não oferece o botão', () => {

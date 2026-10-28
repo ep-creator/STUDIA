@@ -91,7 +91,7 @@
               onclick={() => clicar(q)}
               onkeydown={(e) => teclar(e, q)}
               onfocus={() => (focada = q.id)}
-            >{q.rotulo}{#if m}<span aria-hidden="true"> {SIMBOLO[m]}</span>{/if}</button>
+            >{q.rotulo}</button>
           {/each}
         </div>
       {/each}
@@ -111,12 +111,13 @@
   .placar { font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
   h3 { font-size: 1.05rem; margin: 0; }
   .rotulo { margin: 0.4rem 0 0.2rem; }
-  .questoes { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.3rem; }
-  .questao { min-width: 2.6rem; padding: 0.2rem 0.55rem; border: 1.5px solid var(--borda); border-radius: 6px; background: var(--cartao); cursor: pointer; }
-  .questao:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgb(0 0 0 / 14%); }
-  .questao:not(.ok, .err, .dub):hover { border-color: var(--destaque); color: var(--destaque); }
-  .questao.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
-  .questao.err { background: var(--err); border-color: var(--err); color: #fff; }
-  .questao.dub { background: var(--dub); border-color: var(--dub); color: #000; }
+  /* Número solto: a marca aparece pela cor e por um traço embaixo; a questão aberta fica em negrito */
+  .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.3rem; }
+  .questao { min-width: 1.6rem; padding: 0 2px; background: none; border: 0; border-bottom: 2px solid transparent; font: inherit; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--suave); cursor: pointer; }
+  .questao:hover { color: var(--destaque); }
+  .questao.ok { color: var(--ok); border-bottom-color: var(--ok); }
+  .questao.err { color: var(--err); border-bottom-color: var(--err); }
+  .questao.dub { color: var(--dub); border-bottom-color: var(--dub); }
+  .questao.selecionada { color: var(--texto); font-weight: 600; }
   .questao { outline: 2px solid transparent; outline-offset: 2px; }
 </style>

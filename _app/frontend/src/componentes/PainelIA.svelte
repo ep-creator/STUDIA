@@ -13,6 +13,7 @@
   import { montarHash } from '../rotas/rota'
   import ConfigurarChave from './ConfigurarChave.svelte'
   import Markdown from './Markdown.svelte'
+  import MenuMais from './MenuMais.svelte'
 
   let { uid, alvo, papel, atalhos }: { uid: string; alvo: string; papel: string; atalhos: string[] } = $props()
 
@@ -125,7 +126,10 @@
     return `Não consegui falar com o Gemini (${motivo === 'limite_de_uso' ? 'limite de uso' : motivo === 'tempo_esgotado' ? 'demorou demais' : 'fora do ar'}).`
   }
 
-  const atalho = (a: string) => void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false })
+  // N1–N4 formam um seletor só (o último pedido fica em destaque); os outros papéis têm um atalho solto
+  const niveis = $derived(atalhos.length > 1 && atalhos.every((a) => /^N\d$/.test(a)))
+  let ultimoAtalho = $state<string | null>(null)
+  const atalho = (a: string) => { ultimoAtalho = a; void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false }) }
 
   function mandar(e: SubmitEvent) {
     e.preventDefault()
@@ -200,12 +204,20 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions, a11y_no_noninteractive_element_interactions -->
 <section class="painel-ia" aria-label="Assistente" onclick={clicar}>
   <header>
-    {#each atalhos as a (a)}
-      <button class="botao atalho" aria-label={NOMES[a] ?? a} title={NOMES[a] ?? a} disabled={respondendo} onclick={() => atalho(a)}>
-        {CURTOS[a] ?? NOMES[a] ?? a}
-      </button>
-    {/each}
-    <button class="botao discreto recomecar" disabled={respondendo || !itens.length} onclick={() => void recomecar()}>Recomeçar</button>
+    {#if niveis}
+      <div class="niveis" role="group" aria-label="Nível de ajuda">
+        {#each atalhos as a (a)}
+          <button class:ativo={ultimoAtalho === a} aria-label={NOMES[a] ?? a} title={NOMES[a] ?? a} disabled={respondendo} onclick={() => atalho(a)}>
+            {CURTOS[a] ?? a}
+          </button>
+        {/each}
+      </div>
+    {:else}
+      {#each atalhos as a (a)}
+        <button class="acao-suave" disabled={respondendo} onclick={() => atalho(a)}>{NOMES[a] ?? a}</button>
+      {/each}
+    {/if}
+    <span class="mais"><MenuMais rotulo="Mais ações" itens={[{ rotulo: 'Recomeçar', acao: () => void recomecar() }]} /></span>
   </header>
 
   {#if estado && !estado.chave_configurada}
@@ -218,11 +230,11 @@
         {@const g = item.gravado}
         <div class="gravado" role="status">
           <span>✓ {item.texto}</span>
-          <button class="botao discreto" onclick={() => abrirGravado(g)}>Abrir</button>
+          <button class="acao-texto" onclick={() => abrirGravado(g)}>Abrir</button>
           {#if g.historico}
-            <a class="botao discreto" href={montarHash({ tela: 'historico', uid })}>Abrir o Histórico</a>
+            <a class="acao-texto" href={montarHash({ tela: 'historico', uid })}>Abrir o Histórico</a>
           {:else}
-            <button class="botao discreto" onclick={() => void desfazerGravado(g)}>Desfazer</button>
+            <button class="acao-texto" onclick={() => void desfazerGravado(g)}>Desfazer</button>
           {/if}
         </div>
       {:else if item.autor === 'voce'}
@@ -236,15 +248,15 @@
       {@const c = confirmar}
       <div class="alerta" role="alert">
         <p>Esta resposta passaria do teto de {reais(c.teto)} no mês (já foram {reais(c.total)}).</p>
-        <button class="botao primario" onclick={() => void enviar({ ...c.pedido, confirmado: true })}>Continuar</button>
-        <button class="botao" onclick={() => (confirmar = null)}>Cancelar</button>
+        <button class="acao-suave" onclick={() => void enviar({ ...c.pedido, confirmado: true })}>Continuar</button>
+        <button class="acao-texto" onclick={() => (confirmar = null)}>Cancelar</button>
       </div>
     {/if}
     {#if falha}
       {@const f = falha}
       <div class="alerta" role="alert">
         <p>{f.texto}</p>
-        <button class="botao" onclick={() => { itens = itens.slice(0, -1); void enviar(f.pedido) }}>Tentar de novo</button>
+        <button class="acao-suave" onclick={() => { itens = itens.slice(0, -1); void enviar(f.pedido) }}>Tentar de novo</button>
       </div>
     {/if}
   </div>
@@ -256,7 +268,7 @@
       <span class="suave custo">
         {#if ultimoCusto !== null}Esta resposta: {reais(ultimoCusto)} · {/if}{#if estado}mês: {reais(estado.total_mes)} de {reais(estado.teto)}{/if}
       </span>
-      <button class="botao primario" type="submit" disabled={respondendo || !escrita.trim()}>Enviar</button>
+      <button class="acao-texto enviar" type="submit" disabled={respondendo || !escrita.trim()}>Enviar<span aria-hidden="true"> ↵</span></button>
     </div>
   </form>
 </section>
@@ -264,21 +276,25 @@
 <style>
   .painel-ia { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
   .painel-ia > * { min-width: 0; }
-  header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
-  .atalho { font-size: 0.85rem; padding: 0.2rem 0.6rem; }
-  .recomecar { margin-left: auto; }
-  .discreto { font-size: 0.8rem; padding: 0.15rem 0.5rem; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+  .niveis { display: inline-flex; background: var(--leve); border-radius: 999px; padding: 2px; }
+  .niveis button { background: none; border: 0; border-radius: 999px; padding: 0.15rem 0.8rem; font: inherit; font-size: 0.85rem; color: var(--suave); cursor: pointer; }
+  .niveis button:hover:not(:disabled), .niveis button.ativo { color: var(--texto); }
+  .niveis button.ativo { background: color-mix(in srgb, var(--texto) 11%, transparent); }
+  .niveis button:disabled { opacity: 0.5; cursor: default; }
+  .mais { margin-left: auto; }
   .conversa { display: flex; flex-direction: column; gap: 0.6rem; overflow-y: auto; max-height: 60vh; }
   .conversa.vazia { display: none; }
-  .voce { margin: 0; align-self: flex-end; max-width: 85%; background: var(--realce); padding: 0.4rem 0.65rem; border-radius: 10px; white-space: pre-wrap; }
+  .voce { margin: 0; align-self: flex-end; max-width: 85%; background: var(--leve); padding: 0.4rem 0.65rem; border-radius: 10px; white-space: pre-wrap; }
   .agente { line-height: 1.55; overflow-wrap: anywhere; }
-  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.88rem; border-left: 2px solid var(--ok); padding-left: 0.5rem; }
+  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; font-size: 0.88rem; border-left: 2px solid var(--ok); padding-left: 0.5rem; }
   .gravado span { margin-right: auto; }
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
-  .alerta { border-left: 2px solid var(--destaque); padding: 0.4rem 0.6rem; background: var(--realce); border-radius: 6px; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .alerta { border-left: 2px solid var(--destaque); padding: 0.2rem 0 0.2rem 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
   form { display: grid; gap: 0.35rem; }
   .envio { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .custo { font-size: 0.78rem; }
-  textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 1px solid var(--borda); border-radius: 6px; padding: 0.35rem 0.5rem; background: var(--fundo); color: var(--texto); font: inherit; }
+  .enviar { color: var(--destaque); font-weight: 500; }
+  textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 0; border-radius: 8px; padding: 0.5rem 0.7rem; background: var(--leve); color: var(--texto); font: inherit; }
 </style>

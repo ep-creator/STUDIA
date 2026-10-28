@@ -110,7 +110,7 @@
         {#if rota.tela === 'materia'}
           <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
           <Topo {painel} area={rota.area}>
-            {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
+            {#snippet acoes()}<button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>{/snippet}
           </Topo>
           <MolduraEditorial
             ajustada={rota.area === 'documentos' || rota.area === 'listas'}
@@ -147,7 +147,7 @@
       {/if}
     </main>
     <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
-      <button class="botao alternar" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
+      <button class="acao-texto alternar" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
         {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
       </button>
       {#if ia.aberta}
