@@ -36,7 +36,7 @@
 
 <header class="cabecalho">
   <h2>Cronograma · {nomeUnidade(unidade.numero)}</h2>
-  <button class="botao" onclick={() => (editando = {})}>＋ Sessão</button>
+  <button class="acao-texto" onclick={() => (editando = {})}>+ sessão</button>
 </header>
 
 {#if editando}
@@ -46,7 +46,7 @@
 {/if}
 
 {#if itens.length === 0}
-  <p class="suave">Nada no cronograma ainda. Aulas, feriados e provas vêm do calendário importado; as sessões de estudo você adiciona aqui.</p>
+  <p class="suave">Nada no cronograma ainda.</p>
 {:else}
   <LinhaDoTempo
     {itens}
@@ -56,5 +56,5 @@
 {/if}
 
 <style>
-  .cabecalho { display: flex; align-items: center; justify-content: space-between; }
+  .cabecalho { display: flex; align-items: baseline; gap: 1.2rem; }
 </style>

@@ -16,19 +16,26 @@
     exame_final: 'Exame final',
   }
   const hojeIso = $derived(isoDe(hoje))
+  // na linha do tempo, só a primeira linha do foco (o resto aparece ao editar)
+  const primeiraLinha = (md: string) => md.split('\n').find((l) => l.trim()) ?? ''
 </script>
 
 <ol class="linha">
   {#each itens as item, i (i)}
-    <li class:hoje={item.data === hojeIso} class:prova={item.tipo === 'prova'} class:passado={item.data !== null && item.data < hojeIso}>
+    <li class="linha-acoes" class:hoje={item.data === hojeIso} class:prova={item.tipo === 'prova'} class:passado={item.data !== null && item.data < hojeIso}>
       <span class="quando">{item.data ? dataCurta(item.data, item.hora) : 'sem data'}{item.data === hojeIso ? ' · hoje' : ''}</span>
       {#if item.sessao}
         {@const s = item.sessao}
-        <label class="feito"><input type="checkbox" checked={s.feito} onchange={() => onfeito(s)} aria-label={`Sessão ${s.codigo} feita`} /></label>
-        <span class="texto" class:riscado={s.feito}>
-          <b>{s.codigo}</b>{#if s.foco_md} · <span class="foco"><Markdown texto={s.foco_md} /></span>{/if}
+        <span class="texto">
+          <b>{s.codigo}</b>{#if s.foco_md} · <span class="foco"><Markdown texto={primeiraLinha(s.foco_md)} /></span>{/if}
         </span>
-        <button class="editar" aria-label={`Editar sessão ${s.codigo}`} onclick={() => oneditar(s)}>✎</button>
+        {#if s.feito}<span class="selo-feita">feita</span>{/if}
+        <span class="acoes-linha">
+          <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
+            {s.feito ? 'desmarcar' : 'feita'}
+          </button>
+          <button class="acao-texto" aria-label={`Editar sessão ${s.codigo}`} onclick={() => oneditar(s)}>editar</button>
+        </span>
       {:else if item.evento}
         <span class="texto evento">{ROTULO[item.tipo] ?? item.tipo}{item.evento.descricao ? ` · ${item.evento.descricao}` : ''}</span>
       {/if}
@@ -38,14 +45,14 @@
 
 <style>
   .linha { list-style: none; margin: 0; padding: 0; }
-  li { display: flex; align-items: baseline; gap: 0.75rem; padding: 0.4rem 0; border-top: 1px solid color-mix(in srgb, var(--borda) 25%, transparent); }
-  .quando { width: 9rem; flex: none; font-weight: 600; }
+  li { display: flex; align-items: baseline; gap: 0.9rem; padding: 0.5rem 0; border-bottom: 1px solid var(--fio); }
+  .quando { width: 8.5rem; flex: none; color: var(--suave); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .hoje .quando { color: var(--destaque); }
-  .prova { font-weight: 700; }
+  .prova .quando, .prova .evento { color: var(--destaque); font-weight: 600; }
   .passado { opacity: 0.6; }
+  .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }
-  .prova .evento { color: var(--texto); }
-  .riscado { text-decoration: line-through; color: var(--suave); }
   .foco :global(p) { display: inline; margin: 0; }
-  .editar { margin-left: auto; background: none; border: 0; cursor: pointer; opacity: 0.5; }
+  .selo-feita { font-size: 0.78rem; color: var(--ok); }
+  .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }
 </style>

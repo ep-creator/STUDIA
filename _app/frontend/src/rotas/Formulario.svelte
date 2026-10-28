@@ -41,8 +41,8 @@
 <header class="cabecalho">
   <h2>Formulário · {nomeUnidade(unidade.numero)}</h2>
   <div class="nao-imprimir">
-    <button class="botao" onclick={() => (editando = {})}>＋ Fórmula</button>
-    <button class="botao" onclick={() => window.print()} disabled={painel.formulas.length === 0}>🖨 Folha para imprimir</button>
+    <button class="acao-texto" onclick={() => (editando = {})}>+ fórmula</button>
+    <button class="acao-texto" onclick={() => window.print()} disabled={painel.formulas.length === 0}>folha para imprimir</button>
   </div>
 </header>
 
@@ -53,7 +53,7 @@
 {/if}
 
 {#if grupos.length === 0}
-  <p class="suave">Nenhuma fórmula nesta unidade. Adicione as essenciais para revisar antes da prova.</p>
+  <p class="suave">Nenhuma fórmula ainda.</p>
 {/if}
 {#each grupos as [topico, formulas] (topico)}
   <section class="grupo">
@@ -65,8 +65,8 @@
 {/each}
 
 <style>
-  .cabecalho { display: flex; align-items: center; justify-content: space-between; }
-  .cabecalho div { display: flex; gap: 0.5rem; }
+  .cabecalho { display: flex; align-items: baseline; gap: 1.2rem; }
+  .cabecalho div { display: flex; gap: 1.1rem; }
   .grupo { margin-top: 1.25rem; }
   @media print {
     .grupo { columns: 2; column-gap: 2rem; }

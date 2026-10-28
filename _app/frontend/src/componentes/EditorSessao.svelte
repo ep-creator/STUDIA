@@ -16,15 +16,15 @@
 </script>
 
 <form
-  class="cartao editor"
+  class="editor"
   onsubmit={(e) => { e.preventDefault(); onsalvar({ codigo: codigo.trim(), data: data || null, foco_md: foco }) }}
 >
   <label>Nome da sessão <input bind:value={codigo} required placeholder="Ex.: P1, Revisão 14.3" /></label>
   <label>Data <input type="date" bind:value={data} /></label>
   <label class="largo">Foco <textarea rows="2" bind:value={foco} placeholder="O que estudar (aceita Markdown e $fórmulas$)"></textarea></label>
   <div class="botoes">
-    <button class="botao primario" type="submit" disabled={!codigo.trim()}>Salvar sessão</button>
-    <button class="botao" type="button" onclick={oncancelar}>Cancelar</button>
+    <button class="acao-forte" type="submit" disabled={!codigo.trim()}>Salvar sessão</button>
+    <button class="acao-texto" type="button" onclick={oncancelar}>Cancelar</button>
   </div>
 </form>
 
