@@ -6,15 +6,15 @@
 
   const vistos = $derived(topicos.filter((t) => t.status === 'visto').length)
   const fracao = $derived(topicos.length ? vistos / topicos.length : 0)
-  const MARCA: Record<string, string> = { visto: '✓', proxima: '→', pendente: '' }
+  const MARCA: Record<string, string> = { visto: '✓', proxima: '→', pendente: '○' }
 </script>
 
 <section class="topicos" aria-label="Tópicos vistos">
   <header>
     <div class="rotulo">Tópicos vistos</div>
-    <a class="suave todos" href={hrefTopicos}>ver todos</a>
+    <a class="acao-texto todos" href={hrefTopicos}>ver todos</a>
   </header>
-  <div class="numero-grande">{vistos}/{topicos.length}</div>
+  <div class="numero-grande">{vistos}<small>/{topicos.length}</small></div>
   <div class="barra" aria-hidden="true"><div style:width={`${fracao * 100}%`}></div></div>
   {#if topicos.length}
     <ol>
@@ -28,13 +28,15 @@
 <style>
   header { display: flex; justify-content: space-between; align-items: baseline; }
   .todos { font-size: 0.8rem; }
-  .barra { height: 6px; background: color-mix(in srgb, var(--borda) 25%, transparent); border-radius: 3px; margin: 0.5rem 0 0.75rem; }
-  .barra div { height: 100%; background: var(--destaque); border-radius: 3px; transition: width 500ms ease; }
-  ol { list-style: none; margin: 0; padding: 0; columns: 2 14rem; column-gap: 1.5rem; }
-  li { display: flex; gap: 0.5rem; padding: 0.22rem 0; font-size: 0.92rem; break-inside: avoid; }
-  .marca { width: 1rem; flex: none; text-align: center; color: var(--ok); }
-  .visto { color: var(--suave); }
-  .proxima { color: var(--destaque); font-weight: 600; }
+  .numero-grande { margin-top: 0.4rem; }
+  .numero-grande small { font-size: 1.1rem; color: var(--suave); }
+  /* fio de progresso: 1 px de fundo, 2 px de verde para os vistos */
+  .barra { height: 1px; background: var(--fio); margin: 0.6rem 0 0.9rem; }
+  .barra div { height: 2px; margin-top: -0.5px; background: var(--ok); transition: width 500ms ease; }
+  ol { list-style: none; margin: 0; padding: 0; columns: 2 14rem; column-gap: 1.6rem; }
+  li { display: flex; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.92rem; break-inside: avoid; }
+  .marca { width: 1rem; flex: none; text-align: center; font-size: 0.8rem; }
+  .visto .marca { color: var(--ok); }
   .proxima .marca { color: var(--destaque); }
-  .pendente .marca::before { content: '·'; color: var(--suave); }
+  .pendente .marca { color: var(--suave); }
 </style>
