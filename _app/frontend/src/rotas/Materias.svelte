@@ -104,7 +104,7 @@
   .nova { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; }
   .nova input { margin-left: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo); }
   .nova p { flex-basis: 100%; margin: 0; }
-  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.6rem 3rem; }
   .grade > div { display: grid; }
 
   /* Entrada: cada bloco sobe um pouco e aparece, um depois do outro (depois da abertura, quando houver) */
