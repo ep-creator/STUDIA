@@ -31,6 +31,8 @@ Gemini, se você configurar a chave).
 
 Nada é gravado sem a sua confirmação. Itens marcados com **conferir** são os que o app não teve certeza.
 
+<img src="imagens/importar.png" alt="Tela de Importar com a área para soltar os PDFs" width="760">
+
 Cada matéria vira uma pasta na raiz do projeto, com o banco (`materia.db`), os PDFs (`fontes/`) e os textos
 (`conteudo/`).
 
@@ -49,11 +51,15 @@ A visão geral da unidade:
 - **Para revisar**: os números das questões que você marcou como errei ou dúvida, por lista. Clicar abre a questão.
 - **Desempenho nas listas**: quanto já foi feito e a taxa de acerto, por lista.
 
+<img src="imagens/painel.png" alt="Painel da 3ª unidade: 33 dias para a prova, a próxima aula, os tópicos e o desempenho nas listas" width="760">
+
 ### Tópicos
 
 A lista do que cai na prova. Clique no estado (*pendente → próxima → visto*) para avançar. Passe o mouse (ou use Tab)
 numa linha para ver **↑ ↓** (reordenar), **editar** e o menu **···** (apagar). Para criar um tópico, escreva no campo
 do fim e aperte Enter.
+
+<img src="imagens/topicos.png" alt="Tela de Tópicos com o estado de cada tópico e as seções do livro" width="760">
 
 ### Listas
 
@@ -64,6 +70,8 @@ do fim e aperte Enter.
 - **Ver no livro**: o enunciado original do livro e a resposta do gabarito, quando a questão é um exercício do livro.
 - **Ver resolução**: a resolução gravada, quando existe (fica escondida até você pedir, para não estragar a tentativa).
 - **N1 N2 N3 N4**: pedem ajuda ao assistente, do mais leve ao mais completo (veja abaixo).
+
+<img src="imagens/listas.png" alt="Tela de Listas com a questão 14.1 #22 aberta" width="760">
 
 ### Cronograma
 
@@ -122,6 +130,8 @@ Você também pode escrever uma pergunta livre no campo de mensagem.
 - **Custo**: cada resposta mostra quanto custou em reais, e o rodapé mostra o total do mês. Se uma resposta for passar
   do **teto mensal** (R$ 20, ajustável em `_app/config.toml`), o app pede confirmação antes.
 - O menu **···** tem **Recomeçar**, que abre uma conversa nova e vazia (a antiga fica guardada).
+
+<img src="imagens/gaveta.png" alt="O assistente aberto numa gaveta por cima da tela de Listas" width="760">
 
 ### Sem chave
 
