@@ -188,6 +188,7 @@ npm test          # Vitest
 npm run check     # svelte-check e TypeScript
 npm run e2e       # Playwright, ponta a ponta
 npm run build
+node scripts/fotos-readme.mjs http://127.0.0.1:8795 <uid> ../../docs/imagens   # fotos do README (cópia da matéria, ESTUDOS_AGENTE_FALSO=1)
 
 # avaliação de busca, vínculos e contexto (em _app/backend)
 .venv/Scripts/python.exe -m estudos.avaliacao --help
