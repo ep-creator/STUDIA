@@ -24,7 +24,7 @@ const CONVERSAS = [
   { id: 4, alvo: 'secao:3', papel: 'resumidor', rotulo: '15.4 Integrais duplas', atualizada_em: '2026-09-12T09:00:00' },
 ]
 
-beforeEach(() => { ia.alvo = null; ia.papel = null })
+beforeEach(() => { ia.alvo = null; ia.papel = null; ia.paraPagina = null })
 afterEach(() => vi.unstubAllGlobals())
 
 test('lista as conversas agrupadas e abre a escolhida', async () => {
@@ -51,8 +51,7 @@ test('sem conversas, abre a geral do estrategista', async () => {
 
 test('chegando pela gaveta, abre a conversa que estava aberta', async () => {
   motor(CONVERSAS)
-  ia.alvo = 'secao:3'
-  ia.papel = 'resumidor'
+  ia.paraPagina = { uid: 'u1', alvo: 'secao:3', papel: 'resumidor' }
   render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
   await waitFor(() => expect(urls.some((u) => u.includes('/agente/conversa?alvo=secao%3A3&papel=resumidor'))).toBe(true))
   expect(await screen.findByRole('button', { name: /15\.4 Integrais duplas/ })).toHaveAttribute('aria-current', 'true')
@@ -63,4 +62,24 @@ test('não há + nova conversa', async () => {
   render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
   await screen.findByText('Questões')
   expect(screen.queryByText(/nova conversa/i)).toBeNull()
+})
+
+test('o pedido da gaveta vale uma vez só: a visita seguinte abre a conversa mais recente', async () => {
+  motor(CONVERSAS)
+  ia.paraPagina = { uid: 'u1', alvo: 'secao:3', papel: 'resumidor' }
+  const primeira = render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
+  await screen.findByText('Questões')
+  primeira.unmount()
+  expect(ia.paraPagina).toBeNull()
+  render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
+  expect(await screen.findByRole('button', { name: /14.1 #22/ })).toHaveAttribute('aria-current', 'true')
+})
+
+test('um pedido feito em outra matéria é ignorado', async () => {
+  motor(CONVERSAS)
+  ia.alvo = 'secao:7'
+  ia.papel = 'resumidor'
+  ia.paraPagina = { uid: 'outra', alvo: 'secao:7', papel: 'resumidor' }
+  render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
+  expect(await screen.findByRole('button', { name: /14.1 #22/ })).toHaveAttribute('aria-current', 'true')
 })

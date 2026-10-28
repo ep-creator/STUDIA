@@ -97,7 +97,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* Linha com ações que só aparecem ao passar o mouse ou com foco do teclado */
 .linha-acoes .acoes-linha { opacity: 0; transition: opacity var(--transicao); }
-.linha-acoes:hover .acoes-linha, .linha-acoes:focus-within .acoes-linha { opacity: 1; }
+.linha-acoes:hover .acoes-linha, .linha-acoes:focus-within .acoes-linha,
+.linha-acoes:has([aria-expanded='true']) .acoes-linha { opacity: 1; }
 
 .rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); }
 .suave { color: var(--suave); }

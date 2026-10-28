@@ -1,6 +1,7 @@
 <script lang="ts">
   // Página do Assistente: as conversas da matéria à esquerda (Geral, Questões, Seções) e a conversa aberta à direita.
   // Chegando pela gaveta ("abrir em página"), abre a conversa que estava lá.
+  import { untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
   import type { ConversaResumo } from '../api/tipos'
   import PainelIA from '../componentes/PainelIA.svelte'
@@ -9,7 +10,10 @@
   let { uid, hoje = new Date() }: { uid: string; hoje?: Date } = $props()
 
   let conversas = $state<ConversaResumo[]>([])
-  let aberta = $state<{ alvo: string; papel: string }>({ alvo: ia.alvo ?? 'geral', papel: ia.papel ?? 'estrategista' })
+  // o pedido da gaveta vale uma vez e só nesta matéria; sem ele, abre a conversa usada por último
+  const pedido = untrack(() => (ia.paraPagina?.uid === uid ? ia.paraPagina : null))
+  ia.paraPagina = null
+  let aberta = $state<{ alvo: string; papel: string }>(pedido ?? { alvo: 'geral', papel: 'estrategista' })
 
   const GRUPOS: { nome: string; de: (alvo: string) => boolean }[] = [
     { nome: 'Geral', de: (a) => a === 'geral' },
@@ -20,8 +24,7 @@
   $effect(() => {
     requisitar<ConversaResumo[]>('GET', `/api/materias/${uid}/agente/conversas`).then((cs) => {
       conversas = cs
-      // sem conversa pedida pela gaveta, abre a usada por último
-      if (ia.alvo === null && cs.length) aberta = { alvo: cs[0].alvo, papel: cs[0].papel }
+      if (!pedido && cs.length) aberta = { alvo: cs[0].alvo, papel: cs[0].papel }
     }, () => (conversas = []))
   })
 

@@ -65,6 +65,6 @@ test('abrir em página leva para a página do Assistente com a mesma conversa', 
   render(GavetaIA, { uid: 'u1', onfechar: vi.fn() })
   await userEvent.click(screen.getByRole('link', { name: /abrir em página/ }))
   expect(location.hash).toBe('#/m/u1/assistente')
-  expect(ia.alvo).toBe('geral')
+  expect(ia.paraPagina).toEqual({ uid: 'u1', alvo: 'geral', papel: 'estrategista' })
   expect(ia.aberta).toBe(false)
 })

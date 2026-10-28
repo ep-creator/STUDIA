@@ -1,6 +1,6 @@
 <script lang="ts">
   // Menu "···" das ações pouco usadas (Recomeçar, Apagar…). Fecha com Esc (devolvendo o foco ao botão), com clique
-  // fora ou ao escolher um item.
+  // fora, quando o foco sai dele (senão ficaria aberto numa linha que já se escondeu) ou ao escolher um item.
   let { rotulo, itens }: { rotulo: string; itens: { rotulo: string; acao: () => void; perigo?: boolean }[] } = $props()
 
   let aberto = $state(false)
@@ -30,7 +30,7 @@
   })
 </script>
 
-<div class="mais" bind:this={caixa}>
+<div class="mais" bind:this={caixa} onfocusout={(e) => { if (aberto && !caixa.contains(e.relatedTarget as Node | null)) fechar() }}>
   <button bind:this={botao} class="acao-texto gatilho" aria-label={rotulo} aria-haspopup="menu" aria-expanded={aberto}
     onclick={() => (aberto = !aberto)}>···</button>
   {#if aberto}

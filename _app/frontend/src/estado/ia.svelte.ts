@@ -2,8 +2,12 @@
 // `alvo`/`papel` trocam a conversa do painel (ex.: "Resumir a seção" em Documentos abre o resumidor da seção) e
 // `pendente` é um atalho a disparar assim que o painel abrir. `versaoChave` muda quando a chave é salva, para os
 // dois painéis (o da questão e o lateral) esconderem a caixa juntos.
-export const ia = $state<{ aberta: boolean; alvo: string | null; papel: string | null; pendente: string | null; versaoChave: number }>({
-  aberta: false, alvo: null, papel: null, pendente: null, versaoChave: 0,
+// `paraPagina`: a conversa que a gaveta mandou para a página do Assistente; vale uma vez, só para aquela matéria.
+export const ia = $state<{
+  aberta: boolean; alvo: string | null; papel: string | null; pendente: string | null; versaoChave: number
+  paraPagina: { uid: string; alvo: string; papel: string } | null
+}>({
+  aberta: false, alvo: null, papel: null, pendente: null, versaoChave: 0, paraPagina: null,
 })
 
 /** Atalhos de cada papel: N1–N4 no tutor, Resumir no resumidor, Plano de revisão no estrategista. */
@@ -13,8 +17,7 @@ export function atalhosDoPapel(papel: string): string[] {
 
 /** Leva a conversa aberta na gaveta para a página do Assistente. */
 export function abrirNaPagina(uid: string, alvo: string, papel: string): void {
-  ia.alvo = alvo
-  ia.papel = papel
+  ia.paraPagina = { uid, alvo, papel }
   ia.aberta = false
   location.hash = `#/m/${encodeURIComponent(uid)}/assistente`
 }
