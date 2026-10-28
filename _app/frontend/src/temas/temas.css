@@ -62,8 +62,6 @@
 }
 a, button { transition: color var(--transicao), background-color var(--transicao), border-color var(--transicao), transform var(--transicao), box-shadow var(--transicao); }
 a:hover { text-decoration-color: var(--destaque); }
-.botao:hover:not(:disabled) { border-color: var(--destaque); color: var(--destaque); }
-.botao.primario:hover:not(:disabled) { background: var(--destaque); border-color: var(--destaque); color: var(--texto-sobre-destaque); }
 :focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque) 70%, transparent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
@@ -84,15 +82,6 @@ h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 
-.botao {
-  border: 1.5px solid var(--borda);
-  background: var(--cartao);
-  border-radius: 999px;
-  padding: 0.25rem 0.9rem;
-  cursor: pointer;
-}
-.botao.primario { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
-.botao:disabled { opacity: 0.5; cursor: default; }
 
 .cartao { background: transparent; border: 0; padding: 0; }
 

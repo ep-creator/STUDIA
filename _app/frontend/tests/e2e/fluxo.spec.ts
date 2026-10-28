@@ -77,7 +77,7 @@ test('marcar e desfazer', async ({ page }) => {
 
 test('editar resumo e ver a diferença', async ({ page }) => {
   await abrirArea(page, '1ª', 'Documentos')
-  await page.getByRole('button', { name: '＋ Novo documento' }).click()
+  await page.getByRole('button', { name: '+ novo documento' }).click()
   await page.getByLabel('Título do documento').fill('Resumo E2E')
   await page.getByRole('button', { name: 'Criar', exact: true }).click()
   await page.getByRole('textbox', { name: 'Texto do documento' }).fill('Primeira linha com $x^2$')
@@ -106,16 +106,10 @@ test('busca com Ctrl K abre o texto e o PDF', async ({ page }) => {
   await expect(page.locator('.leitor iframe')).toBeVisible()
 })
 
-test('quatro temas persistem', async ({ page }) => {
+test('claro e escuro persistem', async ({ page }) => {
   await page.goto(inicioMateria)
-  for (const [identidade, modo, esperado] of [
-    ['Padrão', 'Claro', 'padrao-claro'], ['Padrão', 'Escuro', 'padrao-escuro'],
-    ['Editorial', 'Claro', 'editorial-claro'], ['Editorial', 'Escuro', 'editorial-escuro'],
-  ]) {
-    await page.getByRole('button', { name: /^Identidade visual/ }).click()
-    await page.getByRole('option', { name: identidade }).click()
-    await page.getByRole('button', { name: /^Claro ou escuro/ }).click()
-    await page.getByRole('option', { name: modo, exact: true }).click()
+  for (const [modo, esperado] of [['Claro', 'editorial-claro'], ['Escuro', 'editorial-escuro']]) {
+    await page.getByRole('group', { name: 'Tema' }).getByRole('button', { name: modo, exact: true }).click()
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-tema', esperado)
   }
@@ -127,6 +121,6 @@ test('criar outra matéria depois de abrir uma não trava em "Carregando"', asyn
   await page.getByRole('button', { name: '＋ Nova matéria' }).click()
   await page.getByLabel('Nome').fill('Segunda matéria')
   await page.getByRole('button', { name: 'Criar', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Importar arquivos' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Importar', exact: true })).toBeVisible()
   await expect(page.getByText('Carregando…')).toHaveCount(0)
 })

@@ -32,7 +32,7 @@
         {#if s.feito}<span class="selo-feita">feita</span>{/if}
         <span class="acoes-linha">
           <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
-            {s.feito ? 'desmarcar' : 'feita'}
+            {s.feito ? 'desmarcar' : 'marcar feita'}
           </button>
           <button class="acao-texto" aria-label={`Editar sessão ${s.codigo}`} onclick={() => oneditar(s)}>editar</button>
         </span>
