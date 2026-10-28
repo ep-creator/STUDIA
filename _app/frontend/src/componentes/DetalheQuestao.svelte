@@ -28,14 +28,18 @@
   })
   // Lista "14.1" questão "22" é o exercício 22 da seção 14.1 do livro: o índice tem o enunciado original e a resposta
   let doLivro = $state<ExercicioLivro | null>(null)
+  let procurandoLivro = $state(false)   // enquanto procura, o botão já ocupa o lugar (a tela não pula)
   let verLivro = $state(false)
   $effect(() => {
     const q = questao, s = secao, codigo = lista.codigo
     doLivro = null
     verLivro = false
+    procurandoLivro = false
     if (!s || s.codigo !== codigo || !/^\d+$/.test(q.rotulo)) return
+    procurandoLivro = true
     requisitar<ExercicioLivro>('GET', `/api/materias/${uid}/secoes/${s.secao_id}/exercicios/${q.rotulo}`)
-      .then((e) => { if (questao.id === q.id) doLivro = e }, () => {}) // 404: não está no índice, o botão não aparece
+      .then((e) => { if (questao.id === q.id) doLivro = e }, () => {}) // 404: não está no índice, o botão some
+      .finally(() => { if (questao.id === q.id) procurandoLivro = false })
   })
 
   async function mostrarResolucao() {
@@ -68,9 +72,11 @@
     <p class="suave">Exercício do livro{secao ? `: seção ${secao.codigo}` : ''}.</p>
   {/if}
 
-  {#if (doLivro && secao) || resolucao}
+  {#if (doLivro && secao) || procurandoLivro || resolucao}
     <div class="botoes">
-      {#if doLivro && secao}
+      {#if procurandoLivro && !doLivro}
+        <button class="acao-suave" disabled>Ver no livro</button>
+      {:else if doLivro && secao}
         <button class="acao-suave" aria-expanded={verLivro} onclick={() => (verLivro = !verLivro)}>
           {verLivro ? 'Esconder o enunciado do livro' : 'Ver no livro'}
         </button>

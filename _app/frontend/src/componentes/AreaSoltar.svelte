@@ -45,7 +45,11 @@
 </div>
 
 <style>
-  .area { border: 1px dashed color-mix(in srgb, var(--texto) 25%, transparent); border-radius: 6px; padding: 1.4rem; text-align: center; color: var(--suave); }
+  /* área grande: é o alvo principal da tela */
+  .area {
+    min-height: 14rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem;
+    border: 1px dashed color-mix(in srgb, var(--texto) 25%, transparent); border-radius: 6px; padding: 1.4rem; text-align: center; color: var(--suave);
+  }
   .area.sobre { border-color: var(--destaque); background: var(--realce); }
   p { margin: 0; }
   .oculto { display: none; }

@@ -30,7 +30,7 @@
   let aviso = $state<string | null>(null)       // o que a ferramenta está fazendo
   let ultimoCusto = $state<number | null>(null)
   let confirmar = $state<{ pedido: PedidoAgente; total: number; teto: number } | null>(null)
-  let falha = $state<{ texto: string; pedido: PedidoAgente } | null>(null)
+  let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number } | null>(null)
   let escrita = $state('')
   let fontes: FonteResumo[] | null = null
   let corrente: AbortController | null = null   // a resposta em andamento; trocar de alvo a corta
@@ -89,20 +89,23 @@
     const controle = new AbortController()
     corrente = controle
     respondendo = true
+    // o pedido que falhou não empilha: o próximo (ou o "Tentar de novo") toma o lugar da bolha dele
+    if (falha) itens = itens.slice(0, falha.inicio)
     falha = null
     confirmar = null
+    const inicio = itens.length
     itens.push({ autor: 'voce', texto: p.texto ?? NOMES[p.atalho ?? ''] ?? '' })
     itens.push({ autor: 'agente', texto: '' })
     try {
       await conversar(uid, p, (e) => {
         if (controle.signal.aborted) return   // resposta de outra questão: não entra nesta conversa
         if (e.tipo === 'confirmar') confirmar = { pedido: p, total: e.dados.total_mes, teto: e.dados.teto }
-        else if (e.tipo === 'erro') falha = { texto: textoDoErro(e.dados.motivo, e.dados.detalhe), pedido: p }
+        else if (e.tipo === 'erro') falha = { texto: textoDoErro(e.dados.motivo, e.dados.detalhe), pedido: p, inicio }
         else aoEvento(e)
       }, controle.signal)
     } catch (e) {
       if (controle.signal.aborted) return
-      falha = { texto: e instanceof Error ? e.message : String(e), pedido: p }
+      falha = { texto: e instanceof Error ? e.message : String(e), pedido: p, inicio }
     } finally {
       if (corrente === controle) corrente = null
       if (!controle.signal.aborted) {   // cortada: a troca de alvo já zerou o painel
@@ -256,7 +259,7 @@
       {@const f = falha}
       <div class="alerta" role="alert">
         <p>{f.texto}</p>
-        <button class="acao-suave" onclick={() => { itens = itens.slice(0, -1); void enviar(f.pedido) }}>Tentar de novo</button>
+        <button class="acao-suave" onclick={() => void enviar(f.pedido)}>Tentar de novo</button>
       </div>
     {/if}
   </div>

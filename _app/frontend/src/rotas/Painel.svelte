@@ -57,7 +57,12 @@
   .painel { display: grid; gap: 1.2rem; }
   .faixa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; align-items: start; padding-top: 1.1rem; border-top: 1px solid var(--fio); }
   .faixa.topo { grid-template-columns: 11rem 17rem minmax(0, 1fr); border-top: 0; padding-top: 0.4rem; }
+  /* os tópicos ficam sempre na 3ª coluna: sem próxima aula (prova já feita), o layout não muda */
+  .faixa.topo > :global(section[aria-label='Tópicos vistos']) { grid-column: 3; }
   .faixa > :global(*) { min-width: 0; }
-  @media (max-width: 1100px) { .faixa, .faixa.topo { grid-template-columns: 1fr; gap: 1.6rem; } }
+  @media (max-width: 1100px) {
+    .faixa, .faixa.topo { grid-template-columns: 1fr; gap: 1.6rem; }
+    .faixa.topo > :global(section[aria-label='Tópicos vistos']) { grid-column: auto; }
+  }
   .pendencias { display: inline-block; margin-bottom: 0.8rem; color: var(--destaque); }
 </style>

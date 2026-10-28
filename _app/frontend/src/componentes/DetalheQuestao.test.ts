@@ -81,7 +81,8 @@ function motorDoLivro(status: number, corpo: unknown = null) {
 test('questão que é exercício do livro mostra "Ver no livro" com o enunciado e a resposta', async () => {
   const chamadas = motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide' } })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  await userEvent.click(await screen.findByRole('button', { name: /Ver no livro/ }))
+  await vi.waitFor(() => expect(screen.getByRole('button', { name: /Ver no livro/ })).toBeEnabled())
+  await userEvent.click(screen.getByRole('button', { name: /Ver no livro/ }))
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/secoes/31/exercicios/30'))).toBe(true)
   expect(screen.getByText(/x² \+ y²/)).toBeInTheDocument()
   expect(screen.getByText(/o paraboloide/)).toBeInTheDocument()
@@ -98,7 +99,7 @@ test('sem exercício no índice, "Ver no livro" não aparece', async () => {
   const chamadas = motorDoLivro(404)
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
   await vi.waitFor(() => expect(chamadas.filter((u) => u.includes('/exercicios/')).length).toBe(1))
-  expect(screen.queryByRole('button', { name: /Ver no livro/ })).toBeNull()
+  await vi.waitFor(() => expect(screen.queryByRole('button', { name: /Ver no livro/ })).toBeNull())
 })
 
 test('rótulo que não é número, lista de outra seção ou sem seção: nem pergunta ao motor', () => {
@@ -123,4 +124,14 @@ test('o painel do tutor recebe a questão aberta e os atalhos N1–N4', async ()
     expect(await screen.findByRole('button', { name: nome })).toBeInTheDocument()
   }
   expect(chamadas.some((u) => u.includes('/agente/conversa?alvo=questao%3A2&papel=tutor'))).toBe(true)
+})
+
+test('enquanto procura no livro, "Ver no livro" já ocupa o lugar (desabilitado), para a tela não pular', async () => {
+  let responder!: (r: Response) => void
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((r) => { responder = r })))
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  const botao = screen.getByRole('button', { name: /Ver no livro/ })
+  expect(botao).toBeDisabled()
+  responder(new Response(JSON.stringify({ exercicio: exercicio(), resposta: null }), { status: 200, headers: { 'content-type': 'application/json' } }))
+  await vi.waitFor(() => expect(screen.getByRole('button', { name: /Ver no livro/ })).toBeEnabled())
 })

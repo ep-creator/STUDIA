@@ -190,3 +190,16 @@ test('menu ··· fecha com Esc e devolve o foco ao botão', async () => {
   expect(screen.queryByRole('menu')).toBeNull()
   expect(mais).toHaveFocus()
 })
+
+test('pedido que falhou não empilha: o próximo atalho substitui a bolha e o aviso', async () => {
+  const SEM_CHAVE = [{ tipo: 'erro', dados: { motivo: 'sem_chave', detalhe: '' } }]
+  motor({ respostas: [SEM_CHAVE, SEM_CHAVE] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: 'N1 Dica' }))
+  expect(await screen.findByText(/Falta configurar a chave/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'N2 Caminho' }))
+  await waitFor(() => expect(pedidos.filter((p) => p.url.includes('/agente/mensagem'))).toHaveLength(2))
+  await waitFor(() => expect(screen.getAllByText(/Falta configurar a chave/)).toHaveLength(1))
+  expect(screen.queryByText('N1 Dica')).toBeNull()
+  expect(screen.getByText('N2 Caminho')).toBeInTheDocument()
+})

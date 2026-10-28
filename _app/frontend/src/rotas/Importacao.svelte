@@ -149,7 +149,7 @@
 </div>
 
 <style>
-  .importacao { display: grid; grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
+  .importacao { display: grid; grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
   .importacao > :global(*) { min-width: 0; }
   .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; border-left: 1px solid var(--fio); padding-left: 2rem; }
   footer { display: flex; gap: 1.1rem; align-items: center; margin-top: 1.25rem; }
