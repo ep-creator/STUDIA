@@ -7,10 +7,15 @@ import Assistente from './Assistente.svelte'
 const json = (d: unknown) => new Response(JSON.stringify(d), { status: 200, headers: { 'content-type': 'application/json' } })
 let urls: string[] = []
 
+let corpos: { url: string; metodo: string; corpo: unknown }[] = []
+
 function motor(conversas: unknown[]) {
   urls = []
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+  corpos = []
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit = {}) => {
     urls.push(url)
+    corpos.push({ url, metodo: init.method ?? 'GET', corpo: init.body ? JSON.parse(String(init.body)) : null })
+    if (url.endsWith('/api/agente/chave')) return json({ ok: true })
     if (url.endsWith('/agente/conversas')) return json(conversas)
     if (url.includes('/agente/conversa?')) return json({ id: 1, alvo: 'x', papel: 'y', mensagens: [] })
     if (url.endsWith('/api/agente/estado')) return json({ chave_configurada: true, modelo: 'g', total_mes: 0, teto: 20 })
@@ -82,4 +87,16 @@ test('um pedido feito em outra matéria é ignorado', async () => {
   ia.paraPagina = { uid: 'outra', alvo: 'secao:7', papel: 'resumidor' }
   render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
   expect(await screen.findByRole('button', { name: /14.1 #22/ })).toHaveAttribute('aria-current', 'true')
+})
+
+test('a página mostra se há chave e deixa trocar a chave (Enter salva e o campo some)', async () => {
+  motor(CONVERSAS)
+  render(Assistente, { uid: 'u1', hoje: new Date(2026, 9, 28) })
+  const chave = await screen.findByRole('region', { name: 'Chave do Gemini' })
+  await waitFor(() => expect(chave).toHaveTextContent('configurada'))
+  expect(screen.queryByLabelText('API key do Gemini')).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'trocar a chave' }))
+  await userEvent.type(screen.getByLabelText('API key do Gemini'), 'AIza-nova{Enter}')
+  await waitFor(() => expect(corpos.find((c) => c.metodo === 'PUT')?.corpo).toEqual({ chave: 'AIza-nova' }))
+  await waitFor(() => expect(screen.queryByLabelText('API key do Gemini')).toBeNull())
 })

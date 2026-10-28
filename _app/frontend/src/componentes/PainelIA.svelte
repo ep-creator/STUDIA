@@ -30,7 +30,7 @@
   let aviso = $state<string | null>(null)       // o que a ferramenta está fazendo
   let ultimoCusto = $state<number | null>(null)
   let confirmar = $state<{ pedido: PedidoAgente; total: number; teto: number } | null>(null)
-  let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number } | null>(null)
+  let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number; motivo?: string } | null>(null)
   let escrita = $state('')
   let fontes: FonteResumo[] | null = null
   let corrente: AbortController | null = null   // a resposta em andamento; trocar de alvo a corta
@@ -100,7 +100,7 @@
       await conversar(uid, p, (e) => {
         if (controle.signal.aborted) return   // resposta de outra questão: não entra nesta conversa
         if (e.tipo === 'confirmar') confirmar = { pedido: p, total: e.dados.total_mes, teto: e.dados.teto }
-        else if (e.tipo === 'erro') falha = { texto: textoDoErro(e.dados.motivo, e.dados.detalhe), pedido: p, inicio }
+        else if (e.tipo === 'erro') falha = { texto: textoDoErro(e.dados.motivo, e.dados.detalhe), pedido: p, inicio, motivo: e.dados.motivo }
         else aoEvento(e)
       }, controle.signal)
     } catch (e) {
@@ -260,6 +260,7 @@
       <div class="alerta" role="alert">
         <p>{f.texto}</p>
         <button class="acao-suave" onclick={() => void enviar(f.pedido)}>Tentar de novo</button>
+        {#if f.motivo === 'chave_invalida'}<a class="acao-texto" href={montarHash({ tela: 'assistente', uid })}>trocar a chave</a>{/if}
       </div>
     {/if}
   </div>

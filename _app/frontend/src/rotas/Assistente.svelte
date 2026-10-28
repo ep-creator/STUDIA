@@ -4,6 +4,7 @@
   import { untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
   import type { ConversaResumo } from '../api/tipos'
+  import ChaveAgente from '../componentes/ChaveAgente.svelte'
   import PainelIA from '../componentes/PainelIA.svelte'
   import { atalhosDoPapel, ia } from '../estado/ia.svelte'
 
@@ -54,6 +55,7 @@
         {/each}
       {/if}
     {/each}
+    <ChaveAgente />
   </nav>
   <section class="chat">
     {#key `${aberta.alvo}|${aberta.papel}`}
