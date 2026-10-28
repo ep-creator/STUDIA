@@ -1,11 +1,11 @@
-/* Quatro paletas (Padrão/Editorial × claro/escuro). Todo componente usa só estas variáveis. */
+/* Duas paletas do Editorial (claro e escuro). Todo componente usa só estas variáveis. */
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/fraunces';
 
 :root {
   --fonte-texto: 'Inter Variable', system-ui, sans-serif;
-  --fonte-titulo: var(--fonte-texto);
-  --raio: 10px;
+  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
+  --raio: 4px;
   --ok: #2e7d32;
   --err: #c62828;
   --dub: #f9a825;
@@ -13,33 +13,7 @@
 }
 
 :root,
-:root[data-tema='padrao-claro'] {
-  --fundo: #fafaf7;
-  --lateral: #f2f1ec;
-  --cartao: #ffffff;
-  --borda: #e5e5e0;
-  --texto: #1f2328;
-  --suave: #6b6f76;
-  --destaque: #3b82f6;
-}
-
-:root[data-tema='padrao-escuro'] {
-  --fundo: #15171c;
-  --lateral: #1b1e24;
-  --cartao: #1e2128;
-  --borda: #2a2d35;
-  --texto: #e6e6e6;
-  --suave: #9aa0aa;
-  --destaque: #7c9cff;
-  --texto-sobre-destaque: #0b0d12;
-  --ok: #81c995;
-  --err: #f28b82;
-  --dub: #fdd663;
-}
-
 :root[data-tema='editorial-claro'] {
-  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
-  --raio: 4px;
   --fundo: #f3ece0;
   --lateral: #ece3d3;
   --cartao: #f8f2e8;
@@ -50,8 +24,6 @@
 }
 
 :root[data-tema='editorial-escuro'] {
-  --fonte-titulo: 'Fraunces Variable', Georgia, serif;
-  --raio: 4px;
   --fundo: #191714;
   --lateral: #201d19;
   --cartao: #221f1a;
@@ -82,7 +54,12 @@
 ::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--destaque) 55%, transparent); }
 
 /* Destaques ao passar o mouse: mesma linguagem no app inteiro (cor de destaque, transição curta) */
-:root { --transicao: 160ms ease; --realce: color-mix(in srgb, var(--destaque) 9%, transparent); }
+:root {
+  --transicao: 160ms ease;
+  --realce: color-mix(in srgb, var(--destaque) 9%, transparent);
+  --fio: color-mix(in srgb, var(--texto) 14%, transparent);   /* separador de seções */
+  --leve: color-mix(in srgb, var(--texto) 6%, transparent);   /* fundo de ação suave e de campo */
+}
 a, button { transition: color var(--transicao), background-color var(--transicao), border-color var(--transicao), transform var(--transicao), box-shadow var(--transicao); }
 a:hover { text-decoration-color: var(--destaque); }
 .botao:hover:not(:disabled) { border-color: var(--destaque); color: var(--destaque); }
@@ -117,18 +94,26 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .botao.primario { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
 .botao:disabled { opacity: 0.5; cursor: default; }
 
-.cartao {
-  background: var(--cartao);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  padding: 1rem;
-}
+.cartao { background: transparent; border: 0; padding: 0; }
+
+/* Três tipos de ação, nenhum com contorno: texto (secundária), suave (principal de uma área), forte (uma por tela) */
+.acao-texto, .acao-suave, .acao-forte { font: inherit; cursor: pointer; text-decoration: none; }
+.acao-texto { background: none; border: 0; padding: 0; color: var(--suave); text-underline-offset: 3px; }
+.acao-texto:hover:not(:disabled) { color: var(--texto); text-decoration: underline; text-decoration-color: var(--destaque); }
+.acao-suave { background: var(--leve); border: 0; border-radius: 999px; padding: 0.2rem 0.8rem; color: var(--texto); }
+.acao-suave:hover:not(:disabled) { background: color-mix(in srgb, var(--texto) 11%, transparent); }
+.acao-forte { background: var(--texto); color: var(--fundo); border: 0; border-radius: 999px; padding: 0.25rem 1rem; font-weight: 500; }
+.acao-forte:hover:not(:disabled) { background: var(--destaque); color: var(--texto-sobre-destaque); }
+.acao-texto:disabled, .acao-suave:disabled, .acao-forte:disabled { opacity: 0.5; cursor: default; }
+
+/* Linha com ações que só aparecem ao passar o mouse ou com foco do teclado */
+.linha-acoes .acoes-linha { opacity: 0; transition: opacity var(--transicao); }
+.linha-acoes:hover .acoes-linha, .linha-acoes:focus-within .acoes-linha { opacity: 1; }
 
 .rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); }
 .suave { color: var(--suave); }
 .numero-grande { font-family: var(--fonte-titulo); font-size: 2.6rem; line-height: 1; }
 
-:root[data-tema^='editorial'] .cartao { border-width: 0; border-top: 1.5px solid var(--borda); border-radius: 0; background: transparent; }
 
 @media print {
   .nao-imprimir { display: none !important; }

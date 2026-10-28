@@ -8,5 +8,5 @@
   .marca { font-family: var(--fonte-titulo); font-weight: 600; letter-spacing: 0.28em; color: var(--texto); }
   .normal { font-size: 0.95rem; }
   .grande { font-size: 1.4rem; }
-  :global(:root[data-tema^='editorial']) .marca { font-weight: 500; }
+  .marca { font-weight: 500; }
 </style>

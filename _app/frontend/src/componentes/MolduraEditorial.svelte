@@ -17,8 +17,8 @@
   .etiqueta { display: none; }
   .ajustada { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   @media print { .ajustada { display: block; } }
-  :global(:root[data-tema^='editorial']) .moldura { border: 1px solid var(--borda); padding: 2rem 1.75rem; margin: 0.75rem 0; }
-  :global(:root[data-tema^='editorial']) .etiqueta {
+  .moldura { border: 1px solid var(--borda); padding: 2rem 1.75rem; margin: 0.75rem 0; }
+  .etiqueta {
     display: block; position: absolute; left: 50%; transform: translateX(-50%); background: var(--fundo);
     padding: 0 0.6rem; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap;
   }

@@ -41,12 +41,8 @@
     transition: width 280ms ease;
   }
   .materia:hover::before, .materia:focus-visible::before { width: 100%; }
-  :global(:root[data-tema^='editorial']) .materia:hover { background: var(--realce); }
+  .materia:hover { background: var(--realce); }
 
   /* Padrão: o cartão sobe um pouco e a borda ganha o destaque */
-  :global(:root[data-tema^='padrao']) .materia::before { display: none; }
-  :global(:root[data-tema^='padrao']) .materia:hover {
-    border-color: var(--destaque); transform: translateY(-2px); box-shadow: 0 10px 28px rgb(0 0 0 / 14%);
-  }
   .materia:focus-visible { outline: none; }
 </style>

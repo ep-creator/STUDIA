@@ -93,7 +93,7 @@
     font-family: var(--fonte-titulo); font-weight: 600; letter-spacing: 0.28em; line-height: 1;
     font-size: clamp(3.2rem, 12vw, 8.5rem); color: var(--texto);
   }
-  :global(:root[data-tema^='editorial']) .palavra { font-weight: 500; }
+  .palavra { font-weight: 500; }
 
   /* A palavra inteira já ocupa o lugar (fica centrada desde o início); cada tecla só revela a sua letra */
   .letra { display: inline-block; color: transparent; }

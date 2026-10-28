@@ -103,7 +103,7 @@
   .item { padding: 0.2rem 0.4rem; }
   .item.ativo { background: var(--cartao); font-weight: 600; }
   .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque); }
-  :global(:root[data-tema^='editorial']) .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
+  .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   .ia {
     display: inline-block; margin-left: 0.4rem; padding: 0 0.3rem; border-radius: 4px; vertical-align: 0.1em;
     font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque);
