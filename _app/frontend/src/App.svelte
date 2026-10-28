@@ -5,10 +5,10 @@
   import { nomeUnidade } from './apresentacao'
   import Avisos from './componentes/Avisos.svelte'
   import BarraLateral from './componentes/BarraLateral.svelte'
-  import PainelIA from './componentes/PainelIA.svelte'
+  import GavetaIA from './componentes/GavetaIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
-  import { atalhosDoPapel, ia } from './estado/ia.svelte'
+  import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
   import BuscaMateria from './componentes/BuscaMateria.svelte'
   import { busca } from './estado/busca.svelte'
@@ -111,7 +111,10 @@
         {#if rota.tela === 'materia'}
           <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
           <Topo {painel} area={rota.area}>
-            {#snippet acoes()}<button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>{/snippet}
+            {#snippet acoes()}
+              <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
+              <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>IA ›</button>
+            {/snippet}
           </Topo>
           <MolduraEditorial
             ajustada={rota.area === 'documentos' || rota.area === 'listas'}
@@ -149,15 +152,9 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
-      <button class="acao-texto alternar" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
-        {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
-      </button>
-      {#if ia.aberta}
-        <PainelIA uid={rota.uid} alvo={ia.alvo ?? 'geral'} papel={ia.papel ?? 'estrategista'}
-          atalhos={atalhosDoPapel(ia.papel ?? 'estrategista')} />
-      {/if}
-    </div>
+    {#if ia.aberta && rota.tela !== 'assistente'}
+      <GavetaIA uid={rota.uid} onfechar={() => (ia.aberta = false)} />
+    {/if}
   </div>
 {/if}
 
@@ -169,7 +166,4 @@
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
   @media print { main.ajustada { height: auto; display: block; } }
-  .ia { width: 22rem; flex: none; box-sizing: border-box; padding: 1rem 1rem 1rem 0; display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
-  .ia.fechada { width: auto; padding-left: 0; }
-  .alternar { align-self: flex-end; font-size: 0.85rem; padding: 0.2rem 0.65rem; }
 </style>
