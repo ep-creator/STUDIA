@@ -63,21 +63,21 @@
 </div>
 
 {#if conflito}
-  <div class="conflito cartao" role="alert">
+  <div class="conflito" role="alert">
     <p>Este documento mudou desde que você abriu (em outro programa ou em outra aba). O seu texto continua aqui.</p>
     {#if !versaoAtual}
-      <button class="botao" onclick={verAtual}>Ver versão atual</button>
+      <button class="acao-texto" onclick={verAtual}>Ver versão atual</button>
     {:else}
       <div class="atual"><span class="rotulo">Versão atual</span><Markdown texto={versaoAtual.corpo} /></div>
-      <button class="botao" onclick={() => { corpo = versaoAtual!.corpo; conflito = false }}>Usar a versão atual</button>
-      <button class="botao primario" onclick={() => salvar(true)}>Manter o meu e salvar por cima</button>
+      <button class="acao-texto" onclick={() => { corpo = versaoAtual!.corpo; conflito = false }}>Usar a versão atual</button>
+      <button class="acao-suave" onclick={() => salvar(true)}>Manter o meu e salvar por cima</button>
     {/if}
   </div>
 {/if}
 
 <div class="botoes">
-  <button class="botao primario" onclick={() => salvar()} disabled={salvando}>Salvar</button>
-  <button class="botao" onclick={oncancelar}>Cancelar</button>
+  <button class="acao-forte" onclick={() => salvar()} disabled={salvando}>Salvar</button>
+  <button class="acao-texto" onclick={oncancelar}>Cancelar</button>
 </div>
 
 <style>

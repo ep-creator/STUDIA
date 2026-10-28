@@ -17,14 +17,14 @@
   const previa = $derived(corpo.trim() ? renderizarFormula(corpo) : '')
 </script>
 
-<form class="cartao editor" onsubmit={(e) => { e.preventDefault(); onsalvar({ titulo: titulo.trim(), corpo_tex: corpo, notas_md: notas }) }}>
+<form class="editor" onsubmit={(e) => { e.preventDefault(); onsalvar({ titulo: titulo.trim(), corpo_tex: corpo, notas_md: notas }) }}>
   <label>Nome <input bind:value={titulo} required placeholder="Ex.: Regra da cadeia" /></label>
   <label>Fórmula (LaTeX) <textarea rows="3" bind:value={corpo} required placeholder={'\\frac{dz}{dt} = \\frac{\\partial z}{\\partial x}\\frac{dx}{dt}'}></textarea></label>
   <div class="previa" aria-label="Prévia da fórmula">{@html previa}</div>
   <label>Notas <textarea rows="2" bind:value={notas}></textarea></label>
   <div class="botoes">
-    <button class="botao primario" type="submit" disabled={!titulo.trim() || !corpo.trim()}>Salvar fórmula</button>
-    <button class="botao" type="button" onclick={oncancelar}>Cancelar</button>
+    <button class="acao-forte" type="submit" disabled={!titulo.trim() || !corpo.trim()}>Salvar fórmula</button>
+    <button class="acao-texto" type="button" onclick={oncancelar}>Cancelar</button>
   </div>
 </form>
 

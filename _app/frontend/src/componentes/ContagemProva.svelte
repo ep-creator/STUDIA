@@ -7,23 +7,23 @@
     hrefImportar?: string
   } = $props()
 
-  // Número grande só para a contagem; prova passada ou sem data é um aviso, não uma manchete
   const futura = $derived(prova !== null && diasAte(prova.data, hoje) >= 0)
 </script>
 
-<section class="cartao" aria-label="Prova">
+<section aria-label="Prova">
   <div class="rotulo">Prova</div>
-  {#if futura}
-    <div class="numero-grande">{textoContagem(prova, hoje)}</div>
-    <div class="suave">{dataCurta(prova!.data, prova!.hora_inicio)}</div>
-  {:else if prova}
-    <p class="aviso">Já foi em {dataCurta(prova.data, prova.hora_inicio)}.</p>
+  {#if prova}
+    <div class="numero-grande">{futura ? textoContagem(prova, hoje) : 'feita'}</div>
+    <div class="suave data">{dataCurta(prova.data, prova.hora_inicio)}</div>
   {:else}
-    <p class="aviso">Sem data de prova nesta unidade.</p>
-    {#if hrefImportar}<a class="suave" href={hrefImportar}>Importar o calendário</a>{/if}
+    <p class="aviso">Sem data</p>
+    {#if hrefImportar}<a class="acao-texto" href={hrefImportar}>importar o calendário</a>{/if}
   {/if}
 </section>
 
 <style>
-  .aviso { font-family: var(--fonte-titulo); font-size: 1.15rem; margin: 0.4rem 0 0.25rem; }
+  .numero-grande { margin-top: 0.4rem; }
+  .data { font-size: 0.85rem; margin-top: 0.3rem; }
+  .aviso { font-family: var(--fonte-titulo); font-size: 1.25rem; margin: 0.4rem 0 0.25rem; }
+  .acao-texto { font-size: 0.85rem; }
 </style>

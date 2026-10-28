@@ -182,7 +182,7 @@
       {#if buscou && ordem.length === 0}
         <div class="vazio">
           <p class="suave">Nada encontrado {escopo === 'unidade' ? 'nesta unidade' : 'na matéria'}.</p>
-          {#if escopo === 'unidade'}<button class="botao" onclick={() => (escopo = 'materia')}>Buscar na matéria toda</button>{/if}
+          {#if escopo === 'unidade'}<button class="acao-texto" onclick={() => (escopo = 'materia')}>Buscar na matéria toda</button>{/if}
         </div>
       {/if}
     </div>

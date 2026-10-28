@@ -5,7 +5,7 @@
   import { nomeUnidade } from './apresentacao'
   import Avisos from './componentes/Avisos.svelte'
   import BarraLateral from './componentes/BarraLateral.svelte'
-  import EspacoIA from './componentes/EspacoIA.svelte'
+  import GavetaIA from './componentes/GavetaIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import { ia } from './estado/ia.svelte'
@@ -23,6 +23,7 @@
   import Formulario from './rotas/Formulario.svelte'
   import Historico from './rotas/Historico.svelte'
   import Importacao from './rotas/Importacao.svelte'
+  import Assistente from './rotas/Assistente.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
   import Painel from './rotas/Painel.svelte'
@@ -110,7 +111,10 @@
         {#if rota.tela === 'materia'}
           <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
           <Topo {painel} area={rota.area}>
-            {#snippet acoes()}<button class="botao" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↩ Desfazer</button>{/snippet}
+            {#snippet acoes()}
+              <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
+              <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>IA ›</button>
+            {/snippet}
           </Topo>
           <MolduraEditorial
             ajustada={rota.area === 'documentos' || rota.area === 'listas'}
@@ -139,6 +143,8 @@
           <Importacao {painel} />
         {:else if rota.tela === 'historico'}
           <Historico uid={rota.uid} />
+        {:else if rota.tela === 'assistente'}
+          <Assistente uid={rota.uid} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}
@@ -146,12 +152,9 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    <div class="ia nao-imprimir" class:fechada={!ia.aberta}>
-      <button class="botao" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>
-        {ia.aberta ? 'Recolher IA ›' : '‹ IA'}
-      </button>
-      {#if ia.aberta}<EspacoIA contexto="geral" />{/if}
-    </div>
+    {#if ia.aberta && rota.tela !== 'assistente'}
+      <GavetaIA uid={rota.uid} onfechar={() => (ia.aberta = false)} />
+    {/if}
   </div>
 {/if}
 
@@ -163,6 +166,4 @@
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
   @media print { main.ajustada { height: auto; display: block; } }
-  .ia { width: 14rem; flex: none; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-  .ia.fechada { width: auto; }
 </style>

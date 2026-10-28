@@ -11,13 +11,10 @@
   const total = $derived(grupos.reduce((t, g) => t + g.questoes.length, 0))
 </script>
 
-<section class="cartao bloco" aria-label="Para revisar">
-  <header>
-    <div class="rotulo">Para revisar</div>
-    {#if total}<span class="conta">{total} {total === 1 ? 'questão' : 'questões'}</span>{/if}
-  </header>
+<section class="bloco" aria-label="Para revisar">
+  <div class="rotulo">Para revisar{total ? ` · ${total}` : ''}</div>
   {#if total === 0}
-    <p class="suave">Nada marcado com ✗ ou ? nesta unidade. Quando errar ou ficar em dúvida numa questão, ela aparece aqui.</p>
+    <p class="suave">Nada para revisar ainda.</p>
   {:else}
     {#each grupos as g (g.lista.id)}
       <div class="grupo">
@@ -29,7 +26,7 @@
               href={hrefListas}
               aria-label={`${g.lista.codigo} #${questao.rotulo} (${SIMBOLO[marca]})`}
               onclick={() => (pedido.questao = questao.id)}
-            >{questao.rotulo} <span aria-hidden="true">{SIMBOLO[marca]}</span></a>
+            >{questao.rotulo}</a>
           {/each}
         </div>
       </div>
@@ -38,17 +35,14 @@
 </section>
 
 <style>
-  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
-  .conta { font-size: 0.8rem; color: var(--destaque); font-weight: 600; }
-  .grupo { padding: 0.55rem 0; border-top: 1px solid color-mix(in srgb, var(--borda) 35%, transparent); }
-  .assunto { font-family: var(--fonte-titulo); font-size: 0.98rem; margin-bottom: 0.4rem; }
-  .questoes { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .questao {
-    min-width: 2.4rem; padding: 0.15rem 0.5rem; border-radius: 6px; text-align: center; text-decoration: none; font-size: 0.92rem;
-    transition: transform var(--transicao), box-shadow var(--transicao);
-  }
-  .questao:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgb(0 0 0 / 18%); }
-  .questao.err { background: var(--err); color: #fff; }
-  .questao.dub { background: var(--dub); color: #000; }
+  .rotulo { margin-bottom: 0.4rem; }
+  .grupo { padding: 0.45rem 0; }
+  .assunto { font-family: var(--fonte-titulo); font-size: 1rem; margin-bottom: 0.3rem; }
+  /* só os números, no estilo da grade das Listas */
+  .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+  .questao { padding: 0 2px; text-decoration: none; font-variant-numeric: tabular-nums; border-bottom: 2px solid transparent; }
+  .questao:hover { color: var(--destaque); }
+  .questao.err { color: var(--err); border-bottom-color: var(--err); }
+  .questao.dub { color: var(--dub); border-bottom-color: var(--dub); }
   p { margin: 0; }
 </style>

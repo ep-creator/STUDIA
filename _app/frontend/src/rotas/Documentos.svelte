@@ -7,24 +7,20 @@
   import ListaDocumentos, { type Selecao } from '../componentes/ListaDocumentos.svelte'
   import Markdown from '../componentes/Markdown.svelte'
   import VisualizadorPdf from '../componentes/VisualizadorPdf.svelte'
-  import { criarDocumento } from '../documentos'
   import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
+  import { abrirNoPainel } from '../estado/ia.svelte'
 
   let { painel }: { painel: Painel } = $props()
 
   const uid = $derived(painel.materia.uid)
-  const unidade = $derived(painel.unidades.find((u) => u.numero === painel.unidade)!)
 
   let fontes = $state<FonteResumo[]>([])
   let selecao = $state<Selecao>(null)
   let documento = $state<DocumentoComCorpo | null>(null)
   let editando = $state(false)
-  let criando = $state(false)
-  let novoTitulo = $state('')
-  let novoTipo = $state('resumo')
   let leitor = $state<HTMLElement>()
 
   // abrir outro documento começa do topo dele (o texto rola dentro do leitor, não na página)
@@ -120,20 +116,6 @@
     if (s?.tipo === 'documento') void abrirDocumento(s.id)
   }
 
-  async function criar(e: SubmitEvent) {
-    e.preventDefault()
-    try {
-      const id = await criarDocumento(uid, { tipo: novoTipo, titulo: novoTitulo, unidade_id: unidade.id })
-      criando = false
-      novoTitulo = ''
-      await recarregar()
-      selecionar({ tipo: 'documento', id })
-      editando = true
-    } catch (err) {
-      erro(err)
-    }
-  }
-
   async function aoSalvar() {
     avisar('Documento salvo')
     editando = false
@@ -146,15 +128,6 @@
 
 <div class="documentos">
   <aside>
-    <button class="botao" onclick={() => (criando = !criando)}>＋ Novo documento</button>
-    {#if criando}
-      <form class="novo" onsubmit={criar}>
-        <input aria-label="Título do documento" placeholder="Título" bind:value={novoTitulo} required />
-        <Seletor rotulo="Tipo do documento" variante="compacto" valor={novoTipo} onmudar={(v) => (novoTipo = v)}
-          opcoes={[{ valor: 'resumo', rotulo: 'Resumo' }, { valor: 'anotacao', rotulo: 'Anotação' }, { valor: 'resolucao', rotulo: 'Resolução' }, { valor: 'plano', rotulo: 'Plano' }]} />
-        <button class="botao primario" type="submit" disabled={!novoTitulo.trim()}>Criar</button>
-      </form>
-    {/if}
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />
   </aside>
 
@@ -162,7 +135,12 @@
     {#if documento}
       <header>
         <h2>{documento.titulo}</h2>
-        {#if !editando}<button class="botao" onclick={() => (editando = true)}>✎ Editar</button>{/if}
+        <div class="acoes">
+          {#if documento.secao_id !== null && !editando}
+            <button class="acao-suave" onclick={() => abrirNoPainel(`secao:${documento!.secao_id}`, 'resumidor', 'resumir')}>Resumir a seção</button>
+          {/if}
+          {#if !editando}<button class="acao-texto" onclick={() => (editando = true)}>editar</button>{/if}
+        </div>
       </header>
       <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
       {#if TIPOS_COM_SECAO.includes(documento.tipo) && !editando}
@@ -174,8 +152,8 @@
         {#if sugestao}
           <div class="sugestao" role="status">
             <span>Ligar à seção {sugestao.codigo} — {sugestao.titulo}?</span>
-            <button class="botao primario" onclick={() => void escolherSecao(sugestao!.secao_id)}>Sim</button>
-            <button class="botao" onclick={() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()}>Escolher outra</button>
+            <button class="acao-suave" onclick={() => void escolherSecao(sugestao!.secao_id)}>Sim</button>
+            <button class="acao-texto" onclick={() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()}>Escolher outra</button>
           </div>
         {/if}
       {/if}
@@ -201,8 +179,6 @@
   aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
   .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
   @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
-  .novo { display: grid; gap: 0.4rem; }
-  .novo input { border: 1px solid var(--borda); border-radius: 6px; padding: 0.25rem 0.4rem; background: var(--fundo); }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .secao { max-width: 26rem; margin: 0.2rem 0 0.6rem; }
   .sugestao {

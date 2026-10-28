@@ -43,6 +43,13 @@
   <hr />
   <ul>
     <li>
+      <a class:ativa={rota.tela === 'assistente'} aria-current={rota.tela === 'assistente' ? 'page' : undefined}
+        href={montarHash({ tela: 'assistente', uid: rota.uid })}>Assistente</a>
+    </li>
+  </ul>
+  <hr />
+  <ul>
+    <li>
       <a class:ativa={rota.tela === 'importar'} href={montarHash({ tela: 'importar', uid: rota.uid })}>
         Importar {#if pendencias > 0}<span class="selo" aria-label={`${pendencias} pendentes`}>{pendencias}</span>{/if}
       </a>
@@ -60,9 +67,9 @@
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }
   a.ativa { background: var(--cartao); font-weight: 600; }
   ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque); }
-  :global(:root[data-tema^='editorial']) ul a { border-left: 2px solid transparent; border-radius: 0; }
-  :global(:root[data-tema^='editorial']) ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
-  :global(:root[data-tema^='editorial']) a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
+  ul a { border-left: 2px solid transparent; border-radius: 0; }
+  ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
+  a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   hr { border: 0; border-top: 1px solid var(--borda); opacity: 0.4; width: 100%; }
   .selo { background: var(--dub); color: #000; border-radius: 999px; padding: 0 0.45rem; font-size: 0.75rem; margin-left: 0.25rem; }
   .rodape { margin-top: auto; }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import { NOME_TIPO, TIPOS_ARQUIVO, type PropostaCalendario, type PropostaLista, type PropostaLivro, type PropostaOutro,
+  import { type PropostaCalendario, type PropostaLista, type PropostaLivro, type PropostaOutro,
     type PropostaPrograma, type PropostaTurma } from '../api/proposta'
   import type { ImportacaoSaida, Painel, ResumoImportacao } from '../api/tipos'
   import FilaImportacao from '../componentes/FilaImportacao.svelte'
@@ -9,8 +9,7 @@
   import PropostaLivroView from '../componentes/PropostaLivro.svelte'
   import PropostaProgramaView from '../componentes/PropostaPrograma.svelte'
   import PropostaTurmaView from '../componentes/PropostaTurma.svelte'
-  import SeloConfianca from '../componentes/SeloConfianca.svelte'
-  import Seletor from '../componentes/Seletor.svelte'
+  import CabecalhoProposta from '../componentes/CabecalhoProposta.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { recarregar } from '../estado/materia.svelte'
@@ -113,7 +112,7 @@
   }
 </script>
 
-<h2>Importar arquivos</h2>
+<h2>Importar</h2>
 {#if indexando}<p class="suave" role="status">Indexando o livro para a busca…</p>{/if}
 
 <div class="importacao">
@@ -122,15 +121,7 @@
   <section class="proposta">
     {#if imp}
       {@const p = imp.proposta as { classificacao: { tipo: string; confianca: number; revisar: boolean } }}
-      <header>
-        <h3>{NOME_TIPO[imp.tipo] ?? imp.tipo}</h3>
-        <SeloConfianca item={p.classificacao} porque="Pelo texto do arquivo (datas, unidades, sumário, questões…), este é o tipo mais provável. Se estiver errado, troque ao lado." />
-        <div class="tipo">
-          <span>Tipo errado?</span>
-          <Seletor rotulo="Tipo errado?" variante="compacto" valor={imp.tipo} onmudar={trocarTipo}
-            opcoes={TIPOS_ARQUIVO.map((t) => ({ valor: t, rotulo: NOME_TIPO[t] }))} />
-        </div>
-      </header>
+      <CabecalhoProposta tipo={imp.tipo} classificacao={p.classificacao} ontrocar={trocarTipo} />
 
       {#if imp.tipo === 'lista'}
         <PropostaListaView proposta={imp.proposta as PropostaLista} {unidades} alterar={alterar<PropostaLista>} />
@@ -147,22 +138,20 @@
       {/if}
 
       <footer>
-        <button class="botao primario" onclick={confirmar}>Confirmar</button>
-        <button class="botao" onclick={descartar}>Descartar</button>
-        {#if imp.pendencias > 0}<span class="suave">{imp.pendencias} {imp.pendencias === 1 ? 'item pede' : 'itens pedem'} revisão (amarelo/vermelho)</span>{/if}
+        <button class="acao-forte" onclick={confirmar}>Confirmar</button>
+        <button class="acao-texto" onclick={descartar}>descartar</button>
+        {#if imp.pendencias > 0}<span class="pendencias">{imp.pendencias} para conferir</span>{/if}
       </footer>
     {:else}
-      <p class="suave">Escolha um arquivo da fila para ver o que a plataforma entendeu dele.</p>
+      <p class="suave">Escolha um arquivo da fila.</p>
     {/if}
   </section>
 </div>
 
 <style>
-  .importacao { display: grid; grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .importacao { display: grid; grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
   .importacao > :global(*) { min-width: 0; }
-  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; }
-  .proposta header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-  .proposta h3 { margin: 0; }
-  .tipo { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--suave); min-width: 14rem; }
-  footer { display: flex; gap: 0.5rem; align-items: center; margin-top: 1.25rem; }
+  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; border-left: 1px solid var(--fio); padding-left: 2rem; }
+  footer { display: flex; gap: 1.1rem; align-items: center; margin-top: 1.25rem; }
+  .pendencias { color: var(--dub); font-size: 0.85rem; }
 </style>

@@ -673,14 +673,175 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/agente/mensagem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mensagem
+         * @description Eventos em NDJSON: texto, ferramenta, gravado, confirmar, erro, fim.
+         */
+        post: operations["mensagem_api_materias__materia_uid__agente_mensagem_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/agente/conversa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Conversa */
+        get: operations["conversa_api_materias__materia_uid__agente_conversa_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/agente/conversas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista De Conversas */
+        get: operations["lista_de_conversas_api_materias__materia_uid__agente_conversas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/agente/conversa/recomecar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recomecar */
+        post: operations["recomecar_api_materias__materia_uid__agente_conversa_recomecar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/agente/contexto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pacote */
+        get: operations["pacote_api_materias__materia_uid__agente_contexto_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agente/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estado */
+        get: operations["estado_api_agente_estado_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agente/chave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Chave */
+        put: operations["chave_api_agente_chave_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlvoAgente */
+        AlvoAgente: {
+            /** Alvo */
+            alvo: string;
+            /**
+             * Papel
+             * @enum {string}
+             */
+            papel: "tutor" | "resumidor" | "estrategista";
+        };
         /** Body_enviar_api_materias__materia_uid__importacoes_post */
         Body_enviar_api_materias__materia_uid__importacoes_post: {
             /** Arquivo */
             arquivo: string;
+        };
+        /** ChaveAgente */
+        ChaveAgente: {
+            /** Chave */
+            chave: string;
+        };
+        /** ConversaResumo */
+        ConversaResumo: {
+            /** Id */
+            id: number;
+            /** Alvo */
+            alvo: string;
+            /** Papel */
+            papel: string;
+            /** Rotulo */
+            rotulo: string;
+            /** Atualizada Em */
+            atualizada_em: string;
+        };
+        /** ConversaSaida */
+        ConversaSaida: {
+            /** Id */
+            id: number;
+            /** Alvo */
+            alvo: string;
+            /** Papel */
+            papel: string;
+            /** Mensagens */
+            mensagens: components["schemas"]["MensagemSaida"][];
         };
         /** Criado */
         Criado: {
@@ -778,6 +939,17 @@ export interface components {
             questao_id?: number | null;
             /** Versao Esperada */
             versao_esperada?: string | null;
+        };
+        /** EstadoAgente */
+        EstadoAgente: {
+            /** Chave Configurada */
+            chave_configurada: boolean;
+            /** Modelo */
+            modelo: string;
+            /** Total Mes */
+            total_mes: number;
+            /** Teto */
+            teto: number;
         };
         /** Evento */
         Evento: {
@@ -1012,6 +1184,19 @@ export interface components {
             /** Periodo */
             periodo?: string | null;
         };
+        /** MensagemSaida */
+        MensagemSaida: {
+            /** Id */
+            id: number;
+            /** Autor */
+            autor: string;
+            /** Texto */
+            texto: string;
+            /** Custo Brl */
+            custo_brl: number;
+            /** Criada Em */
+            criada_em: string;
+        };
         /** MudancaArquivo */
         MudancaArquivo: {
             /** Caminho */
@@ -1043,6 +1228,11 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** PacoteContexto */
+        PacoteContexto: {
+            /** Texto */
+            texto: string;
+        };
         /** Painel */
         Painel: {
             materia: components["schemas"]["Materia"];
@@ -1072,6 +1262,28 @@ export interface components {
             vinculos: components["schemas"]["Vinculos"];
             /** Importacoes Pendentes */
             importacoes_pendentes: number;
+        };
+        /**
+         * PedidoAgente
+         * @description Uma mensagem para o assistente: texto livre ou um atalho (N1–N4, resumir, plano).
+         */
+        PedidoAgente: {
+            /** Alvo */
+            alvo: string;
+            /**
+             * Papel
+             * @enum {string}
+             */
+            papel: "tutor" | "resumidor" | "estrategista";
+            /** Texto */
+            texto?: string | null;
+            /** Atalho */
+            atalho?: ("N1" | "N2" | "N3" | "N4" | "resumir" | "plano") | null;
+            /**
+             * Confirmado
+             * @default false
+             */
+            confirmado: boolean;
         };
         /** Placar */
         Placar: {
@@ -3079,6 +3291,229 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SecaoLivro"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mensagem_api_materias__materia_uid__agente_mensagem_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PedidoAgente"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    conversa_api_materias__materia_uid__agente_conversa_get: {
+        parameters: {
+            query: {
+                alvo: string;
+                papel: string;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaSaida"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lista_de_conversas_api_materias__materia_uid__agente_conversas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaResumo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recomecar_api_materias__materia_uid__agente_conversa_recomecar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlvoAgente"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaSaida"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pacote_api_materias__materia_uid__agente_contexto_get: {
+        parameters: {
+            query: {
+                alvo: string;
+                papel: string;
+                atalho?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PacoteContexto"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estado_api_agente_estado_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoAgente"];
+                };
+            };
+        };
+    };
+    chave_api_agente_chave_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChaveAgente"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ok"];
                 };
             };
             /** @description Validation Error */

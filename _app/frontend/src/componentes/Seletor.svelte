@@ -135,8 +135,8 @@
   li[aria-selected='true'] { font-weight: 600; }
   .detalhe { color: var(--suave); font-size: 0.85em; }
   .marca { margin-left: auto; color: var(--destaque); }
-  :global(:root[data-tema^='editorial']) .opcoes { border-radius: 4px; }
-  :global(:root[data-tema^='editorial']) .gatilho { border-radius: 4px; }
+  .opcoes { border-radius: 4px; }
+  .gatilho { border-radius: 4px; }
 
   @keyframes surgir { from { opacity: 0; transform: translateY(-4px); } }
   @media (prefers-reduced-motion: reduce) { .opcoes { animation: none; } .seta { transition: none; } }

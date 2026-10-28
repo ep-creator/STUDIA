@@ -93,17 +93,16 @@
         <li>
           <button class:ativa={imp.id === selecionada} aria-current={imp.id === selecionada ? 'true' : undefined} onclick={() => onselecionar(imp.id)}>
             <span class="nome">{nomes[imp.fonte_id] ?? `Arquivo ${imp.fonte_id}`}</span>
-            <span class="tipo">{NOME_TIPO[imp.tipo] ?? imp.tipo}</span>
             {#if imp.pendencias > 0}
-              <span class="pend revisar" title="itens que pedem revisão">{imp.pendencias}</span>
+              <span class="estado revisar" title={`${NOME_TIPO[imp.tipo] ?? imp.tipo}: itens que pedem revisão`}>revisar {imp.pendencias}</span>
             {:else}
-              <span class="pend certo">ok</span>
+              <span class="estado pronto" title={NOME_TIPO[imp.tipo] ?? imp.tipo}>pronto</span>
             {/if}
           </button>
         </li>
       {/each}
     </ul>
-    <button class="botao primario" disabled={prontas.length === 0} onclick={confirmarProntas}>
+    <button class="acao-suave confirmar" disabled={prontas.length === 0} onclick={confirmarProntas}>
       ✔ Confirmar todos sem pendências ({prontas.length})
     </button>
   {:else if !enviando}
@@ -112,14 +111,14 @@
 </div>
 
 <style>
-  .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; align-content: start; min-width: 0; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; max-height: 55vh; overflow-y: auto; }
-  li button { width: 100%; display: flex; gap: 0.5rem; align-items: center; text-align: left; background: none; border: 1px solid transparent; border-radius: 6px; padding: 0.35rem 0.5rem; cursor: pointer; }
-  li button.ativa { border-color: var(--destaque); background: var(--cartao); }
-  li button:hover:not(.ativa) { background: var(--realce); border-color: color-mix(in srgb, var(--destaque) 35%, transparent); }
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-content: start; min-width: 0; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; max-height: 55vh; overflow-y: auto; }
+  li button { width: 100%; display: flex; gap: 0.6rem; align-items: baseline; text-align: left; background: none; border: 0; border-left: 2px solid transparent; padding: 0.45rem 0.6rem; cursor: pointer; font: inherit; color: var(--texto); }
+  li button.ativa { border-left-color: var(--destaque); font-weight: 600; }
+  li button:hover:not(.ativa) { border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tipo { font-size: 0.8rem; color: var(--suave); }
-  .pend { font-size: 0.75rem; border-radius: 999px; padding: 0 0.45rem; }
-  .pend.revisar { background: var(--dub); color: #000; }
-  .pend.certo { background: color-mix(in srgb, var(--ok) 22%, transparent); }
+  .estado { font-size: 0.78rem; font-weight: 400; }
+  .revisar { color: var(--dub); }
+  .pronto { color: var(--ok); }
+  .confirmar { justify-self: start; }
 </style>

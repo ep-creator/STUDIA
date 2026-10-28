@@ -59,7 +59,7 @@
         onmarcar={aoMarcar}
       />
     {:else}
-      <p class="suave dica">Escolha uma questão para ver o enunciado, marcar como acertei, errei ou dúvida e abrir a resolução, quando houver. Atalhos: setas para andar entre as questões · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
+      <p class="suave dica">Escolha uma questão. Setas andam · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
     {/if}
     </div>
   </div>
@@ -69,6 +69,8 @@
   /* As questões e o menu rolam cada um no seu espaço (a página fica parada), como em Documentos */
   .listas { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 1fr); gap: 1.75rem; }
   .coluna { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.6rem; }
+  /* a questão aberta fica separada da lista por um fio, sem cartão */
+  .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
   .dica { margin: 0; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }
 </style>

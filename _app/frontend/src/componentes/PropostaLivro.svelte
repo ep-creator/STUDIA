@@ -26,7 +26,7 @@
   <dt>Respostas</dt><dd>{proposta.gabarito ? `páginas ${proposta.gabarito[0]}–${proposta.gabarito[1]} do PDF` : 'não encontradas'}</dd>
 </dl>
 
-<button class="botao" onclick={() => (verTodas = !verTodas)}>{verTodas ? 'Esconder seções' : 'Ver seções'}</button>
+<button class="acao-texto" onclick={() => (verTodas = !verTodas)}>{verTodas ? 'Esconder seções' : 'Ver seções'}</button>
 {#if verTodas}
   <ol class="secoes">
     {#each proposta.secoes as s (s.codigo)}

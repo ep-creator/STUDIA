@@ -57,7 +57,7 @@ def _arquivo_gabarito(materia: str, tipo: str) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="estudos.avaliacao", description="Avalia a busca ou os vínculos de uma matéria contra o gabarito.")
-    parser.add_argument("tipo", choices=["busca", "vinculos"])
+    parser.add_argument("tipo", choices=["busca", "vinculos", "contexto"])
     parser.add_argument("--materia", required=True, help="nome da pasta da matéria (ex.: \"Calculo 2\")")
     parser.add_argument("--gabarito", type=Path, help="arquivo TOML (padrão: gabaritos/<matéria>_<tipo>.toml)")
     parser.add_argument("--configs", default=None, help="separadas por vírgula (busca: texto…; vínculos: regra…)")
@@ -72,10 +72,12 @@ def main(argv: list[str] | None = None) -> int:
     if not (pasta / ARQUIVO_DB).is_file():
         print(f"{pasta} não é uma matéria (falta {ARQUIVO_DB}).", file=sys.stderr)
         return 2
-    arquivo = args.gabarito or _arquivo_gabarito(args.materia, args.tipo)
+    arquivo = args.gabarito or _arquivo_gabarito(args.materia, "busca" if args.tipo == "contexto" else args.tipo)
     if not arquivo.is_file():
         print(f"gabarito não encontrado: {arquivo}", file=sys.stderr)
         return 2
+    if args.tipo == "contexto":
+        return _contexto(args, pasta, arquivo)
     padrao = "texto" if args.tipo == "busca" else "regra"
     try:
         nomes = [n.strip() for n in (args.configs or padrao).split(",") if n.strip()]
@@ -97,6 +99,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.gravar:
         texto = f"# Avaliação da busca — {args.materia}\n\nGabarito: `{arquivo.name}` ({len(perguntas)} perguntas)\n\n{tabela}"
         print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', args.tipo, datetime.date.today(), materia=args.materia)}")
+    return 0
+
+
+def _contexto(args, pasta: Path, arquivo: Path) -> int:
+    """Cobertura do contexto inicial do assistente (perguntas de questão do gabarito de busca)."""
+    from estudos.avaliacao.contexto import cobertura_do_contexto
+    perguntas = ler_busca(arquivo)
+    with closing(conectar(pasta / ARQUIVO_DB)) as con:
+        if args.geradas:
+            perguntas += perguntas_das_questoes(con)
+        linha = cobertura_do_contexto(con, pasta, perguntas)
+    pct = lambda v: f"{round(v * 100)}%"
+    geral = pct(linha.achadas / linha.total) if linha.total else "—"
+    tabela = (
+        "| perguntas de questão | resposta no contexto inicial | " + " | ".join(linha.por_estilo) + " |\n"
+        + "|---|---|" + "---|" * len(linha.por_estilo) + "\n"
+        + f"| {linha.total} | {linha.achadas} ({geral}) | " + " | ".join(pct(v) for v in linha.por_estilo.values()) + " |\n"
+    )
+    print(f"{arquivo.name}\n\n{tabela}")
+    if args.gravar:
+        texto = f"# Contexto inicial do assistente — {args.materia}\n\nGabarito: `{arquivo.name}`\n\n{tabela}"
+        print(f"gravado em {gravar(texto, WORKSPACE / 'docs' / 'avaliacoes', 'contexto', datetime.date.today(), materia=args.materia)}")
     return 0
 
 

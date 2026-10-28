@@ -26,3 +26,18 @@ peso_sentido_vinculo = 0.5
 [historico]
 # Quantidade de ações guardadas para desfazer.
 max_grupos = 500
+
+[agente]
+# Assistente (tutor, resumidor, estrategista). A chave do Gemini fica em _app/.segredos.toml (configurada pela tela).
+modelo = "gemini-3.8-flash"
+# Teto de gasto por mês, somando todas as matérias: passar dele pede confirmação.
+teto_mensal_brl = 20
+# Cotação usada para converter o preço em dólar. Confira e atualize de vez em quando.
+cotacao_dolar = 5.6
+# Rodadas de ferramentas por resposta (buscar, calcular, salvar) e tempo máximo de espera do Gemini (s).
+max_rodadas = 6
+tempo_limite_s = 60
+
+[agente.precos]
+# US$ por milhão de tokens. Valores iniciais estimados: confira na página de preços do Gemini.
+"gemini-3.8-flash" = { entrada = 0.30, saida = 2.50 }

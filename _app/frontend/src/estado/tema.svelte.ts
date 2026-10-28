@@ -1,20 +1,19 @@
-// Tema: identidade (Padrão ou Editorial) × modo (sistema, claro, escuro). Preferência só deste navegador.
+// Tema: só o Editorial, em claro, escuro ou seguindo o sistema. Preferência só deste navegador.
 
-export type Identidade = 'padrao' | 'editorial'
 export type Modo = 'sistema' | 'claro' | 'escuro'
 
 const CHAVE = 'estudos.tema'
+const MODOS: Modo[] = ['sistema', 'claro', 'escuro']
 
-function ler(): { identidade: Identidade; modo: Modo } {
+function ler(): { modo: Modo } {
   try {
+    // Preferências antigas guardavam também a identidade (Padrão ou Editorial): só o modo conta agora
     const salvo = JSON.parse(localStorage.getItem(CHAVE) ?? 'null')
-    if (salvo && ['padrao', 'editorial'].includes(salvo.identidade) && ['sistema', 'claro', 'escuro'].includes(salvo.modo)) {
-      return salvo
-    }
+    if (salvo && MODOS.includes(salvo.modo)) return { modo: salvo.modo }
   } catch {
     // armazenamento bloqueado ou valor estragado: fica o padrão
   }
-  return { identidade: 'editorial', modo: 'sistema' }
+  return { modo: 'sistema' }
 }
 
 export const tema = $state(ler())
@@ -23,20 +22,19 @@ function sistemaEscuro(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches
 }
 
-export function temaEfetivo(): string {
+export function temaEfetivo(): 'editorial-claro' | 'editorial-escuro' {
   const escuro = tema.modo === 'escuro' || (tema.modo === 'sistema' && sistemaEscuro())
-  return `${tema.identidade}-${escuro ? 'escuro' : 'claro'}`
+  return escuro ? 'editorial-escuro' : 'editorial-claro'
 }
 
 export function aplicarTema(): void {
   document.documentElement.dataset.tema = temaEfetivo()
 }
 
-export function escolherTema(identidade: Identidade, modo: Modo): void {
-  tema.identidade = identidade
+export function escolherModo(modo: Modo): void {
   tema.modo = modo
   try {
-    localStorage.setItem(CHAVE, JSON.stringify({ identidade, modo }))
+    localStorage.setItem(CHAVE, JSON.stringify({ modo }))
   } catch {
     // sem armazenamento: vale só até recarregar
   }

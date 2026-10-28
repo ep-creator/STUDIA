@@ -7,7 +7,9 @@
 <button class="selo {status}" {onclick} title="Clique para mudar o status">{rotuloStatus(status)}</button>
 
 <style>
-  .selo { border: 1.3px solid var(--borda); border-radius: 999px; padding: 0 0.6rem; background: transparent; cursor: pointer; font-size: 0.8rem; }
-  .proxima { border-color: var(--destaque); color: var(--destaque); }
-  .visto { background: var(--texto); color: var(--fundo); border-color: var(--texto); }
+  /* selo como texto colorido: próxima em laranja, vista em verde, pendente em cinza */
+  .selo { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; font-size: 0.78rem; color: var(--suave); min-width: 4.8rem; text-align: left; }
+  .selo:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .proxima { color: var(--destaque); }
+  .visto { color: var(--ok); }
 </style>

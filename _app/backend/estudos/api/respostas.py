@@ -170,6 +170,40 @@ class ResumoImportacao(TypedDict):
     indexacao: str
 
 
+class MensagemSaida(TypedDict):
+    id: int
+    autor: str          # voce, agente ou ferramenta
+    texto: str
+    custo_brl: float
+    criada_em: str
+
+
+class ConversaResumo(TypedDict):
+    id: int
+    alvo: str
+    papel: str
+    rotulo: str          # "Geral", "14.1 #22" ou "15.4 Integrais duplas"
+    atualizada_em: str
+
+
+class ConversaSaida(TypedDict):
+    id: int
+    alvo: str
+    papel: str
+    mensagens: list[MensagemSaida]
+
+
+class PacoteContexto(TypedDict):
+    texto: str          # instruções do papel + contexto da tela + pedido, para colar em qualquer chat
+
+
+class EstadoAgente(TypedDict):
+    chave_configurada: bool
+    modelo: str
+    total_mes: float
+    teto: float
+
+
 class ExercicioLivro(TypedDict):
     exercicio: Resultado
     resposta: Resultado | None       # do gabarito do livro, quando há
@@ -192,5 +226,6 @@ class TextoSecao(TypedDict):
 __all__ = [
     "Criado", "Ok", "ResumoMateria", "MateriaCriada", "Painel", "Marcado", "FonteResumo", "DocumentoComCorpo",
     "DetalheHistorico", "Desfeito", "ImportacaoSaida", "ResumoImportacao", "ResultadoBusca", "TextoSecao",
-    "SecaoLivro", "GrupoHistorico", "ResumoSincronizacao", "ExercicioLivro",
+    "SecaoLivro", "GrupoHistorico", "ResumoSincronizacao", "ExercicioLivro", "ConversaSaida", "PacoteContexto",
+    "EstadoAgente",
 ]

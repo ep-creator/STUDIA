@@ -59,7 +59,32 @@ test('editando, a seção não pode ser trocada (trocar regravaria o .md e perde
   render(Documentos, { painel: painel({ documentos: [resumo] }) })
   await userEvent.click(await screen.findByRole('button', { name: 'Extremos' }))
   expect(await screen.findByText(/Ligar à seção 14\.7/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Editar/ }))
+  await userEvent.click(screen.getByRole('button', { name: /editar/i }))
   expect(screen.queryByText(/Ligar à seção 14\.7/)).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /^Seção do livro/ })).not.toBeInTheDocument()
+})
+
+test('"Resumir a seção" abre o resumidor da seção no painel', async () => {
+  const { ia } = await import('../estado/ia.svelte')
+  motor()
+  const comSecao = { ...resumo, secao_id: 42, secao_codigo: '14.7' }
+  render(Documentos, { painel: painel({ documentos: [comSecao] }) })
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    const json = (dados: unknown) => new Response(JSON.stringify(dados), { status: 200, headers: { 'content-type': 'application/json' } })
+    if (url.endsWith('/documentos/7')) return json({ ...comSecao, corpo: '# Extremos', versao: 'v1' })
+    if (url.endsWith('/fontes') || url.endsWith('/secoes')) return json([])
+    return json({ ligados: 0 })
+  }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Extremos' }))
+  await userEvent.click(await screen.findByRole('button', { name: /Resumir a seção/ }))
+  expect({ aberta: ia.aberta, alvo: ia.alvo, papel: ia.papel, pendente: ia.pendente })
+    .toEqual({ aberta: true, alvo: 'secao:42', papel: 'resumidor', pendente: 'resumir' })
+})
+
+test('não há botão de criar documento à mão', async () => {
+  motor()
+  render(Documentos, { painel: painel({ documentos: [resumo] }) })
+  await screen.findByRole('button', { name: 'Extremos' })
+  expect(screen.queryByRole('button', { name: /novo documento/i })).toBeNull()
+  expect(screen.queryByLabelText('Título do documento')).toBeNull()
 })

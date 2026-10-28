@@ -62,14 +62,14 @@
 
   <header class="aparece" style="--i: 3">
     <h2>Suas matérias <span class="contador">{materias.length}</span></h2>
-    <button class="botao primario" onclick={() => (criando = true)}>＋ Nova matéria</button>
+    <button class="acao-suave" onclick={() => (criando = true)}>＋ Nova matéria</button>
   </header>
 
   {#if criando}
-    <form class="cartao nova" onsubmit={criar}>
+    <form class="nova" onsubmit={criar}>
       <label>Nome <input bind:value={nome} required placeholder="Ex.: Cálculo 2" /></label>
-      <button class="botao primario" type="submit" disabled={!nome.trim()}>Criar</button>
-      <button class="botao" type="button" onclick={() => (criando = false)}>Cancelar</button>
+      <button class="acao-forte" type="submit" disabled={!nome.trim()}>Criar</button>
+      <button class="acao-texto" type="button" onclick={() => (criando = false)}>Cancelar</button>
       <p class="suave">Depois de criar, é só soltar os PDFs (programa, calendário, livros, listas) na importação.</p>
     </form>
   {/if}
@@ -104,7 +104,7 @@
   .nova { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; }
   .nova input { margin-left: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo); }
   .nova p { flex-basis: 100%; margin: 0; }
-  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.6rem 3rem; }
   .grade > div { display: grid; }
 
   /* Entrada: cada bloco sobe um pouco e aparece, um depois do outro (depois da abertura, quando houver) */

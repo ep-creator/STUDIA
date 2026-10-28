@@ -30,3 +30,29 @@ test('subtópicos aparecem dentro do pai e mostram a seção do livro', () => {
   expect(pai).toContainElement(screen.getByText('Polares'))
   expect(screen.getByRole('link', { name: /15\.4/ })).toHaveAttribute('href', '/arquivos/ab/fontes/livros/s.pdf#page=431')
 })
+
+test('apagar fica no menu ··· da linha, alcançável por teclado', async () => {
+  okFetch()
+  vi.stubGlobal('confirm', vi.fn(() => true))
+  const t = topico(1, 'pendente', { titulo: 'Polares' })
+  render(ArvoreTopicos, { uid: 'ab', unidadeId: 1, topicos: [t], vinculos: {}, listasDoTopico: {}, onmudou: vi.fn() })
+  expect(screen.queryByRole('button', { name: /^Apagar / })).toBeNull()
+  const mais = screen.getByRole('button', { name: 'Mais ações de Polares' })
+  expect(mais.closest('.acoes-linha')).not.toBeNull()
+  mais.focus()
+  await userEvent.keyboard('{Enter}')
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Apagar' }))
+  const [url, init] = vi.mocked(fetch).mock.calls[0]
+  expect(url).toMatch(/\/topicos\/1$/)
+  expect(init?.method).toBe('DELETE')
+})
+
+test('novo tópico: Enter adiciona, sem botão Adicionar', async () => {
+  okFetch()
+  render(ArvoreTopicos, { uid: 'ab', unidadeId: 1, topicos: [], vinculos: {}, listasDoTopico: {}, onmudou: vi.fn() })
+  expect(screen.queryByRole('button', { name: /Adicionar/ })).toBeNull()
+  await userEvent.type(screen.getByRole('textbox', { name: 'Novo tópico' }), 'Revisão{Enter}')
+  const [, init] = vi.mocked(fetch).mock.calls[0]
+  expect(init?.method).toBe('POST')
+  expect(JSON.parse(init?.body as string)).toEqual({ unidade_id: 1, titulo: 'Revisão' })
+})

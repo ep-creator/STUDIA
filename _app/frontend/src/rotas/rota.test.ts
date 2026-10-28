@@ -23,3 +23,8 @@ test('montarHash da área com unidade', () => {
 test('hash malformado não derruba o app: volta para a tela inicial', () => {
   expect(analisarRota('#/m/%E0%A4%A')).toEqual({ tela: 'materias' })
 })
+
+test('rota do assistente', () => {
+  expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'assistente', uid: 'u1' })
+  expect(montarHash({ tela: 'assistente', uid: 'u1' })).toBe('#/m/u1/assistente')
+})

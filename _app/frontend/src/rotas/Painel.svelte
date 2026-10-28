@@ -5,8 +5,7 @@
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
   import ParaRevisar from '../componentes/ParaRevisar.svelte'
   import ProgressoTopicos from '../componentes/ProgressoTopicos.svelte'
-  import ProximoPasso from '../componentes/ProximoPasso.svelte'
-  import SemanaPainel from '../componentes/SemanaPainel.svelte'
+  import ProximaAula from '../componentes/ProximaAula.svelte'
   import { montarHash } from './rota'
 
   let { painel, hoje = new Date() }: { painel: Painel; hoje?: Date } = $props()
@@ -30,42 +29,40 @@
   />
 {:else}
   {#if painel.importacoes_pendentes > 0}
-    <a class="pendencias" href={hrefImportar}>
+    <a class="acao-texto pendencias" href={hrefImportar}>
       {painel.importacoes_pendentes} {painel.importacoes_pendentes === 1 ? 'importação esperando' : 'importações esperando'} revisão →
     </a>
   {/if}
   <div class="painel">
-    <!-- Faixa da prova: a contagem e, ao lado, o que cai (tópicos da unidade com status) -->
-    <div class="faixa cartao">
+    <!-- Faixa de cima: a prova, a próxima aula e os tópicos que caem -->
+    <div class="faixa topo">
       <ContagemProva {prova} {hoje} {hrefImportar} />
+      <ProximaAula
+        topicos={painel.topicos}
+        documentos={painel.documentos}
+        vinculos={painel.vinculos.topicos}
+        hrefDocumentos={area('documentos')}
+        hrefTopicos={area('topicos')}
+      />
       <ProgressoTopicos topicos={painel.topicos} hrefTopicos={area('topicos')} />
     </div>
-    <ParaRevisar listas={painel.listas} marcacoes={painel.marcacoes} hrefListas={area('listas')} />
-    <DesempenhoListas listas={painel.listas} marcacoes={painel.marcacoes} />
-    <ProximoPasso
-      {uid}
-      topicos={painel.topicos}
-      documentos={painel.documentos}
-      vinculos={painel.vinculos.topicos}
-      hrefDocumentos={area('documentos')}
-      hrefTopicos={area('topicos')}
-    />
-    <SemanaPainel sessoes={painel.sessoes} eventos={painel.eventos} {hoje} />
+    <div class="faixa">
+      <ParaRevisar listas={painel.listas} marcacoes={painel.marcacoes} hrefListas={area('listas')} />
+      <DesempenhoListas listas={painel.listas} marcacoes={painel.marcacoes} />
+    </div>
   </div>
 {/if}
 
 <style>
-  .painel { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1.25rem; }
-  .painel > :global(*) { min-width: 0; }
-  .faixa { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(13rem, 1fr) minmax(0, 2.6fr); gap: 2rem; align-items: start; }
-  .faixa :global(.cartao) { border: 0; padding: 0; background: none; }
-  .painel > :global(:nth-child(2)) { grid-column: span 7; }
-  .painel > :global(:nth-child(3)) { grid-column: span 5; }
-  .painel > :global(:nth-child(4)) { grid-column: span 5; }
-  .painel > :global(:nth-child(5)) { grid-column: span 7; }
-  @media (max-width: 1100px) { .painel > :global(*) { grid-column: 1 / -1 !important; } .faixa { grid-template-columns: 1fr; } }
-  .pendencias {
-    display: block; margin-bottom: 1rem; padding: 0.5rem 0.8rem; border-radius: 6px; text-decoration: none;
-    background: var(--realce); color: var(--destaque); font-weight: 600; font-size: 0.92rem;
+  .painel { display: grid; gap: 1.2rem; }
+  .faixa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3rem; align-items: start; padding-top: 1.1rem; border-top: 1px solid var(--fio); }
+  .faixa.topo { grid-template-columns: 11rem 17rem minmax(0, 1fr); border-top: 0; padding-top: 0.4rem; }
+  /* os tópicos ficam sempre na 3ª coluna: sem próxima aula (prova já feita), o layout não muda */
+  .faixa.topo > :global(section[aria-label='Tópicos vistos']) { grid-column: 3; }
+  .faixa > :global(*) { min-width: 0; }
+  @media (max-width: 1100px) {
+    .faixa, .faixa.topo { grid-template-columns: 1fr; gap: 1.6rem; }
+    .faixa.topo > :global(section[aria-label='Tópicos vistos']) { grid-column: auto; }
   }
+  .pendencias { display: inline-block; margin-bottom: 0.8rem; color: var(--destaque); }
 </style>

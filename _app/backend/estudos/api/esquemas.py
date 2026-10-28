@@ -126,3 +126,29 @@ class DocumentoSalvar(BaseModel):
 
 class SecaoEscolhida(BaseModel):
     secao_id: int | None = None   # None = "sem seção" (escolha do usuário, que a ligação automática respeita)
+
+
+class PedidoAgente(BaseModel):
+    """Uma mensagem para o assistente: texto livre ou um atalho (N1–N4, resumir, plano)."""
+    alvo: str
+    papel: Literal["tutor", "resumidor", "estrategista"]
+    texto: str | None = None
+    atalho: Literal["N1", "N2", "N3", "N4", "resumir", "plano"] | None = None
+    confirmado: bool = False
+
+    def model_post_init(self, _contexto) -> None:
+        if not (self.texto or "").strip() and self.atalho is None:
+            raise DadoInvalido("Escreva uma mensagem ou escolha um atalho.")
+
+
+class AlvoAgente(BaseModel):
+    alvo: str
+    papel: Literal["tutor", "resumidor", "estrategista"]
+
+
+class ChaveAgente(BaseModel):
+    chave: str
+
+    def model_post_init(self, _contexto) -> None:
+        if not self.chave.strip() or len(self.chave) > 200:
+            raise DadoInvalido("Chave vazia ou longa demais.")

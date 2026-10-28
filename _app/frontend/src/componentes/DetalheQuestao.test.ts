@@ -35,13 +35,24 @@ test('a resolução da questão fica escondida até pedir, e aparece no próprio
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/documentos/16'))).toBe(true)
 })
 
-test('abrir a resolução recolhe a área de IA para dar espaço', async () => {
+test('ver a resolução não recolhe mais a IA (ela abre por cima da página)', async () => {
   motor()
   const { ia } = await import('../estado/ia.svelte')
   ia.aberta = true
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
   await userEvent.click(screen.getByRole('button', { name: /Ver resolução/ }))
-  expect(ia.aberta).toBe(false)
+  expect(ia.aberta).toBe(true)
+})
+
+test('sem Limpar: clicar na marca ativa desmarca, clicar em outra troca', async () => {
+  motor()
+  const onmarcar = vi.fn()
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: 'ok', secao: null, onmarcar })
+  expect(screen.queryByRole('button', { name: /Limpar/ })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: /Acertei/ }))
+  expect(onmarcar).toHaveBeenLastCalledWith(q.id, null)
+  await userEvent.click(screen.getByRole('button', { name: /Errei/ }))
+  expect(onmarcar).toHaveBeenLastCalledWith(q.id, 'err')
 })
 
 test('sem resolução, o menu não oferece o botão', () => {
@@ -70,18 +81,25 @@ function motorDoLivro(status: number, corpo: unknown = null) {
 test('questão que é exercício do livro mostra "Ver no livro" com o enunciado e a resposta', async () => {
   const chamadas = motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide' } })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  await userEvent.click(await screen.findByRole('button', { name: /Ver no livro/ }))
+  await vi.waitFor(() => expect(screen.getByRole('button', { name: /Ver no livro/ })).toBeEnabled())
+  await userEvent.click(screen.getByRole('button', { name: /Ver no livro/ }))
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/secoes/31/exercicios/30'))).toBe(true)
   expect(screen.getByText(/x² \+ y²/)).toBeInTheDocument()
   expect(screen.getByText(/o paraboloide/)).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Abrir no livro na p\. 312/ })).toBeInTheDocument()
 })
 
+test('não há botão solto para abrir o livro na página da seção: o caminho é "Ver no livro"', async () => {
+  motorDoLivro(404)
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  expect(screen.queryByRole('link', { name: /Abrir o livro/ })).toBeNull()
+})
+
 test('sem exercício no índice, "Ver no livro" não aparece', async () => {
   const chamadas = motorDoLivro(404)
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  await vi.waitFor(() => expect(chamadas.length).toBe(1))
-  expect(screen.queryByRole('button', { name: /Ver no livro/ })).toBeNull()
+  await vi.waitFor(() => expect(chamadas.filter((u) => u.includes('/exercicios/')).length).toBe(1))
+  await vi.waitFor(() => expect(screen.queryByRole('button', { name: /Ver no livro/ })).toBeNull())
 })
 
 test('rótulo que não é número, lista de outra seção ou sem seção: nem pergunta ao motor', () => {
@@ -89,5 +107,31 @@ test('rótulo que não é número, lista de outra seção ou sem seção: nem pe
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: questao(3, '22a'), marca: null, secao: SECAO, onmarcar: vi.fn() })
   render(DetalheQuestao, { uid: 'u1', lista: lista(2, 'L2', [q]), questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, onmarcar: vi.fn() })
-  expect(chamadas).toEqual([])
+  expect(chamadas.filter((u) => u.includes('/exercicios/'))).toEqual([])
+})
+
+test('o painel do tutor recebe a questão aberta e os atalhos N1–N4', async () => {
+  const chamadas: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    chamadas.push(url)
+    const json = (d: unknown) => new Response(JSON.stringify(d), { status: 200, headers: { 'content-type': 'application/json' } })
+    if (url.includes('/agente/conversa')) return json({ id: 1, alvo: 'questao:2', papel: 'tutor', mensagens: [] })
+    if (url.endsWith('/api/agente/estado')) return json({ chave_configurada: true, modelo: 'g', total_mes: 0, teto: 20 })
+    throw new Error(`rota não simulada: ${url}`)
+  }))
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, onmarcar: vi.fn() })
+  for (const nome of ['N1 Dica', 'N2 Caminho', 'N3 Esboço', 'N4 Resolução']) {
+    expect(await screen.findByRole('button', { name: nome })).toBeInTheDocument()
+  }
+  expect(chamadas.some((u) => u.includes('/agente/conversa?alvo=questao%3A2&papel=tutor'))).toBe(true)
+})
+
+test('enquanto procura no livro, "Ver no livro" já ocupa o lugar (desabilitado), para a tela não pular', async () => {
+  let responder!: (r: Response) => void
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((r) => { responder = r })))
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  const botao = screen.getByRole('button', { name: /Ver no livro/ })
+  expect(botao).toBeDisabled()
+  responder(new Response(JSON.stringify({ exercicio: exercicio(), resposta: null }), { status: 200, headers: { 'content-type': 'application/json' } }))
+  await vi.waitFor(() => expect(screen.getByRole('button', { name: /Ver no livro/ })).toBeEnabled())
 })
