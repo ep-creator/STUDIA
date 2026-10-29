@@ -49,3 +49,11 @@ _app/backend/tests/fixtures/paginas/
 
 # Chave da API do Gemini (assistente, Fase 6): nunca no repositório
 _app/.segredos.toml
+
+# Matérias (PDFs, resumos, marcações): dados pessoais, ficam só no computador.
+# Toda pasta da raiz fica fora, menos as do app, da documentação e o modelo vazio.
+/*/
+!/_app/
+!/docs/
+!/.github/
+!/_modelo-materia/
