@@ -28,7 +28,7 @@
   import Materias from './rotas/Materias.svelte'
   import Painel from './rotas/Painel.svelte'
   import Topicos from './rotas/Topicos.svelte'
-  import { analisarRota, type Rota } from './rotas/rota'
+  import { analisarRota, type Rota, precisaListaDeMaterias } from './rotas/rota'
 
   let rota = $state<Rota>(analisarRota(location.hash))
   let materias = $state<ResumoMateria[]>([])
@@ -83,9 +83,13 @@
     }
   }
 
-  // Lista de matérias: na tela inicial e para o seletor da barra lateral.
+  // Lista de matérias: na tela inicial e para o seletor da barra lateral; relida quando a matéria aberta não está nela
+  // (a recém-criada), uma vez por matéria.
+  let listaPedidaPara: string | null = null
   $effect(() => {
-    if (rota.tela === 'materias' || materias.length === 0) void carregarMaterias()
+    if (!precisaListaDeMaterias(rota, materias, listaPedidaPara)) return
+    if (rota.tela !== 'materias') listaPedidaPara = rota.uid
+    void carregarMaterias()
   })
 
   // Painel da matéria/unidade da rota (só recarrega quando muda a matéria ou a unidade pedida).
@@ -102,7 +106,7 @@
 <FaixaMotor />
 
 {#if rota.tela === 'materias'}
-  <Materias {materias} />
+  <Materias {materias} onmudou={() => void carregarMaterias()} />
 {:else}
   <div class="app">
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />

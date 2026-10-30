@@ -1,16 +1,17 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import type { MateriaCriada, ResumoMateria } from '../api/tipos'
+  import type { MateriaApagada, MateriaCriada, ResumoMateria } from '../api/tipos'
   import { dataPorExtenso, nomeUnidade, proximaProvaGeral, saudacao, textoContagem } from '../apresentacao'
   import Abertura, { deveAbrir } from '../componentes/Abertura.svelte'
   import CartaoMateria from '../componentes/CartaoMateria.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
+  import MenuMais from '../componentes/MenuMais.svelte'
   import Marca from '../componentes/Marca.svelte'
   import SeletorTema from '../componentes/SeletorTema.svelte'
-  import { erro } from '../estado/avisos.svelte'
+  import { avisar, erro } from '../estado/avisos.svelte'
   import { montarHash } from './rota'
 
-  let { materias }: { materias: ResumoMateria[] } = $props()
+  let { materias, onmudou = () => {} }: { materias: ResumoMateria[]; onmudou?: () => void } = $props()
 
   const agora = new Date()
   let abrindo = $state(deveAbrir())
@@ -24,6 +25,18 @@
     return t === 'hoje' || t === 'amanhã' ? t : `em ${t}`
   })
   const pendentes =$derived(materias.reduce((t, m) => t + m.importacoes_pendentes, 0))
+
+  // Apagar não destrói nada: a pasta vai para _lixeira/, de onde dá para recuperar movendo de volta
+  async function apagar(m: ResumoMateria) {
+    if (!confirm(`Apagar "${m.nome}"? A pasta vai para _lixeira, na pasta do projeto; dá para recuperar movendo de volta.`)) return
+    try {
+      const r = await requisitar<MateriaApagada>('DELETE', `/api/materias/${m.uid}`)
+      avisar(`${m.nome} foi para ${r.movida_para}`)
+      onmudou()
+    } catch (e) {
+      erro(e)
+    }
+  }
 
   async function criar(evento: SubmitEvent) {
     evento.preventDefault()
@@ -78,7 +91,12 @@
     <EstadoVazio texto="Nenhuma matéria ainda. Crie a primeira: dê um nome e solte os PDFs." />
   {/if}
   <div class="grade">
-    {#each materias as m, i (m.uid)}<div class="aparece" style="--i: {4 + i}"><CartaoMateria materia={m} /></div>{/each}
+    {#each materias as m, i (m.uid)}
+      <div class="aparece linha-acoes cartao-com-menu" style="--i: {4 + i}">
+        <CartaoMateria materia={m} />
+        <span class="acoes-linha menu-materia"><MenuMais rotulo={`Mais ações de ${m.nome}`} itens={[{ rotulo: 'Apagar matéria', acao: () => void apagar(m), perigo: true }]} /></span>
+      </div>
+    {/each}
   </div>
 </div>
 
@@ -106,6 +124,8 @@
   .nova p { flex-basis: 100%; margin: 0; }
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.6rem 3rem; }
   .grade > div { display: grid; }
+  .cartao-com-menu { position: relative; }
+  .menu-materia { position: absolute; top: 0.2rem; right: 0; z-index: 3; }
 
   /* Entrada: cada bloco sobe um pouco e aparece, um depois do outro (depois da abertura, quando houver) */
   .materias:not(.revelado) .aparece { opacity: 0; }

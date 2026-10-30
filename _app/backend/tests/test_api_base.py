@@ -1,5 +1,6 @@
 from contextlib import closing
 
+from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
@@ -100,3 +101,18 @@ def test_questao_inexistente_404(cliente, materia_com_lista):
 def test_post_text_plain_403(cliente):
     r = cliente.post("/api/materias", content=b'{"nome": "X"}', headers={"Content-Type": "text/plain"})
     assert r.status_code == 403
+
+
+def test_apagar_materia_move_a_pasta_para_a_lixeira(cliente):
+    uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+    r = cliente.delete(f"/api/materias/{uid}")
+    assert r.status_code == 200
+    destino = r.json()["movida_para"]
+    assert destino.startswith("_lixeira/Sistemas Digitais")
+    assert all(m["uid"] != uid for m in cliente.get("/api/materias").json())
+    raiz = Path(cliente.app.state.settings.workspace)
+    assert not (raiz / "Sistemas Digitais").exists() and (raiz / destino / "materia.db").is_file()
+
+
+def test_apagar_materia_inexistente_404(cliente):
+    assert cliente.delete("/api/materias/nao-existe").status_code == 404

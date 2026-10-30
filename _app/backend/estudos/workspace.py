@@ -2,6 +2,7 @@
 
 import datetime
 import re
+import shutil
 import sqlite3
 import uuid
 from contextlib import closing
@@ -9,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from estudos.db.conexao import aplicar_migracoes, conectar, transacao
-from estudos.erros import DadoInvalido, NaoEncontrado
+from estudos.erros import Conflito, DadoInvalido, NaoEncontrado
 
 ARQUIVO_DB = "materia.db"
 SUBPASTAS = (
@@ -99,6 +100,23 @@ def inicializar_materia(pasta: Path, nome: str, periodo: str | None = None, uid:
                 (uid, nome, periodo, datetime.datetime.now().isoformat(timespec="seconds")),
             )
     return MateriaRef(uid=uid, nome=nome, pasta=pasta)
+
+
+PASTA_LIXEIRA = "_lixeira"
+
+
+def mover_para_lixeira(workspace: Path, uid: str) -> Path:
+    """"Apaga" a matéria movendo a pasta para `_lixeira/` (o app não lista pastas com `_`): dá para recuperar movendo de
+    volta. Devolve o caminho novo, relativo ao workspace."""
+    ref = abrir_materia(workspace, uid)
+    lixeira = workspace / PASTA_LIXEIRA
+    lixeira.mkdir(exist_ok=True)
+    destino = lixeira / f"{ref.pasta.name} ({datetime.datetime.now():%Y-%m-%d %H-%M-%S})"
+    try:
+        shutil.move(str(ref.pasta), str(destino))
+    except OSError as e:  # arquivo aberto em outro programa (Windows não move pasta com arquivo em uso)
+        raise Conflito(f"Não consegui mover '{ref.nome}': algum arquivo dela está aberto. Feche e tente de novo.") from e
+    return destino.relative_to(workspace)
 
 
 def abrir_materia(workspace: Path, uid: str) -> MateriaRef:

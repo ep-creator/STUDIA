@@ -4,6 +4,7 @@ import type { components } from './tipos.gerados'
 type E = components['schemas']
 
 export type ResumoMateria = E['ResumoMateria']
+export type MateriaApagada = E['MateriaApagada']
 export type MateriaCriada = E['MateriaCriada']
 export type Painel = E['Painel']
 export type Unidade = E['Unidade']

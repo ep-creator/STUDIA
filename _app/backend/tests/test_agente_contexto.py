@@ -80,3 +80,11 @@ def test_papeis_carregam_ferramentas_e_instrucoes():
     assert not {"salvar_resolucao", "salvar_resumo", "adicionar_formula"} & set(estrategista.ferramentas)
     assert "N4" in tutor.instrucoes and tutor.instrucoes.strip()
     assert set(ATALHOS) == {"N1", "N2", "N3", "N4", "resumir", "plano"}
+
+
+def test_tutor_usa_o_contexto_antes_de_buscar_e_n4_nao_repete_a_resolucao_no_chat():
+    # revisão do uso real: buscas demais sem resposta, e a resolução inteira copiada no chat
+    tutor = carregar_papel("tutor")
+    assert "no máximo 2 buscas" in tutor.instrucoes
+    assert "não repita a resolução no chat" in tutor.instrucoes.lower()
+    assert "não repita a resolução no chat" in ATALHOS["N4"].lower()

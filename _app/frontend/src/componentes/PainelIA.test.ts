@@ -27,6 +27,7 @@ function motor(opcoes: { chave?: boolean; respostas?: unknown[][]; historicoTopo
     if (url.includes('/agente/mensagem')) return ndjson(respostas.shift() ?? [])
     if (url.endsWith('/fontes')) return json([{ id: 1, tipo: 'livro', titulo: 'Stewart', caminho: 'fontes/livros/s.pdf', paginas: 600 }])
     if (url.includes('/historico/desfazer')) return json({ desfeito: { id: 77, descricao: 'Agente: resolução l1-3' } })
+    if (url.includes('/painel')) return json({ unidade: 3, materia: { uid: 'u1' }, documentos: [] })
     if (url.includes('/historico')) return json([{ id: opcoes.historicoTopo ?? 77, momento: 'x', descricao: 'y', desfaz_grupo: null, desfeito_em: null }])
     throw new Error(`rota não simulada: ${metodo} ${url}`)
   }))
@@ -209,4 +210,13 @@ test('chave recusada oferece o atalho para trocar a chave', async () => {
   abrir()
   await userEvent.click(await screen.findByRole('button', { name: 'N1 Dica' }))
   expect(await screen.findByRole('link', { name: 'trocar a chave' })).toHaveAttribute('href', '#/m/u1/assistente')
+})
+
+test('depois que o agente grava, o painel é recarregado (o Ver resolução aparece sem recarregar a página)', async () => {
+  motor({ respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
+    { tipo: 'texto', dados: { texto: 'Gravei: resposta π/4.' } }, { tipo: 'fim', dados: { custo_brl: 0.01, total_mes: 1.51 } }]] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await screen.findByText(/Resolução L1-3 salva/)
+  await waitFor(() => expect(pedidos.some((p) => p.metodo === 'GET' && p.url.includes('/api/materias/u1/painel'))).toBe(true))
 })

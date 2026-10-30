@@ -32,6 +32,10 @@ class ProximaProva(TypedDict):
     unidade: int | None
 
 
+class MateriaApagada(TypedDict):
+    movida_para: str     # ex.: "_lixeira/Sistemas Digitais (2026-10-30 14-02-11)"
+
+
 class ResumoMateria(TypedDict):
     uid: str
     nome: str

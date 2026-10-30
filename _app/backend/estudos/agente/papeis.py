@@ -14,7 +14,7 @@ ATALHOS = {
     "N1": "Nível N1 (dica): só o conceito e o ponto de partida, sem contas.",
     "N2": "Nível N2 (caminho): o roteiro em passos, sem resolver as contas.",
     "N3": "Nível N3 (esboço): a estrutura com as passagens-chave, deixando as contas finais.",
-    "N4": "Nível N4 (resolução completa no padrão prova): resolva e grave com salvar_resolucao.",
+    "N4": "Nível N4 (resolução completa no padrão prova): resolva e grave com salvar_resolucao; não repita a resolução no chat, responda só com uma linha (gravou e o resultado final).",
     "resumir": "Resuma a seção no formato dos meus resumos, grave com salvar_resumo e crie os cartões de fórmula.",
     "plano": "Monte o diagnóstico e o plano de revisão até a próxima prova.",
 }

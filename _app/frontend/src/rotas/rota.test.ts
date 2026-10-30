@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { analisarRota, montarHash, type Rota } from './rota'
+import { analisarRota, montarHash, precisaListaDeMaterias, type Rota } from './rota'
 
 test.each<[string, Rota]>([
   ['#/', { tela: 'materias' }],
@@ -27,4 +27,15 @@ test('hash malformado não derruba o app: volta para a tela inicial', () => {
 test('rota do assistente', () => {
   expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'assistente', uid: 'u1' })
   expect(montarHash({ tela: 'assistente', uid: 'u1' })).toBe('#/m/u1/assistente')
+})
+
+test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a matéria aberta não está nela (uma vez por matéria)', () => {
+  const lista = [{ uid: 'a' }]
+  expect(precisaListaDeMaterias({ tela: 'materias' }, lista, null)).toBe(true)
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], null)).toBe(true)
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, lista, null)).toBe(false)
+  // matéria recém-criada: ainda não está na lista
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, null)).toBe(true)
+  // já pediu para essa matéria e ela continua fora (endereço errado): não pede de novo
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, 'nova')).toBe(false)
 })

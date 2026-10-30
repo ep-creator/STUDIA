@@ -25,6 +25,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{uid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Apagar */
+        delete: operations["apagar_api_materias__uid__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/painel": {
         parameters: {
             query?: never;
@@ -1170,6 +1187,11 @@ export interface components {
             /** Email Professor */
             email_professor: string | null;
         };
+        /** MateriaApagada */
+        MateriaApagada: {
+            /** Movida Para */
+            movida_para: string;
+        };
         /** MateriaCriada */
         MateriaCriada: {
             /** Uid */
@@ -1736,6 +1758,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MateriaCriada"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apagar_api_materias__uid__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MateriaApagada"];
                 };
             };
             /** @description Validation Error */

@@ -38,3 +38,13 @@ export function montarHash(rota: Rota): string {
   if (rota.unidade === null) return base
   return `${base}/u/${rota.unidade}/${rota.area}`
 }
+
+/**
+ * A lista de matérias (tela inicial e seletor da barra lateral) precisa ser lida de novo? Na tela inicial, sem lista,
+ * ou quando a matéria aberta não está nela — a recém-criada, por exemplo. `jaPedidaPara` evita pedir de novo, em
+ * laço, para um endereço de matéria que não existe.
+ */
+export function precisaListaDeMaterias(rota: Rota, materias: { uid: string }[], jaPedidaPara: string | null): boolean {
+  if (rota.tela === 'materias' || materias.length === 0) return true
+  return !materias.some((m) => m.uid === rota.uid) && jaPedidaPara !== rota.uid
+}

@@ -8,7 +8,7 @@
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { ia } from '../estado/ia.svelte'
-  import { estadoMateria } from '../estado/materia.svelte'
+  import { estadoMateria, recarregar } from '../estado/materia.svelte'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash } from '../rotas/rota'
   import ConfigurarChave from './ConfigurarChave.svelte'
@@ -76,6 +76,7 @@
     } else if (e.tipo === 'gravado') {
       itens.push({ autor: 'ferramenta', texto: `${e.dados.titulo} salva`, gravado: e.dados })
       itens.push({ autor: 'agente', texto: '' })
+      void recarregar()   // a tela fica sabendo do que foi gravado (ex.: o Ver resolução aparece na hora)
     } else if (e.tipo === 'confirmar') {
       confirmar = null
     } else if (e.tipo === 'fim') {
@@ -296,7 +297,9 @@
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
   .alerta { border-left: 2px solid var(--destaque); padding: 0.2rem 0 0.2rem 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
-  form { display: grid; gap: 0.35rem; }
+  /* o campo e o gasto do mês ficam presos ao pé da coluna: uma resolução longa não os empurra para fora da vista */
+  form { display: grid; gap: 0.35rem; position: sticky; bottom: 0; z-index: 1; background: var(--fundo); padding: 0.5rem 0 0.4rem; }
+  :global(.gaveta) form { background: var(--lateral); }
   .envio { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .custo { font-size: 0.78rem; }
   .enviar { color: var(--destaque); font-weight: 500; }

@@ -121,8 +121,10 @@
   <section class="proposta">
     {#if imp}
       {@const p = imp.proposta as { classificacao: { tipo: string; confianca: number; revisar: boolean } }}
-      <CabecalhoProposta tipo={imp.tipo} classificacao={p.classificacao} ontrocar={trocarTipo} />
+      <div class="cabeca"><CabecalhoProposta tipo={imp.tipo} classificacao={p.classificacao} ontrocar={trocarTipo} /></div>
 
+      <!-- só o corpo rola: o cabeçalho (com o seletor de tipo) e o rodapé (Confirmar) ficam sempre à vista -->
+      <div class="corpo">
       {#if imp.tipo === 'lista'}
         <PropostaListaView proposta={imp.proposta as PropostaLista} {unidades} alterar={alterar<PropostaLista>} />
       {:else if imp.tipo === 'programa'}
@@ -136,6 +138,7 @@
       {:else}
         <p class="suave">{(imp.proposta as PropostaOutro).observacao}</p>
       {/if}
+      </div>
 
       <footer>
         <button class="acao-forte" onclick={confirmar}>Confirmar</button>
@@ -151,7 +154,9 @@
 <style>
   .importacao { display: grid; grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
   .importacao > :global(*) { min-width: 0; }
-  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; border-left: 1px solid var(--fio); padding-left: 2rem; }
+  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); display: flex; flex-direction: column; border-left: 1px solid var(--fio); padding-left: 2rem; }
+  .cabeca { position: relative; z-index: 2; }
+  .corpo { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
   footer { display: flex; gap: 1.1rem; align-items: center; margin-top: 1.25rem; }
   .pendencias { color: var(--dub); font-size: 0.85rem; }
 </style>

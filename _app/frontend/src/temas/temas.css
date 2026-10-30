@@ -89,7 +89,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .acao-texto, .acao-suave, .acao-forte { font: inherit; cursor: pointer; text-decoration: none; }
 .acao-texto { background: none; border: 0; padding: 0; color: var(--suave); text-underline-offset: 3px; }
 .acao-texto:hover:not(:disabled) { color: var(--texto); text-decoration: underline; text-decoration-color: var(--destaque); }
-.acao-suave { background: var(--leve); border: 0; border-radius: 999px; padding: 0.2rem 0.8rem; color: var(--texto); }
+.acao-suave { background: var(--leve); border: 0; border-radius: 999px; padding: 0.32rem 1rem; color: var(--texto); }
 .acao-suave:hover:not(:disabled) { background: color-mix(in srgb, var(--texto) 11%, transparent); }
 .acao-forte { background: var(--texto); color: var(--fundo); border: 0; border-radius: 999px; padding: 0.25rem 1rem; font-weight: 500; }
 .acao-forte:hover:not(:disabled) { background: var(--destaque); color: var(--texto-sobre-destaque); }
