@@ -4,12 +4,13 @@ import re
 from dataclasses import dataclass
 
 from estudos.importacao.idioma import normalizar
+from estudos.importacao.parsers.calendario import dia_mes
 from estudos.importacao.pdf import DocumentoPdf
 
 TIPOS = ("programa", "calendario", "turma", "livro", "lista", "slides", "prova", "anotacao", "outro")
 _PAGINAS_ANALISADAS = 2
 _CONFIANCA_MINIMA = 0.2
-_DATA = re.compile(r"\b\d{1,2}/\d{1,2}\b")
+_DATA = re.compile(r"\b\d{1,2}/\d{1,2}\b|\b\d{1,2}-(?:jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b", re.I)
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
 _CABECALHO_UNIDADE = re.compile(r"^(?:\w+ unidade|unidade [\divx]+)$")
 _MARCADOR = re.compile(r"^[○◦•▪‣]")
@@ -43,11 +44,15 @@ def _pontuar(doc: DocumentoPdf) -> dict[str, float]:
     if sum(1 for l in linhas if _MARCADOR.match(l)) >= 3:
         pontos["programa"] += 1
 
-    if any(n in ("calendario", "calendario de atividades") for n in norm):
+    if any(n.startswith("calendario") and len(n) < 40 for n in norm):  # "Calendário das provas"
         pontos["calendario"] += 3
-    if len(_DATA.findall(texto)) >= 6:
+    # datas também nas tabelas, onde aparecem como "08.09 (3ª feira)"; cada linha conta uma vez
+    linhas_tabela = [l for t in doc.tabelas(1, _PAGINAS_ANALISADAS) for l in t.linhas]
+    datas_tabela = sum(1 for l in linhas_tabela if any(dia_mes(c.texto) for c in l))
+    if len(_DATA.findall(texto)) >= 6 or datas_tabela >= 6:
         pontos["calendario"] += 2
-    if any(("exame" in n or "prova" in n) and _DATA.search(l) for l, n in zip(linhas, norm)):
+    if any(("exame" in n or "prova" in n) and _DATA.search(l) for l, n in zip(linhas, norm)) or any(
+            dia_mes(l[0].texto) and any(_TITULO_PROVA.search(normalizar(c.texto)) for c in l[1:]) for l in linhas_tabela):
         pontos["calendario"] += 1
 
     for titulo in ("objetivo", "metodologia", "avaliacao", "referencia", "horario"):

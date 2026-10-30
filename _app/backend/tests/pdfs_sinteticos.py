@@ -45,3 +45,30 @@ def criar_pdf(
     doc.save(str(caminho))
     doc.close()
     return caminho
+
+
+def criar_pdf_tabela(caminho: Path, titulo: str, tabelas: list[tuple[str, list[list[str]]]]) -> Path:
+    """Uma página com tabelas de bordas desenhadas, como um calendário feito no Word. Cada tabela vem com a linha que
+    fica logo acima dela ("1ª Unidade"); célula com "\n" tem várias linhas."""
+    doc = pymupdf.open()
+    pagina = doc.new_page(width=595, height=842)
+    pagina.insert_text((40, 40), titulo, fontsize=12)
+    y = 70
+    for acima, linhas in tabelas:
+        if acima:
+            pagina.insert_text((40, y), acima, fontsize=11)
+        y += 14
+        largura = 515 / max(len(l) for l in linhas)
+        for linha in linhas:
+            altura = 14 * max(c.count("\n") + 1 for c in linha) + 6
+            for j, celula in enumerate(linha):
+                retangulo = pymupdf.Rect(40 + j * largura, y, 40 + (j + 1) * largura, y + altura)
+                pagina.draw_rect(retangulo, color=(0, 0, 0), width=0.6)
+                for k, parte in enumerate(celula.split("\n")):
+                    pagina.insert_text((retangulo.x0 + 3, retangulo.y0 + 13 + 14 * k), parte, fontsize=9)
+            y += altura
+        y += 30
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(caminho))
+    doc.close()
+    return caminho

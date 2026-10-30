@@ -15,7 +15,7 @@ from estudos.erros import Conflito, DadoInvalido
 from estudos.historico import Operacao, operacao
 from estudos.importacao.classificador import TIPOS, Classificacao, classificar
 from estudos.importacao.idioma import normalizar
-from estudos.importacao.parsers.calendario import extrair_calendario
+from estudos.importacao.parsers.calendario import CalendarioExtraido, extrair_calendario, extrair_calendario_tabelas
 from estudos.importacao.parsers.livro import extrair_livro
 from estudos.importacao.parsers.lista import extrair_listas
 from estudos.importacao.parsers.programa import TopicoExtraido, extrair_programa
@@ -150,10 +150,18 @@ def _derivar_programa(con, proposta: dict, settings: Settings) -> None:
             _derivar_topico(t, secoes, existentes, settings, sentido)
 
 
+def _datas_no_calendario(cal: CalendarioExtraido) -> int:
+    return sum(len(u.aulas) + (u.prova is not None) for u in cal.unidades) + len(cal.eventos)
+
+
 def _propor_calendario(con, doc: DocumentoPdf) -> dict:
     periodo = materia.obter(con).periodo or ""
     ano_padrao = int(periodo[:4]) if periodo[:4].isdigit() else None
     cal = extrair_calendario(doc.texto(), ano_padrao)
+    if tabelas := doc.tabelas():  # calendário em tabela: vale a leitura que achar mais datas
+        pela_tabela = extrair_calendario_tabelas(tabelas, cal.ano, materia.obter(con).nome)
+        if _datas_no_calendario(pela_tabela) > _datas_no_calendario(cal):
+            cal = pela_tabela
     dados = dataclasses.asdict(cal)
     dados["revisar"] = cal.ano is None or not cal.unidades
     return dados
