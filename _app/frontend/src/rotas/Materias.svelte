@@ -9,6 +9,7 @@
   import Marca from '../componentes/Marca.svelte'
   import SeletorTema from '../componentes/SeletorTema.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
+  import { esquecerMateria } from '../estado/materia.svelte'
   import { montarHash } from './rota'
 
   let { materias, onmudou = () => {} }: { materias: ResumoMateria[]; onmudou?: () => void } = $props()
@@ -30,7 +31,8 @@
   async function apagar(m: ResumoMateria) {
     if (!confirm(`Apagar "${m.nome}"? A pasta vai para _lixeira, na pasta do projeto; dá para recuperar movendo de volta.`)) return
     try {
-      const r = await requisitar<MateriaApagada>('DELETE', `/api/materias/${m.uid}`)
+      const r = await requisitar<MateriaApagada>('DELETE', `/api/materias/${encodeURIComponent(m.uid)}`)
+      esquecerMateria(m.uid)
       avisar(`${m.nome} foi para ${r.movida_para}`)
       onmudou()
     } catch (e) {

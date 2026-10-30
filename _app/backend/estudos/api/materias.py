@@ -9,8 +9,10 @@ from estudos.api.esquemas import MateriaCriar
 from estudos.api.respostas import MateriaApagada, MateriaCriada, ResumoMateria
 from estudos.config import Settings
 from estudos.db.conexao import conectar
+from estudos.erros import Conflito
+from estudos.rag.indexador import sincronizando
 from estudos.repos import materia
-from estudos.workspace import criar_materia, descobrir_materias, mover_para_lixeira
+from estudos.workspace import abrir_materia, criar_materia, descobrir_materias, mover_para_lixeira
 
 router = APIRouter(prefix="/api/materias", tags=["matérias"])
 
@@ -38,4 +40,6 @@ def criar(corpo: MateriaCriar, settings: Settings = Depends(obter_settings)) -> 
 
 @router.delete("/{uid}")
 def apagar(uid: str, settings: Settings = Depends(obter_settings)) -> MateriaApagada:
+    if sincronizando(abrir_materia(settings.workspace, uid).pasta):  # a thread de indexação escreve dentro da pasta
+        raise Conflito("A matéria ainda está sendo indexada para a busca. Espere terminar e tente de novo.")
     return {"movida_para": mover_para_lixeira(settings.workspace, uid).as_posix()}

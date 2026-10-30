@@ -2,7 +2,6 @@
 
 import datetime
 import re
-import shutil
 import sqlite3
 import uuid
 from contextlib import closing
@@ -111,9 +110,13 @@ def mover_para_lixeira(workspace: Path, uid: str) -> Path:
     ref = abrir_materia(workspace, uid)
     lixeira = workspace / PASTA_LIXEIRA
     lixeira.mkdir(exist_ok=True)
-    destino = lixeira / f"{ref.pasta.name} ({datetime.datetime.now():%Y-%m-%d %H-%M-%S})"
+    base = f"{ref.pasta.name} ({datetime.datetime.now():%Y-%m-%d %H-%M-%S})"
+    destino, n = lixeira / base, 2
+    while destino.exists():  # duas matérias de mesmo nome apagadas no mesmo segundo
+        destino, n = lixeira / f"{base} {n}", n + 1
     try:
-        shutil.move(str(ref.pasta), str(destino))
+        # rename move tudo ou nada; shutil.move copiaria e apagaria arquivo a arquivo, deixando a pasta pela metade
+        ref.pasta.rename(destino)
     except OSError as e:  # arquivo aberto em outro programa (Windows não move pasta com arquivo em uso)
         raise Conflito(f"Não consegui mover '{ref.nome}': algum arquivo dela está aberto. Feche e tente de novo.") from e
     return destino.relative_to(workspace)

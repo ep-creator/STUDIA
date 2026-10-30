@@ -82,7 +82,7 @@ def responder(
                     entrada, saida = entrada + evento.entrada, saida + evento.saida
             if not chamadas:
                 break
-            if rodada == ajustes.max_rodadas:
+            if ultima:  # sem ferramentas o modelo não deveria chamar nenhuma; se chamar, avisa em vez de cortar mudo
                 resposta.append(_PAREI)
                 yield Saida("texto", {"texto": _PAREI})
                 break

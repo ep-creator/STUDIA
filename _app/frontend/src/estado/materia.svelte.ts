@@ -44,6 +44,11 @@ export async function carregarPainel(uid: string, unidade: number | null = null)
   }
 }
 
+/** A matéria foi apagada: se era a aberta, esquece o painel dela (voltar ao endereço antigo pede de novo e dá 404). */
+export function esquecerMateria(uid: string): void {
+  if (estadoMateria.uid === uid) Object.assign(estadoMateria, { uid: null, unidade: null, painel: null })
+}
+
 export function recarregar(): Promise<void> {
   if (!estadoMateria.uid) return Promise.resolve()
   return carregarPainel(estadoMateria.uid, estadoMateria.unidade)

@@ -1,6 +1,6 @@
 from contextlib import closing
-
 from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -116,3 +116,20 @@ def test_apagar_materia_move_a_pasta_para_a_lixeira(cliente):
 
 def test_apagar_materia_inexistente_404(cliente):
     assert cliente.delete("/api/materias/nao-existe").status_code == 404
+
+
+def test_apagar_duas_materias_de_mesmo_nome_no_mesmo_segundo_nao_colide(cliente):
+    destinos = []
+    for _ in range(2):
+        uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+        destinos.append(cliente.delete(f"/api/materias/{uid}").json()["movida_para"])
+    raiz = Path(cliente.app.state.settings.workspace)
+    assert destinos[0] != destinos[1] and all((raiz / d / "materia.db").is_file() for d in destinos)
+
+
+def test_apagar_materia_sendo_indexada_409(cliente, monkeypatch):
+    from estudos.api import materias as rota
+    monkeypatch.setattr(rota, "sincronizando", lambda raiz: True)
+    uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+    assert cliente.delete(f"/api/materias/{uid}").status_code == 409
+    assert any(m["uid"] == uid for m in cliente.get("/api/materias").json())

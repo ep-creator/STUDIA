@@ -40,11 +40,11 @@ export function montarHash(rota: Rota): string {
 }
 
 /**
- * A lista de matérias (tela inicial e seletor da barra lateral) precisa ser lida de novo? Na tela inicial, sem lista,
- * ou quando a matéria aberta não está nela — a recém-criada, por exemplo. `jaPedidaPara` evita pedir de novo, em
- * laço, para um endereço de matéria que não existe.
+ * A lista de matérias (tela inicial e seletor da barra lateral) precisa ser lida de novo? Na tela inicial, ou quando a
+ * matéria aberta não está nela — a recém-criada, ou a lista ainda vazia. `jaPedidaPara` evita pedir de novo, em laço,
+ * para um endereço de matéria que não existe (ou com o workspace sem matérias).
  */
 export function precisaListaDeMaterias(rota: Rota, materias: { uid: string }[], jaPedidaPara: string | null): boolean {
-  if (rota.tela === 'materias' || materias.length === 0) return true
+  if (rota.tela === 'materias') return true
   return !materias.some((m) => m.uid === rota.uid) && jaPedidaPara !== rota.uid
 }

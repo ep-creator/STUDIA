@@ -1,5 +1,6 @@
 <script lang="ts">
   import './temas/temas.css'
+  import { untrack } from 'svelte'
   import { requisitar } from './api/cliente'
   import type { ResumoMateria } from './api/tipos'
   import { nomeUnidade } from './apresentacao'
@@ -84,10 +85,11 @@
   }
 
   // Lista de matérias: na tela inicial e para o seletor da barra lateral; relida quando a matéria aberta não está nela
-  // (a recém-criada), uma vez por matéria.
+  // (a recém-criada), uma vez por matéria. Só a rota dispara: a lista é lida sem rastrear, senão cada leitura (que troca
+  // o array) dispararia outra, sem fim.
   let listaPedidaPara: string | null = null
   $effect(() => {
-    if (!precisaListaDeMaterias(rota, materias, listaPedidaPara)) return
+    if (!precisaListaDeMaterias(rota, untrack(() => materias), listaPedidaPara)) return
     if (rota.tela !== 'materias') listaPedidaPara = rota.uid
     void carregarMaterias()
   })

@@ -38,4 +38,6 @@ test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a mat
   expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, null)).toBe(true)
   // já pediu para essa matéria e ela continua fora (endereço errado): não pede de novo
   expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, 'nova')).toBe(false)
+  // workspace sem matérias: a lista vazia também é pedida uma vez só por matéria
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], 'a')).toBe(false)
 })
