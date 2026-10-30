@@ -6,6 +6,8 @@ A proposta é um JSON editável; nada do domínio é gravado antes de `confirmar
 
 import copy
 import dataclasses
+import datetime
+import re
 import shutil
 import sqlite3
 from pathlib import Path, PurePath
@@ -31,6 +33,7 @@ from estudos.seguranca import caminho_seguro
 
 ORIGEM = "importado"
 _MAX_TOPICOS_POR_CONTEUDO = 3
+_ANO_NO_NOME = re.compile(r"(?<!\d)(20\d\d)(?!\d)")
 _ERROS_DE_PROPOSTA = (KeyError, TypeError, ValueError, AttributeError, IndexError)
 PASTA_POR_TIPO = {
     "programa": "fontes/documentos", "calendario": "fontes/documentos", "turma": "fontes/documentos",
@@ -154,9 +157,19 @@ def _datas_no_calendario(cal: CalendarioExtraido) -> int:
     return sum(len(u.aulas) + (u.prova is not None) for u in cal.unidades) + len(cal.eventos)
 
 
-def _propor_calendario(con, doc: DocumentoPdf) -> dict:
+def _ano_padrao(con, nome: str) -> int:
+    """Ano das datas sem ano (15/09, 11-ago) quando o documento não diz: o do período da matéria, o do nome do
+    arquivo ("PlanejamentoAulas_2026_2.pdf") ou o atual. Sem um ano, toda data seria descartada."""
     periodo = materia.obter(con).periodo or ""
-    ano_padrao = int(periodo[:4]) if periodo[:4].isdigit() else None
+    if periodo[:4].isdigit():
+        return int(periodo[:4])
+    if m := _ANO_NO_NOME.search(nome):
+        return int(m.group(1))
+    return datetime.date.today().year
+
+
+def _propor_calendario(con, doc: DocumentoPdf, nome: str) -> dict:
+    ano_padrao = _ano_padrao(con, nome)
     cal = extrair_calendario(doc.texto(), ano_padrao)
     if tabelas := doc.tabelas():  # calendário em tabela: vale a leitura que achar mais datas
         pela_tabela = extrair_calendario_tabelas(tabelas, cal.ano, materia.obter(con).nome)
@@ -335,7 +348,7 @@ def propor(con, doc: DocumentoPdf, tipo: str, nome: str, settings: Settings, cla
     if tipo == "programa":
         extraido = _propor_programa(doc)
     elif tipo == "calendario":
-        extraido = _propor_calendario(con, doc)
+        extraido = _propor_calendario(con, doc, nome)
     elif tipo == "turma":
         extraido = _propor_turma(doc)
     elif tipo == "livro":

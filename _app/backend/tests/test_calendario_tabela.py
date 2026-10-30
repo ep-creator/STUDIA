@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from estudos.historico import operacao
@@ -109,3 +111,19 @@ def test_pipeline_usa_a_tabela_quando_o_texto_nao_tem_datas(con, materia, tmp_pa
     pipeline.confirmar(con, materia.pasta, imp.id, settings)
     assert [(u.numero, u.data_prova) for u in unidades.listar(con)] == [(1, "2026-09-22"), (2, "2026-11-17")]
     assert {e.tipo for e in eventos.listar(con)} == {"aula", "prova", "segunda_chamada", "exame_final"}
+
+
+def test_materia_sem_periodo_usa_o_ano_do_nome_do_arquivo(con, materia, tmp_path):
+    # Sistemas Digitais e Geometria Analítica foram criadas sem período: sem ano, toda data era descartada
+    settings = carregar_settings(tmp_path / "_app", tmp_path)
+    caminho = criar_pdf_tabela(tmp_path / "entrada" / "PlanejamentoAulas_SD_2026_2.pdf", "Sistemas Digitais",
+                               [("", PLANEJAMENTO)])
+    imp = pipeline.receber_arquivo(con, materia.pasta, caminho, caminho.name, settings)
+    assert imp.proposta["ano"] == 2026 and imp.proposta["unidades"][0]["prova"]["data"] == "2026-09-22"
+
+
+def test_sem_ano_em_lugar_nenhum_usa_o_ano_atual(con, materia, tmp_path):
+    settings = carregar_settings(tmp_path / "_app", tmp_path)
+    caminho = _planejamento(tmp_path / "entrada")
+    imp = pipeline.receber_arquivo(con, materia.pasta, caminho, caminho.name, settings)
+    assert imp.proposta["ano"] == datetime.date.today().year and imp.proposta["unidades"]
