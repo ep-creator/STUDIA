@@ -22,7 +22,6 @@
   import Formulario from './rotas/Formulario.svelte'
   import Historico from './rotas/Historico.svelte'
   import Importacao from './rotas/Importacao.svelte'
-  import Assistente from './rotas/Assistente.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
   import Hoje from './rotas/Hoje.svelte'
@@ -103,7 +102,7 @@
   // título da aba diz onde se está (leitor de tela e histórico do navegador)
   const NOME_TELA: Record<string, string> = {
     painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano', documentos: 'Biblioteca', formulario: 'Fórmulas',
-    importar: 'Adicionar material', historico: 'Histórico', assistente: 'Assistente',
+    importar: 'Adicionar material', historico: 'Histórico',
   }
   $effect(() => {
     if (rota.tela === 'materias') document.title = 'STUDIA'
@@ -154,8 +153,6 @@
           <Importacao {painel} />
         {:else if rota.tela === 'historico'}
           <Historico uid={rota.uid} />
-        {:else if rota.tela === 'assistente'}
-          <Assistente uid={rota.uid} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}
@@ -163,7 +160,7 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    {#if ia.aberta && rota.tela !== 'assistente'}
+    {#if ia.aberta}
       <GavetaIA uid={rota.uid} onfechar={() => (ia.aberta = false)} />
     {/if}
   </div>

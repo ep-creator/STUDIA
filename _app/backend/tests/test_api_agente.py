@@ -127,3 +127,12 @@ def test_rota_de_conversas(api):
     assert r.status_code == 200
     [linha] = r.json()
     assert set(linha) == {"id", "alvo", "papel", "rotulo", "atualizada_em"} and linha["rotulo"] == "L1 #3"
+
+
+def test_conversa_mostra_o_atalho_pelo_nome_e_nao_a_instrucao_interna(api):
+    _com_modelo(api, [[Texto("ok")], [Texto("ok")]])
+    alvo = {"alvo": f"questao:{api['questao']}", "papel": "tutor"}
+    api["cliente"].post(f"{api['base']}/mensagem", json={**alvo, "atalho": "N4"})
+    api["cliente"].post(f"{api['base']}/mensagem", json={**alvo, "atalho": "N2", "texto": "e o domínio?"})
+    voce = [m["texto"] for m in api["cliente"].get(f"{api['base']}/conversa", params=alvo).json()["mensagens"] if m["autor"] == "voce"]
+    assert voce == ["N4 Resolução", "N2 Caminho: e o domínio?"]

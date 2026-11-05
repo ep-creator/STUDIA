@@ -18,7 +18,7 @@ from estudos.agente.contexto import contexto_em_texto, montar_contexto
 from estudos.agente.ferramentas import Ambiente
 from estudos.agente.laco import responder
 from estudos.agente.modelo import Gemini, Modelo
-from estudos.agente.papeis import ATALHOS, carregar_papel
+from estudos.agente.papeis import ATALHOS, carregar_papel, texto_visivel
 from estudos.agente.segredos import gravar_chave, ler_chave
 from estudos.api.deps import Contexto, contexto_dep, materia_dep, obter_settings
 from estudos.api.esquemas import AlvoAgente, ChaveAgente, PedidoAgente
@@ -97,7 +97,10 @@ def mensagem(pedido: PedidoAgente, request: Request, materia: MateriaRef = Depen
 def _conversa(ctx: Contexto, alvo: str, papel: str, nova: bool = False) -> ConversaSaida:
     c = (conversas.recomecar if nova else conversas.conversa_ativa)(ctx.con, alvo, papel)
     return {"id": c.id, "alvo": c.alvo, "papel": c.papel,
-            "mensagens": [asdict(m) for m in conversas.mensagens(ctx.con, c.id)]}
+            "mensagens": [
+                {**asdict(m), "texto": texto_visivel(m.texto) if m.autor == "voce" else m.texto}
+                for m in conversas.mensagens(ctx.con, c.id)
+            ]}
 
 
 @router.get(_BASE + "/conversa")

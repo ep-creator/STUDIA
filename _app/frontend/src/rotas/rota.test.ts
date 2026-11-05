@@ -24,9 +24,8 @@ test('hash malformado não derruba o app: volta para a tela inicial', () => {
   expect(analisarRota('#/m/%E0%A4%A')).toEqual({ tela: 'materias' })
 })
 
-test('rota do assistente', () => {
-  expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'assistente', uid: 'u1' })
-  expect(montarHash({ tela: 'assistente', uid: 'u1' })).toBe('#/m/u1/assistente')
+test('o endereço da antiga página do Assistente abre a matéria (a IA é a gaveta)', () => {
+  expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'materia', uid: 'u1', unidade: null, area: 'painel' })
 })
 
 test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a matéria aberta não está nela (uma vez por matéria)', () => {

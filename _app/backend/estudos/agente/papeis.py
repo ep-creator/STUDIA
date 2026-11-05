@@ -19,6 +19,22 @@ ATALHOS = {
     "plano": "Monte o diagnóstico e o plano de revisão até a próxima prova.",
 }
 
+# Como cada atalho aparece na conversa (a instrução acima é só para o modelo)
+NOMES_ATALHOS = {
+    "N1": "N1 Dica", "N2": "N2 Caminho", "N3": "N3 Esboço", "N4": "N4 Resolução",
+    "resumir": "Resumir a seção", "plano": "Plano de revisão",
+}
+
+
+def texto_visivel(texto: str) -> str:
+    """O pedido como o aluno o fez: "N4 Resolução" em vez da instrução do atalho; o que ele escreveu junto vem depois."""
+    for atalho, instrucao in ATALHOS.items():
+        if texto == instrucao:
+            return NOMES_ATALHOS[atalho]
+        if texto.startswith(instrucao + "\n\n"):
+            return f"{NOMES_ATALHOS[atalho]}: {texto[len(instrucao) + 2:]}"
+    return texto
+
 
 @dataclass(frozen=True)
 class Papel:

@@ -215,7 +215,10 @@ test('chave recusada oferece o atalho para trocar a chave', async () => {
   motor({ respostas: [[{ tipo: 'erro', dados: { motivo: 'chave_invalida', detalhe: 'API key not valid' } }]] })
   abrir()
   await userEvent.click(await screen.findByRole('button', { name: 'N1 Dica' }))
-  expect(await screen.findByRole('link', { name: 'trocar a chave' })).toHaveAttribute('href', '#/m/u1/assistente')
+  const { ia } = await import('../estado/ia.svelte')
+  ia.aberta = false
+  await userEvent.click(await screen.findByRole('button', { name: 'trocar a chave' }))
+  expect(ia.aberta).toBe(true)
 })
 
 test('depois que o agente grava, o painel é recarregado (o Ver resolução aparece sem recarregar a página)', async () => {

@@ -277,13 +277,13 @@
       <div class="alerta" role="alert">
         <p>{f.texto}</p>
         <button class="acao-suave" onclick={() => void enviar(f.pedido)}>Tentar de novo</button>
-        {#if f.motivo === 'chave_invalida'}<a class="acao-texto" href={montarHash({ tela: 'assistente', uid })}>trocar a chave</a>{/if}
+        {#if f.motivo === 'chave_invalida'}<button class="acao-texto" onclick={() => (ia.aberta = true)}>trocar a chave</button>{/if}
       </div>
     {/if}
   </div>
 
   <form onsubmit={mandar}>
-    <textarea aria-label="Mensagem para o assistente" placeholder="Pergunte sobre o que está aberto…" bind:value={escrita} rows="2"
+    <textarea aria-label="Mensagem para o assistente" placeholder={papel === 'tutor' ? 'Pergunte sobre esta questão…' : papel === 'resumidor' ? 'Pergunte sobre esta seção…' : 'Pergunte sobre a matéria…'} bind:value={escrita} rows="2"
       onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement).requestSubmit() } }}></textarea>
     <div class="envio">
       <span class="suave custo">
