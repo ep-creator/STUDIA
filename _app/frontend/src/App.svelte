@@ -101,7 +101,7 @@
 
   // título da aba diz onde se está (leitor de tela e histórico do navegador)
   const NOME_TELA: Record<string, string> = {
-    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano', documentos: 'Biblioteca', formulario: 'Fórmulas',
+    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano completo', documentos: 'Biblioteca', formulario: 'Folha de fórmulas',
     importar: 'Adicionar material', historico: 'Histórico',
   }
   $effect(() => {

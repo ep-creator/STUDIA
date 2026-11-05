@@ -14,7 +14,7 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
     prova: { data: '2026-11-30', hora_inicio: null, unidade: 3, dias: 25 },
     sessao: {
       id: 1, codigo: 'S3', data: '2026-11-05', unidade: 3, titulo: '15.5 Aplicações', detalhe: 'massa, centro de massa',
-      estado: 'hoje', secoes: [secao],
+      estado: 'hoje', trabalhadas: 2, total: 3, secoes: [secao],
       resumos: [{ id: 40, titulo: '15.5 Aplicações de Integrais Duplas' }],
       formulas: [{ id: 7, titulo: 'Massa de uma lâmina (15.5)' }, { id: 8, titulo: 'Momentos (15.5)' }],
       questoes: [
@@ -24,9 +24,9 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
       ],
     },
     proximos: [
-      { tipo: 'sessao', data: '2026-11-05', hora_inicio: null, codigo: 'S3', titulo: '15.5 Aplicações', estado: 'hoje', unidade: 3 },
-      { tipo: 'sessao', data: '2026-11-07', hora_inicio: null, codigo: 'S4', titulo: 'Triplas', estado: 'futura', unidade: 3 },
-      { tipo: 'prova', data: '2026-11-12', hora_inicio: '14:00', codigo: null, titulo: '', estado: null, unidade: 3 },
+      { tipo: 'sessao', data: '2026-11-05', hora_inicio: null, codigo: 'S3', titulo: '15.5 Aplicações', estado: 'hoje', unidade: 3, trabalhadas: 2, total: 3 },
+      { tipo: 'sessao', data: '2026-11-07', hora_inicio: null, codigo: 'S4', titulo: 'Triplas', estado: 'futura', unidade: 3, trabalhadas: 0, total: 4 },
+      { tipo: 'prova', data: '2026-11-12', hora_inicio: '14:00', codigo: null, titulo: '', estado: null, unidade: 3, trabalhadas: 0, total: 0 },
     ],
     revisar: [
       { lista_id: 1, lista_codigo: '14.1', lista_titulo: 'Funções', unidade: 1, questoes: [{ id: 4, rotulo: '46', estado: 'err' }] },
@@ -77,10 +77,31 @@ test('questões da sessão por lista; clicar abre em Praticar', async () => {
   expect(within(sessao).getByRole('button', { name: /15\.5 #11, resolução gravada/ })).toBeInTheDocument()
 })
 
-test('Começar pelas questões abre a primeira ainda não trabalhada', async () => {
+test('a sessão começada mostra quantas faltam; a ação continua pela primeira não trabalhada', async () => {
   render(Hoje, { painel: p3 })
-  await userEvent.click(await screen.findByRole('button', { name: 'Começar pelas questões' }))
+  const sessao = await screen.findByRole('region', { name: /Sessão de hoje/ })
+  expect(sessao).toHaveTextContent('2 de 3')
+  expect(screen.getByRole('region', { name: 'Próximos 7 dias' })).toHaveTextContent('2/3')
+  await userEvent.click(screen.getByRole('button', { name: 'Continuar pelas questões' }))
   expect(pedido.questao).toBe(160)
+})
+
+test('sessão feita: a ação forte passa a ser revisar o que ficou marcado', async () => {
+  const base = dados()
+  resposta = dados({
+    sessao: { ...base.sessao!, estado: 'feita', trabalhadas: 3, total: 3, questoes: base.sessao!.questoes.map((q) => ({ ...q, estado: 'ok' })) },
+  })
+  render(Hoje, { painel: p3 })
+  await userEvent.click(await screen.findByRole('button', { name: 'Revisar 1 questão marcada' }))
+  expect(pedido.questao).toBe(4)
+  expect(location.hash).toBe('#/m/ab/u/1/listas')
+})
+
+test('na reta final a ação forte é revisar, mesmo com a sessão por fazer', async () => {
+  resposta = dados({ reta_final: true, prova: { data: '2026-11-08', hora_inicio: null, unidade: 3, dias: 3 } })
+  render(Hoje, { painel: p3 })
+  expect(await screen.findByRole('button', { name: 'Revisar 1 questão marcada' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /pelas questões/ })).toBeNull()
 })
 
 test('para revisar junta todas as unidades e abre na unidade certa', async () => {

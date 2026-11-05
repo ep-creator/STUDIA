@@ -1,6 +1,6 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import type { Painel, Sessao } from '../api/tipos'
+  import type { Painel, Sessao, SessaoProgresso } from '../api/tipos'
   import { nomeUnidade } from '../apresentacao'
   import EditorSessao from '../componentes/EditorSessao.svelte'
   import LinhaDoTempo from '../componentes/LinhaDoTempo.svelte'
@@ -14,6 +14,16 @@
   const unidade = $derived(painel.unidades.find((u) => u.numero === painel.unidade)!)
   const base = $derived(`/api/materias/${painel.materia.uid}/sessoes`)
   const itens = $derived(montarLinhaDoTempo(painel.sessoes, painel.eventos))
+
+  // o estado de cada sessão vem derivado do motor (questões marcadas ou resolvidas), igual à tela Hoje
+  let progresso = $state<Record<number, SessaoProgresso>>({})
+  $effect(() => {
+    void painel
+    requisitar<SessaoProgresso[]>('GET', `/api/materias/${painel.materia.uid}/sessoes/progresso?unidade=${unidade.numero}`).then(
+      (lista) => (progresso = Object.fromEntries(lista.map((s) => [s.id, s]))),
+      () => (progresso = {}),
+    )
+  })
 
   async function executar(acao: () => Promise<unknown>) {
     try {
@@ -35,7 +45,7 @@
 </script>
 
 <header class="cabecalho">
-  <h2>Cronograma · {nomeUnidade(unidade.numero)}</h2>
+  <h1>Plano da {nomeUnidade(unidade.numero)}</h1>
   <button class="acao-texto" onclick={() => (editando = {})}>+ sessão</button>
 </header>
 
@@ -50,6 +60,7 @@
 {:else}
   <LinhaDoTempo
     {itens}
+    {progresso}
     onfeito={(s) => void executar(() => requisitar('PATCH', `${base}/${s.id}`, { feito: !s.feito }))}
     oneditar={(s) => (editando = s)}
   />
@@ -57,4 +68,5 @@
 
 <style>
   .cabecalho { display: flex; align-items: baseline; gap: 1.2rem; }
+  h1 { font-size: 2.2rem; margin: 0 0 0.6rem; }
 </style>

@@ -71,7 +71,7 @@
       <header>
         <button class="assunto" aria-expanded={aberto} onclick={() => grupos.alternar(String(l.id))}>
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
-          <h3>{l.titulo}</h3>
+          <h2>{l.titulo}</h2>
         </button>
         <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões feitas`}>{feitas(l)}/{l.questoes.length}</span>
       </header>
@@ -104,12 +104,12 @@
   .grade { display: grid; gap: 1rem; }
   header { display: flex; align-items: center; gap: 0.4rem 1rem; flex-wrap: wrap; }
   .assunto { display: flex; align-items: center; gap: 0.45rem; background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-align: left; }
-  .assunto:hover h3, .assunto:hover .seta { color: var(--destaque-texto); }
+  .assunto:hover h2, .assunto:hover .seta { color: var(--destaque-texto); }
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
-  h3 { transition: color var(--transicao); }
+  h2 { transition: color var(--transicao); }
   .placar { font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
-  h3 { font-size: 1.05rem; margin: 0; }
+  h2 { font-size: 1.05rem; margin: 0; }
   .rotulo { margin: 0.4rem 0 0.2rem; }
   /* Número solto: a marca aparece pela cor e por um traço embaixo; a questão aberta fica em negrito */
   .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.3rem; }

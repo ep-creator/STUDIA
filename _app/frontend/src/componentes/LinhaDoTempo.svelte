@@ -1,12 +1,13 @@
 <script lang="ts">
-  import type { Sessao } from '../api/tipos'
+  import type { Sessao, SessaoProgresso } from '../api/tipos'
   import { dataCurta, isoDe } from '../apresentacao'
   import type { ItemLinha } from '../cronograma'
   import Markdown from './Markdown.svelte'
 
-  let { itens, hoje = new Date(), onfeito, oneditar }: {
+  let { itens, hoje = new Date(), progresso = {}, onfeito, oneditar }: {
     itens: ItemLinha[]
     hoje?: Date
+    progresso?: Record<number, SessaoProgresso>   // estado derivado no motor (o mesmo da tela Hoje)
     onfeito: (s: Sessao) => void
     oneditar: (s: Sessao) => void
   } = $props()
@@ -29,7 +30,9 @@
         <span class="texto">
           <b>{s.codigo}</b>{#if s.foco_md} · <span class="foco"><Markdown texto={primeiraLinha(s.foco_md)} /></span>{/if}
         </span>
-        {#if s.feito}<span class="selo-feita">feita</span>{/if}
+        {@const p = progresso[s.id]}
+        {#if p?.estado === 'feita' || (!p && s.feito)}<span class="selo-feita">feita</span>
+        {:else if p && p.trabalhadas > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
         <span class="acoes-linha">
           <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
             {s.feito ? 'desmarcar' : 'marcar feita'}
@@ -52,6 +55,9 @@
   .passado, .passado :global(*) { color: var(--suave); }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }
+  .foco :global(p) { display: inline; margin: 0; }
+  .selo-parcial { font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
+  /* o foco vem do Markdown em parágrafo: aqui fica na mesma linha do código ("S3 · Polares…") */
   .foco :global(p) { display: inline; margin: 0; }
   .selo-feita { font-size: 0.78rem; color: var(--ok); }
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }

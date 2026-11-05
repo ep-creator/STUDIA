@@ -21,6 +21,7 @@
   })
 
   const NOME_MARCA: Record<string, string> = { ok: 'acertei', err: 'errei', dub: 'dúvida' }
+  const CLASSE_ESTADO: Record<string, string> = { hoje: 'hoje', visto: 'visto', 'começado': 'comecado', 'a seguir': 'seguir' }
   const ESTADO_SESSAO: Record<string, string> = { feita: 'feita', passou: 'passou', hoje: 'hoje', futura: '' }
   const TIPO_EVENTO: Record<string, string> = {
     prova: 'Prova', aula: 'Aula', segunda_chamada: 'Segunda chamada', exame_final: 'Exame final', extra: 'Aula extra', feriado: 'Feriado',
@@ -55,7 +56,18 @@
     }
     return grupos
   })
-  const primeira = $derived(sessao?.questoes.find((q) => !q.estado && !q.resolucao_id) ?? sessao?.questoes[0] ?? null)
+  const primeira = $derived(sessao?.questoes.find((q) => !q.estado && !q.resolucao_id) ?? null)
+  const primeiraRevisar = $derived(dados?.revisar[0] ? { id: dados.revisar[0].questoes[0].id, unidade: dados.revisar[0].unidade } : null)
+  // a ação forte segue o estado: na reta final, revisar os erros; senão, a próxima questão da sessão; feita a sessão,
+  // revisar os erros (ou nada, se não houver)
+  const acao = $derived.by(() => {
+    const revisar = primeiraRevisar && {
+      rotulo: `Revisar ${plural(totalRevisar, 'questão marcada', 'questões marcadas')}`, ...primeiraRevisar,
+    }
+    if (dados?.reta_final && revisar) return revisar
+    if (primeira) return { rotulo: sessao && sessao.trabalhadas > 0 ? 'Continuar pelas questões' : 'Começar pelas questões', id: primeira.id, unidade: primeira.unidade }
+    return revisar
+  })
   const codigosSessao = $derived(sessao?.secoes.map((s) => s.codigo).join(', ') ?? '')
 
   const totalRevisar = $derived(dados?.revisar.reduce((t, g) => t + g.questoes.length, 0) ?? 0)
@@ -103,7 +115,8 @@
           <section class="sessao" aria-label={deHoje ? 'Sessão de hoje' : 'Próxima sessão'}>
             <h2 class="rotulo">
               {deHoje ? 'Sessão de hoje' : `Próxima sessão · ${dataCurta(sessao.data ?? '')}`} · {sessao.codigo}
-              {#if sessao.estado === 'feita'}<span class="feita">feita</span>{/if}
+              {#if sessao.estado === 'feita'}<span class="feita">feita</span>
+              {:else if sessao.trabalhadas > 0}<span class="parcial">{sessao.trabalhadas} de {sessao.total}</span>{/if}
             </h2>
             <h3 class="titulo">{sessao.titulo}</h3>
             {#if sessao.detalhe}<p class="suave detalhe">{sessao.detalhe}</p>{/if}
@@ -124,7 +137,7 @@
               {#if sessao.formulas.length}
                 <dt>Fórmulas</dt>
                 <dd>
-                  <a class="acao-texto" href={href('formulario', sessao.unidade)} title={sessao.formulas.map((f) => f.titulo).join('\n')}>
+                  <a class="acao-texto" href={href('formulario', sessao.unidade)}>
                     {plural(sessao.formulas.length, 'fórmula', 'fórmulas')}{codigosSessao ? ` da ${codigosSessao}` : ''}
                   </a>
                 </dd>
@@ -147,8 +160,8 @@
               {/if}
             </dl>
 
-            {#if primeira}
-              <button class="acao-forte comecar" onclick={() => abrirQuestao(primeira.id, primeira.unidade)}>Começar pelas questões</button>
+            {#if acao}
+              <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade)}>{acao.rotulo}</button>
             {/if}
           </section>
         {:else}
@@ -191,7 +204,8 @@
                   {#if item.tipo === 'sessao'}
                     <span class="codigo">{item.codigo}</span>
                     <span class="texto">{item.titulo}</span>
-                    {#if ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
+                    {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado">{item.trabalhadas}/{item.total}</span>
+                    {:else if ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
                   {:else}
                     <span class="codigo">{TIPO_EVENTO[item.tipo] ?? item.tipo}</span>
                     <span class="texto suave">{item.hora_inicio ?? ''} {item.titulo}</span>
@@ -212,7 +226,7 @@
               {#each dados.topicos as t (t.id)}
                 <li>
                   <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
-                  <span class="estado-topico {t.estado === 'a seguir' ? 'seguir' : t.estado}">{t.estado}</span>
+                  <span class="estado-topico {CLASSE_ESTADO[t.estado] ?? ''}">{t.estado}</span>
                   {#if t.total}
                     <span class="placar suave" title="questões trabalhadas (marcadas ou com resolução) / questões ligadas">{t.trabalhadas}/{t.total}</span>
                     <span class="fio" aria-hidden="true">
@@ -243,6 +257,7 @@
   section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-content: start; min-width: 0; }
   h2.rotulo { margin: 0; font-family: var(--fonte-texto); font-weight: 400; display: flex; gap: 0.6rem; align-items: baseline; }
   .feita { color: var(--ok); letter-spacing: 0.12em; }
+  .parcial { letter-spacing: 0.06em; }
 
   /* a sessão: o único bloco com peso de título */
   .sessao { gap: 0.5rem; }
@@ -291,6 +306,7 @@
   .estado-topico { font-size: 0.8rem; color: var(--suave); }
   .estado-topico.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado-topico.visto { color: var(--ok); }
+  .estado-topico.comecado { color: var(--texto); }
   .placar { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .fio { grid-column: 1 / -1; position: relative; display: flex; height: 2px; background: var(--fio); }
   .fio .feito { background: var(--ok); }

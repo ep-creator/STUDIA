@@ -122,6 +122,8 @@ class SessaoHoje(TypedDict):
     titulo: str
     detalhe: str
     estado: str                 # feita, hoje, passou ou futura (derivado)
+    trabalhadas: int            # questões da sessão já marcadas ou resolvidas
+    total: int
     secoes: list[SecaoVinculada]
     resumos: list[ItemMaterial]
     formulas: list[ItemMaterial]
@@ -136,6 +138,16 @@ class ItemProximo(TypedDict):
     titulo: str
     estado: str | None
     unidade: int | None
+    trabalhadas: int
+    total: int
+
+
+class SessaoProgresso(TypedDict):
+    id: int
+    codigo: str
+    estado: str
+    trabalhadas: int
+    total: int
 
 
 class QuestaoRevisar(TypedDict):
@@ -155,7 +167,7 @@ class GrupoRevisar(TypedDict):
 class TopicoProgresso(TypedDict):
     id: int
     titulo: str
-    estado: str                 # hoje, visto ou a seguir (derivado)
+    estado: str                 # hoje, visto, começado ou a seguir (derivado)
     secoes: list[str]
     total: int
     trabalhadas: int

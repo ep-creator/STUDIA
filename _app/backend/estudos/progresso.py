@@ -4,9 +4,9 @@ Nada aqui pede registro manual: o estado das sessões e dos tópicos sai do plan
 gravadas. As regras ficam explícitas para dar para conferir (spec 2026-11-05-redesenho-hoje-design, §5):
 
 - questão trabalhada: tem marcação ou resolução gravada;
-- sessão: feita (à mão ou com alguma questão trabalhada), hoje, passou ou futura;
-- tópico: hoje (coberto pela sessão de hoje), visto (à mão, coberto por sessão que já passou, ou com questão
-  trabalhada) ou a seguir. Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos
+- sessão: feita (à mão, ou com todas as suas questões trabalhadas), hoje, passou ou futura; com o placar x/y;
+- tópico: hoje (coberto pela sessão de hoje), visto (à mão, ou coberto por uma sessão que já passou), começado (tem
+  questão trabalhada, mas a aula ainda não chegou) ou a seguir. Uma questão só não faz o tópico "visto". Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos
   ligados às listas das suas questões.
 """
 
@@ -93,7 +93,7 @@ def _titulo_e_detalhe(foco_md: str) -> tuple[str, str]:
 
 
 def _estado_sessao(linha: sqlite3.Row, questoes: list[int], feitas: set[int], hoje: date) -> str:
-    if linha["feito"] or any(q in feitas for q in questoes):
+    if linha["feito"] or (questoes and all(q in feitas for q in questoes)):
         return "feita"
     if not linha["data"]:
         return "futura"
@@ -128,6 +128,7 @@ def sessoes(con: sqlite3.Connection, hoje: date) -> list[dict]:
         resultado.append({
             "id": l["id"], "codigo": l["codigo"], "data": l["data"], "unidade": l["unidade"],
             "titulo": titulo, "detalhe": detalhe, "estado": _estado_sessao(l, ids, feitas, hoje),
+            "trabalhadas": sum(1 for q in ids if q in feitas), "total": len(ids),
             "questao_ids": ids, "secao_ids": sorted(secoes),
             "listas": sorted({questoes[q]["lista_id"] for q in ids if q in questoes}),
         })
@@ -163,7 +164,7 @@ def _material(con: sqlite3.Connection, sessao: dict) -> dict:
         if l["secao_id"] in secao_ids or codigos & set(CODIGO_SECAO.findall(l["titulo"]))
     ]
     return {
-        **{k: sessao[k] for k in ("id", "codigo", "data", "unidade", "titulo", "detalhe", "estado")},
+        **{k: sessao[k] for k in ("id", "codigo", "data", "unidade", "titulo", "detalhe", "estado", "trabalhadas", "total")},
         "secoes": [_secao(con, s) for s in secao_ids],
         "resumos": resumos,
         "formulas": formulas,
@@ -210,12 +211,10 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
 
         if foco and foco["data"] == iso and cobre(foco):
             estado = "hoje"
-        elif (
-            t["status"] == "visto"
-            or any(q in feitas for q in ids)
-            or any(s["data"] and s["data"] < iso and cobre(s) for s in todas)
-        ):
+        elif t["status"] == "visto" or any(s["data"] and s["data"] < iso and cobre(s) for s in todas):
             estado = "visto"
+        elif any(q in feitas for q in ids):
+            estado = "começado"
         else:
             estado = "a seguir"
         codigos = [
@@ -232,6 +231,14 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
             "dub": sum(1 for q in ids if marcas.get(q) == "dub"),
         })
     return resultado
+
+
+def sessoes_da_unidade(con: sqlite3.Connection, numero: int, hoje: date) -> list[dict]:
+    """Estado derivado e placar de cada sessão da unidade, para o plano completo concordar com a tela Hoje."""
+    return [
+        {k: s[k] for k in ("id", "codigo", "estado", "trabalhadas", "total")}
+        for s in sessoes(con, hoje) if s["unidade"] == numero
+    ]
 
 
 def topicos_da_unidade(con: sqlite3.Connection, numero: int, hoje: date) -> list[dict]:
@@ -314,7 +321,7 @@ def proximos(con: sqlite3.Connection, hoje: date, todas: list[dict]) -> list[dic
     inicio, fim = hoje.isoformat(), (hoje + timedelta(days=DIAS_PROXIMOS)).isoformat()
     itens = [
         {"tipo": "sessao", "data": s["data"], "hora_inicio": None, "codigo": s["codigo"], "titulo": s["titulo"],
-         "estado": s["estado"], "unidade": s["unidade"]}
+         "estado": s["estado"], "unidade": s["unidade"], "trabalhadas": s["trabalhadas"], "total": s["total"]}
         for s in todas if s["data"] and inicio <= s["data"] <= fim
     ]
     for e in con.execute(
@@ -322,7 +329,7 @@ def proximos(con: sqlite3.Connection, hoje: date, todas: list[dict]) -> list[dic
         "WHERE e.data BETWEEN ? AND ?", (inicio, fim)
     ):
         itens.append({"tipo": e["tipo"], "data": e["data"], "hora_inicio": e["hora_inicio"], "codigo": None,
-                      "titulo": e["descricao"], "estado": None, "unidade": e["numero"]})
+                      "titulo": e["descricao"], "estado": None, "unidade": e["numero"], "trabalhadas": 0, "total": 0})
     return sorted(itens, key=lambda i: (i["data"], i["tipo"] != "sessao", i["hora_inicio"] or ""))
 
 

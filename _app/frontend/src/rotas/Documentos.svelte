@@ -126,6 +126,7 @@
   const fonte = $derived(selecao?.tipo === 'fonte' ? fontes.find((f) => f.id === selecao!.id) ?? null : null)
 </script>
 
+<h1 class="so-leitor">Biblioteca</h1>
 <div class="documentos">
   <aside>
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />

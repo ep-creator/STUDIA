@@ -59,7 +59,7 @@
       <a class="acao-texto voltar" href={href('topicos', dados.unidade)}>← Tópicos da {nomeUnidade(dados.unidade)}</a>
       <h1>{t.titulo}</h1>
       <p class="meta">
-        <span class="estado {t.estado === 'a seguir' ? 'seguir' : t.estado}">{t.estado}</span>
+        <span class="estado {t.estado === 'a seguir' ? 'seguir' : t.estado === 'começado' ? 'comecado' : t.estado}">{t.estado}</span>
         {#if t.total}<span class="suave">{t.trabalhadas} de {t.total} questões trabalhadas</span>{/if}
         {#if erros}<span class="erros">{erros} para revisar</span>{/if}
         {#each dados.secoes as s (s.secao_id)}
@@ -151,6 +151,7 @@
   .estado { color: var(--suave); }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado.visto { color: var(--ok); }
+  .estado.comecado { color: var(--texto); }
   .erros { color: var(--err); }
 
   .colunas { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 2rem 4rem; align-items: start; padding-top: 1.2rem; border-top: 1px solid var(--fio); }

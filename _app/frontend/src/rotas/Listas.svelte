@@ -60,6 +60,7 @@
 {#if painel.listas.length === 0}
   <EstadoVazio texto="Nenhuma lista nesta unidade ainda." acao={{ rotulo: 'Importar listas', href: montarHash({ tela: 'importar', uid }) }} />
 {:else}
+  <h1 class="so-leitor">Praticar · {painel.unidade}ª unidade</h1>
   <div class="listas">
     <div class="coluna questoes">
     <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />

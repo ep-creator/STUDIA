@@ -99,6 +99,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/sessoes/progresso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Progresso Das Sessoes
+         * @description Estado derivado de cada sessão da unidade (o plano completo usa o mesmo que a tela Hoje).
+         */
+        get: operations["progresso_das_sessoes_api_materias__materia_uid__sessoes_progresso_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/topicos/{topico_id}/pagina": {
         parameters: {
             query?: never;
@@ -1218,6 +1238,10 @@ export interface components {
             estado: string | null;
             /** Unidade */
             unidade: number | null;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
         };
         /** Ligados */
         Ligados: {
@@ -1774,6 +1798,10 @@ export interface components {
             detalhe: string;
             /** Estado */
             estado: string;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
             /** Secoes */
             secoes: components["schemas"]["SecaoVinculada"][];
             /** Resumos */
@@ -1782,6 +1810,19 @@ export interface components {
             formulas: components["schemas"]["ItemMaterial"][];
             /** Questoes */
             questoes: components["schemas"]["QuestaoSessao"][];
+        };
+        /** SessaoProgresso */
+        SessaoProgresso: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Estado */
+            estado: string;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
         };
         /** SugestaoSecao */
         SugestaoSecao: {
@@ -2132,6 +2173,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TopicoProgresso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    progresso_das_sessoes_api_materias__materia_uid__sessoes_progresso_get: {
+        parameters: {
+            query: {
+                unidade: number;
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessaoProgresso"][];
                 };
             };
             /** @description Validation Error */

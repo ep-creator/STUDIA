@@ -93,7 +93,7 @@
         ]} />
       </span>
       {#if p}
-        <span class="estado {p.estado === 'a seguir' ? 'seguir' : p.estado}">{p.estado}</span>
+        <span class="estado {p.estado === 'a seguir' ? 'seguir' : p.estado === 'começado' ? 'comecado' : p.estado}">{p.estado}</span>
         <span class="placar suave">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
       {/if}
     </div>
@@ -121,6 +121,7 @@
   .estado { font-size: 0.85rem; color: var(--suave); min-width: 4.5rem; text-align: right; }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado.visto { color: var(--ok); }
+  .estado.comecado { color: var(--texto); }
   .placar { font-size: 0.85rem; min-width: 3.2rem; text-align: right; font-variant-numeric: tabular-nums; }
   form { display: flex; gap: 0.5rem; }
   input { border: 0; border-bottom: 1px solid var(--fio); padding: 0.25rem 0; background: transparent; color: var(--texto); font: inherit; }

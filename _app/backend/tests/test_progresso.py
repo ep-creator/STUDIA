@@ -120,8 +120,8 @@ def test_topicos_com_estado_e_progresso_derivados(con, plano):
     assert aplic["estado"] == "hoje"
     assert (aplic["total"], aplic["trabalhadas"], aplic["dub"]) == (4, 1, 1)
     assert aplic["secoes"] == ["15.5"]
-    # ligado só pela L5 (sem seção): a sessão de hoje tem seção, então não o cobre; o ? da L5 conta como trabalho
-    assert (extra["estado"], extra["total"], extra["dub"]) == ("visto", 2, 1)
+    # ligado só pela L5 (sem seção): a sessão de hoje tem seção, então não o cobre; o ? da L5 é começo, não "visto"
+    assert (extra["estado"], extra["total"], extra["dub"]) == ("começado", 2, 1)
 
 
 def test_status_manual_visto_ainda_vale(con, materia, plano):
@@ -204,3 +204,29 @@ def test_rotas_de_progresso_e_pagina(tmp_path):
     uid = cliente.post("/api/materias", json={"nome": "Nova"}).json()["uid"]
     assert cliente.get(f"/api/materias/{uid}/progresso?unidade=1").status_code == 404
     assert cliente.get(f"/api/materias/{uid}/topicos/1/pagina").status_code == 404
+
+
+def test_sessao_so_fica_feita_com_todas_as_questoes_trabalhadas(con, materia, plano):
+    with operacao(con, "metade", materia.pasta) as op:
+        marcacoes.definir(op, plano.q155["11"], "ok")
+    s2 = next(s for s in progresso.sessoes(con, HOJE) if s["codigo"] == "S2")
+    assert (s2["estado"], s2["trabalhadas"], s2["total"]) == ("hoje", 1, 3)
+    with operacao(con, "resto", materia.pasta) as op:
+        marcacoes.definir(op, plano.q155["18"], "err")
+        marcacoes.definir(op, plano.q5["9"], "ok")
+    s2 = next(s for s in progresso.sessoes(con, HOJE) if s["codigo"] == "S2")
+    assert (s2["estado"], s2["trabalhadas"], s2["total"]) == ("feita", 3, 3)
+
+
+def test_topico_com_questao_trabalhada_mas_sem_aula_passada_e_comecado(con, materia, plano):
+    with operacao(con, "adiantado", materia.pasta) as op:
+        marcacoes.definir(op, plano.q155["18"], "ok")
+    t = {x["id"]: x for x in progresso.hoje(con, date(2099, 3, 1))["topicos"]}
+    assert t[plano.aplicacoes]["estado"] == "começado"     # a S2 (15.5) ainda não chegou
+    assert t[plano.polares]["estado"] == "começado"        # nem a S1 (15.4), mas já tem marcações
+
+
+def test_sessoes_da_unidade_para_o_plano(con, plano):
+    lista = progresso.sessoes_da_unidade(con, 1, date(2099, 3, 12))
+    assert [(s["codigo"], s["estado"], s["trabalhadas"], s["total"]) for s in lista] == [
+        ("S1", "feita", 2, 2), ("S2", "passou", 0, 3), ("S3", "hoje", 0, 0), ("S4", "futura", 0, 0)]
