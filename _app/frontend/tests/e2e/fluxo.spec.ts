@@ -52,13 +52,14 @@ test('matéria nova só com cliques', async ({ page }) => {
   }
   await expect(page.getByText('Nenhum arquivo esperando revisão.')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Painel', exact: true }).click()
-  await expect(page.getByRole('region', { name: 'Prova' }).getByText(/^\d+ dias$|^hoje$|^amanhã$/)).toBeVisible()
-  await expect(page.getByText('Tópicos vistos')).toBeVisible()
+  await page.getByRole('link', { name: 'Hoje', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Hoje' })).toBeVisible()
+  await expect(page.getByText(/^Prova (da \dª unidade (em \d+ dias|amanhã)|hoje)/)).toBeVisible()
+  await expect(page.getByRole('region', { name: /^Tópicos da \dª unidade$/ })).toBeVisible()
 })
 
 test('marcar e desfazer', async ({ page }) => {
-  await abrirArea(page, '1ª', 'Listas')
+  await abrirArea(page, '1ª', 'Praticar')
   const q1 = page.getByRole('button', { name: /^Questão L1 #1( |$)/ })
   await q1.click()   // clicar só abre a questão no menu ao lado
   await expect(page.getByRole('button', { name: 'Questão L1 #1', exact: true })).toBeVisible()
@@ -77,7 +78,7 @@ test('marcar e desfazer', async ({ page }) => {
 
 test('editar resumo e ver a diferença', async ({ page }) => {
   // a tela não cria documentos à mão: o resumo nasce pela API (como faria o agente ou a importação)
-  await abrirArea(page, '1ª', 'Documentos')
+  await abrirArea(page, '1ª', 'Biblioteca')
   await page.evaluate(async () => {
     const uid = location.hash.split('/')[2]
     const painel = await (await fetch(`/api/materias/${uid}/painel`)).json()
@@ -101,7 +102,7 @@ test('editar resumo e ver a diferença', async ({ page }) => {
 })
 
 test('busca com Ctrl K abre o texto e o PDF', async ({ page }) => {
-  await abrirArea(page, '1ª', 'Painel')
+  await abrirArea(page, '1ª', 'Hoje')
   await page.keyboard.press('Control+k')
   const campo = page.getByRole('combobox', { name: 'Buscar na matéria' })
   await campo.fill('primeira linha')
@@ -126,11 +127,11 @@ test('claro e escuro persistem', async ({ page }) => {
 })
 
 test('criar outra matéria depois de abrir uma não trava em "Carregando"', async ({ page }) => {
-  await abrirArea(page, '1ª', 'Listas')
+  await abrirArea(page, '1ª', 'Praticar')
   await page.getByRole('link', { name: 'STUDIA' }).click()
   await page.getByRole('button', { name: '＋ Nova matéria' }).click()
   await page.getByLabel('Nome').fill('Segunda matéria')
   await page.getByRole('button', { name: 'Criar', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Importar', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Adicionar material', exact: true })).toBeVisible()
   await expect(page.getByText('Carregando…')).toHaveCount(0)
 })

@@ -33,7 +33,7 @@
     position: absolute; right: 1.2rem; bottom: 1rem; font-size: 0.85rem; color: var(--destaque-texto);
     opacity: 0; transform: translateX(-6px); transition: opacity var(--transicao), transform var(--transicao);
   }
-  .materia:hover h2, .materia:focus-visible h2 { color: var(--destaque-texto); }
+
   .materia:hover .abrir, .materia:focus-visible .abrir { opacity: 1; transform: none; }
 
   /* a linha do topo vira laranja, da esquerda para a direita */
@@ -42,5 +42,5 @@
     transition: width 280ms ease;
   }
   .materia:hover::before, .materia:focus-visible::before { width: 100%; }
-  .materia:hover { background: var(--realce); }
+  .materia:hover { background: var(--leve); }
 </style>

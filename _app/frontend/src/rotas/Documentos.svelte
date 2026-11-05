@@ -182,8 +182,8 @@
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .secao { max-width: 26rem; margin: 0.2rem 0 0.6rem; }
   .sugestao {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.9rem; padding: 0.55rem 0.8rem;
-    border-radius: 6px; background: var(--realce); border-left: 2px solid var(--destaque);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 0.9rem; padding: 0.5rem 0;
+    border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio);
   }
   .sugestao span { margin-right: auto; }
 </style>

@@ -66,5 +66,5 @@
   .titulo b { font-family: var(--fonte-titulo); font-weight: 500; font-size: 1.1rem; }
   .sobre { font-size: 0.85rem; }
   header .acao-texto { font-size: 0.85rem; }
-  .chave { margin-top: auto; padding-top: 0.8rem; border-top: 1px solid var(--fio); }
+  .chave { margin-top: auto; }   /* a caixa da chave já traz o próprio fio */
 </style>

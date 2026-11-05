@@ -308,10 +308,11 @@
   .conversa.vazia { display: none; }
   .voce { margin: 0; align-self: flex-end; max-width: 85%; background: var(--leve); padding: 0.4rem 0.65rem; border-radius: 10px; white-space: pre-wrap; }
   .agente { line-height: 1.55; overflow-wrap: anywhere; }
-  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; font-size: 0.88rem; border-left: 2px solid var(--ok); padding-left: 0.5rem; }
+  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; font-size: 0.88rem; color: var(--ok); }
+  .gravado .acao-texto { color: var(--suave); }
   .gravado span { margin-right: auto; }
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
-  .alerta { border-left: 2px solid var(--destaque); padding: 0.2rem 0 0.2rem 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .alerta { padding: 0.5rem 0; border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
   /* o campo e o gasto do mês ficam presos ao pé da coluna: uma resolução longa não os empurra para fora da vista */
   form { display: grid; gap: 0.35rem; position: sticky; bottom: 0; z-index: 1; background: var(--fundo); padding: 0.5rem 0 0.4rem; }

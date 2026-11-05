@@ -118,12 +118,9 @@
 
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
   h2 { font-size: 1.35rem; margin: 0; display: flex; align-items: center; gap: 0.6rem; }
-  .contador {
-    font-family: var(--fonte-texto); font-size: 0.75rem; font-weight: 600; color: var(--suave);
-    border: 1px solid color-mix(in srgb, var(--borda) 50%, transparent); border-radius: 999px; padding: 0.05rem 0.5rem;
-  }
+  .contador { font-family: var(--fonte-texto); font-size: 0.9rem; font-weight: 400; color: var(--suave); font-variant-numeric: tabular-nums; }
   .nova { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; }
-  .nova input { margin-left: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo); }
+  .nova input { margin-left: 0.5rem; padding: 0.35rem 0.7rem; border: 0; border-radius: 8px; background: var(--leve); color: var(--texto); }
   .nova p { flex-basis: 100%; margin: 0; }
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.6rem 3rem; }
   .grade > div { display: grid; }
