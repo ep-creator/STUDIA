@@ -154,7 +154,7 @@
   .erros { color: var(--err); }
 
   .colunas { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 2rem 4rem; align-items: start; padding-top: 1.2rem; border-top: 1px solid var(--fio); }
-  .leitura { max-width: 44rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
+  .leitura { max-width: 42rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
   .abas { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-bottom: 1rem; }
   .abas button { background: none; border: 0; padding: 0 0 2px; font: inherit; font-family: var(--fonte-titulo); color: var(--suave); border-bottom: 1.5px solid transparent; cursor: pointer; }
   .abas button.ativa { color: var(--texto); border-bottom-color: var(--destaque); }

@@ -49,7 +49,7 @@
   .quando { width: 8.5rem; flex: none; color: var(--suave); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .hoje .quando { color: var(--destaque-texto); }
   .prova .quando, .prova .evento { color: var(--destaque-texto); font-weight: 600; }
-  .passado { opacity: 0.6; }
+  .passado, .passado :global(*) { color: var(--suave); }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }
   .foco :global(p) { display: inline; margin: 0; }

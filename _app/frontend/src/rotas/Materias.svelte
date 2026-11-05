@@ -60,8 +60,8 @@
   </nav>
 
   <section class="boas-vindas">
-    <p class="rotulo aparece" style="--i: 0">{dataPorExtenso(agora)}</p>
-    <h1 class="aparece" style="--i: 1">{saudacao(agora)}.</h1>
+    <h1 class="aparece" style="--i: 0">{saudacao(agora)}.</h1>
+    <p class="data aparece suave" style="--i: 1">{dataPorExtenso(agora)}</p>
     <p class="resumo aparece" style="--i: 2">
       {#if proxima?.proxima_prova}
         Próxima prova: <b>{proxima.nome}</b>{proxima.proxima_prova.unidade ? `, ${nomeUnidade(proxima.proxima_prova.unidade)}` : ''}
@@ -108,8 +108,8 @@
   .logo.escondido { visibility: hidden; }
 
   .boas-vindas { margin-bottom: 3.5rem; }
-  .boas-vindas .rotulo { margin: 0 0 0.6rem; }
-  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 0.9rem; letter-spacing: -0.01em; }
+  .data { margin: 0 0 0.9rem; font-size: 1rem; }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
   .resumo { margin: 0; font-size: 1.1rem; color: var(--suave); max-width: 40rem; }
   .resumo b { color: var(--texto); font-weight: 600; }
   .contagem { font-weight: 600; }

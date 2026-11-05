@@ -80,11 +80,12 @@ html, body {
   background: var(--fundo);
   color: var(--texto);
   font-family: var(--fonte-texto);
-  font-size: 15px;
+  font-size: 16px;   /* sessões longas de leitura: 16 px de base (rótulos a 0.7rem ficam acima de 11 px) */
   line-height: 1.5;
 }
 
-h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; }
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; text-wrap: balance; }
+p, li, dd { text-wrap: pretty; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 /* texto de exemplo dos campos na cor secundária do tema, não no cinza do navegador */
@@ -108,7 +109,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .linha-acoes:hover .acoes-linha, .linha-acoes:focus-within .acoes-linha,
 .linha-acoes:has([aria-expanded='true']) .acoes-linha { opacity: 1; }
 
-.rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); }
+.rotulo { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
+/* texto corrido longo (resumos, documentos, resoluções): no máximo ~70 caracteres por linha */
+.leitura-medida { max-width: 42rem; }
 .suave { color: var(--suave); }
 .numero-grande { font-family: var(--fonte-titulo); font-size: 3rem; line-height: 1; }
 

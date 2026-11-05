@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T17:10:00-03:00",
+  "generatedAt": "2026-11-05T23:30:00-03:00",
   "title": "Design System: STUDIA",
   "extensions": {
     "colorMeta": {
@@ -144,12 +144,12 @@
     ],
     "typographyMeta": {
       "display": {
-        "displayName": "Número grande",
-        "purpose": "Dias até a prova, x/y, porcentagens."
+        "displayName": "Título da tela",
+        "purpose": "Título de cada tela (Hoje, Tópicos, o tópico, Adicionar material)."
       },
       "headline": {
         "displayName": "Questão aberta",
-        "purpose": "Identificação da questão (14.1 #22)."
+        "purpose": "Identificação da questão (14.1 #22) e títulos de bloco grandes."
       },
       "title": {
         "displayName": "Título serifado",
@@ -157,7 +157,7 @@
       },
       "body": {
         "displayName": "Texto",
-        "purpose": "Texto corrido, navegação, respostas do assistente."
+        "purpose": "Texto corrido em 16px; enunciado da questão em 1.12rem; leitura limitada a 42rem."
       },
       "small": {
         "displayName": "Secundário",
@@ -292,6 +292,7 @@
     "northStar": "A mesa silenciosa",
     "overview": "O STUDIA é o lugar onde se estuda por horas: pouca coisa na mesa, tudo no lugar, um único sinal de cor. A tela é papel creme (ou noite quente, no escuro) com tinta escura, e a hierarquia vem só da tipografia — Fraunces para o que tem nome e número, Inter para o resto. Não há caixas, contornos nem cartões: seções são um rótulo pequeno em caixa alta e um fio de 1px.\n\nA densidade é de ferramenta, não de vitrine. Na visão geral aparece só o assunto e os números (dias até a prova, `9/9`, `0%`); enunciados, legendas e referências moram no detalhe, quando o item é aberto. O que é raro fica a um gesto: ações de linha aparecem no hover ou no foco, e apagar mora no menu `···`.\n\nO laranja brasa é o sinal único de \"aqui\" e \"agora\": o item ativo, a aba atual, o traço do hover, a próxima aula. Verde, vermelho e amarelo existem só para marcar acerto, erro e dúvida. Rejeições confirmadas: o tema \"Padrão\" antigo, caixas com borda, botões com contorno e texto explicativo fixo na tela.",
     "keyCharacteristics": [
+      "A casa da matéria é **Hoje**: a sessão do plano em foco, com o material a um clique.",
       "Texto puro em repouso; estado mostrado por cor e por um traço (embaixo ou à esquerda), nunca por moldura.",
       "Fraunces para títulos, unidades e números grandes; Inter para o texto corrido e controles.",
       "Um laranja de sinal; três cores semânticas só para marcação.",
@@ -305,18 +306,23 @@
         "section": "colors"
       },
       {
-        "name": "The Cor É Dado Rule",
-        "body": "Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.",
-        "section": "colors"
-      },
-      {
         "name": "The Letra Legível Rule",
         "body": "Toda cor usada em letra passa de 4,5:1 no papel e na noite. Se o tom da marca não passa, ele ganha uma variante `-texto` e fica só para traços e superfícies.",
         "section": "colors"
       },
       {
+        "name": "The Cor É Dado Rule",
+        "body": "Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.",
+        "section": "colors"
+      },
+      {
         "name": "The Serifa Nomeia Rule",
         "body": "Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sem Sobretítulo Rule",
+        "body": "Nada de rótulo pequeno em cima do título da tela: o título fala sozinho; data e contexto vêm ao lado ou embaixo.",
         "section": "typography"
       },
       {
@@ -331,9 +337,11 @@
       }
     ],
     "dos": [
-      "Do separar seções com um rótulo em caixa alta (0.7rem, tracking 0.12em) e um fio de 1px (texto a 14%).",
+      "Do separar seções com um rótulo em caixa alta (0.7rem sobre 16px de base, tracking 0.1em) e um fio de 1px (texto a 14%).",
+      "Do organizar cada tela pelo que o aluno faz na sessão (a sessão de hoje, o tópico, a questão), não pelo tipo de dado guardado.",
+      "Do mostrar progresso que se deriva sozinho (datas do plano, marcações, resoluções); nunca pedir registro manual para a tela fazer sentido.",
       "Do mostrar estado com cor e traço: 2px à esquerda para o item ativo de lista vertical, 2px embaixo para número marcado, 1.5px embaixo para aba e marcação.",
-      "Do usar Fraunces 3rem para o número que decide algo, com o sufixo pequeno em tinta suave.",
+      "Do limitar texto corrido a 42rem e quebrar títulos com `text-wrap: balance`.",
       "Do escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.",
       "Do deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.",
       "Do derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.",
@@ -348,7 +356,9 @@
       "Don't pôr sombra em nada que está no fluxo da página.",
       "Don't colocar parágrafos explicativos fixos na tela; estado vazio é uma frase curta, ajuda longa vai para o `title` ou para o detalhe.",
       "Don't encostar dois fios.",
-      "Don't trazer de volta o tema \"Padrão\" nem cores fora das duas paletas Editorial."
+      "Don't trazer de volta o tema \"Padrão\" nem cores fora das duas paletas Editorial.",
+      "Don't pôr rótulo pequeno em cima do título da tela, nem texto abaixo de 11px.",
+      "Don't abrir uma segunda superfície de IA para a mesma coisa: a da questão fica na questão; a da matéria, na gaveta."
     ]
   }
 }

@@ -25,12 +25,12 @@ colors:
 typography:
   display:
     fontFamily: "Fraunces Variable, Georgia, serif"
-    fontSize: "3rem"
-    fontWeight: 400
-    lineHeight: 1
+    fontSize: "2.2rem"
+    fontWeight: 500
+    lineHeight: 1.15
   headline:
     fontFamily: "Fraunces Variable, Georgia, serif"
-    fontSize: "1.45rem"
+    fontSize: "1.6rem"
     fontWeight: 500
     lineHeight: 1.2
   title:
@@ -40,7 +40,7 @@ typography:
     lineHeight: 1.3
   body:
     fontFamily: "Inter Variable, system-ui, sans-serif"
-    fontSize: "15px"
+    fontSize: "16px"
     fontWeight: 400
     lineHeight: 1.5
   small:
@@ -52,7 +52,7 @@ typography:
     fontFamily: "Inter Variable, system-ui, sans-serif"
     fontSize: "0.7rem"
     fontWeight: 400
-    letterSpacing: "0.12em"
+    letterSpacing: "0.1em"
   marca:
     fontFamily: "Fraunces Variable, Georgia, serif"
     fontSize: "0.95rem"
@@ -119,6 +119,7 @@ A densidade é de ferramenta, não de vitrine. Na visão geral aparece só o ass
 O laranja brasa é o sinal único de "aqui" e "agora": o item ativo, a aba atual, o traço do hover, a próxima aula. Verde, vermelho e amarelo existem só para marcar acerto, erro e dúvida. Rejeições confirmadas: o tema "Padrão" antigo, caixas com borda, botões com contorno e texto explicativo fixo na tela.
 
 **Key Characteristics:**
+- A casa da matéria é **Hoje**: a sessão do plano em foco, com o material a um clique.
 - Texto puro em repouso; estado mostrado por cor e por um traço (embaixo ou à esquerda), nunca por moldura.
 - Fraunces para títulos, unidades e números grandes; Inter para o texto corrido e controles.
 - Um laranja de sinal; três cores semânticas só para marcação.
@@ -163,26 +164,30 @@ Três tons derivados do texto, sempre por mistura e nunca como hex fixo: **fio**
 **Character:** Uma serifa editorial com contraste macio para o que tem nome e número, ao lado de uma sans neutra e muito legível para o trabalho. A serifa dá o tom de página impressa; a sans garante leitura longa sem cansaço.
 
 ### Hierarchy
-- **Display** (Fraunces 400, 3rem, lh 1): números grandes — dias até a prova, `0/8`, `0%`. Sufixo pequeno em tinta suave.
-- **Headline** (Fraunces 500, 1.45rem): identificação da questão aberta (`14.1 #22`).
-- **Title** (Fraunces 500, 1.05rem): assuntos e listas nas grades, abas de unidade, próxima aula, nome da matéria na lateral.
-- **Body** (Inter 400, 15px de base, lh 1.5; 1.6 em enunciados e resoluções): texto corrido, itens de navegação, respostas do assistente.
-- **Small** (Inter 400, 0.85rem): metadados, contagens, custo, ações dentro de cabeçalhos. É o tamanho secundário mais usado.
-- **Label** (Inter 400, 0.7rem, tracking 0.12em, CAIXA ALTA, tinta suave): rótulos de seção ("PROVA", "PARA REVISAR", "LINHA 1").
+- **Display** (Fraunces 500, 2.2rem, lh 1.15): o título de cada tela ("Hoje", "Tópicos da 3ª unidade", o nome do tópico, "Adicionar material"). A sessão do dia em Hoje usa 2rem. "Boa tarde." na tela inicial vai até 3.6rem.
+- **Headline** (Fraunces 500, 1.6rem): identificação da questão aberta (`14.1 #22`), títulos de bloco grandes.
+- **Title** (Fraunces 500, 1.05rem): assuntos e listas, abas de unidade, nomes de tópico, nome da matéria na lateral.
+- **Body** (Inter 400, **16px de base**, lh 1.5; 1.6 em enunciados e resumos): texto corrido, itens de navegação, respostas da IA. O enunciado da questão sobe para 1.12rem.
+- **Small** (Inter 400, 0.85rem): metadados, contagens, custo, ações dentro de cabeçalhos.
+- **Label** (Inter 400, 0.7rem = 11,2px, tracking 0.1em, CAIXA ALTA, tinta suave): rótulos de seção ("SESSÃO DE HOJE", "PARA REVISAR", "LINHA 1"). Nunca abaixo de 11px.
 - **Marca** (Fraunces 500, tracking 0.28em, caixa alta): só o nome STUDIA.
 
-Números em contagens e grades usam `font-variant-numeric: tabular-nums`.
+Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títulos quebram com `text-wrap: balance`; parágrafos e itens com `text-wrap: pretty`. Texto corrido longo (resumo, documento, resolução) fica em no máximo 42rem (≈70 caracteres, classe `.leitura-medida`).
 
 ### Named Rules
 **The Serifa Nomeia Rule.** Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.
 
+**The Sem Sobretítulo Rule.** Nada de rótulo pequeno em cima do título da tela: o título fala sozinho; data e contexto vêm ao lado ou embaixo.
+
 ## Layout
 
-Barra lateral fixa de 13rem à esquerda (altura da tela, rola sozinha) e conteúdo fluido à direita com respiro de 2rem nas laterais. No topo de cada tela da matéria: abas de unidade, a contagem até a prova, a busca (Ctrl K), Desfazer e IA; logo abaixo, uma linha com matéria à esquerda e unidade à direita sobre um fio.
+Barra lateral fixa de 13rem à esquerda e conteúdo fluido à direita com respiro de 2rem. A barra tem as **quatro áreas do estudo** (Hoje · Tópicos · Praticar · Biblioteca) em texto maior e, depois de um fio, o **apoio** em tinta suave (Plano completo, Folha de fórmulas, ＋ Material, Histórico). No topo de cada tela da matéria: abas de unidade, a prova (fora de Hoje, que a tem no cabeçalho), a busca (Ctrl K), Desfazer e "IA ›". Cada tela tem um título real (h1).
 
-As telas se organizam em **faixas** separadas por fio. O Painel tem duas: Prova · Próxima aula · Tópicos vistos (colunas de 11rem, 17rem e o resto) e Para revisar · Desempenho (meio a meio, 3rem de vão). Listas é uma grade de duas colunas (lista de questões 1.15fr e questão aberta com no mínimo 22rem), cada coluna rolando por conta própria com a página parada; Documentos segue o mesmo modelo de altura fixa.
+- **Hoje:** cabeçalho (título, data, prova à direita) e duas colunas 1.55fr / 1fr: à esquerda a sessão do plano (o foco da tela) e "Para revisar"; à direita "Próximos 7 dias" e os tópicos da unidade. A faixa "Reta final" entra por cima com 7 dias ou menos.
+- **Tópico:** cabeçalho (voltar, título, estado, seções do livro) e duas colunas 1.5fr / 1fr: o resumo para ler (até 42rem) e, ao lado, questões, fórmulas e resoluções.
+- **Praticar:** grade de números estreita (≥17rem, 0.8fr) e a questão aberta larga (1.5fr), cada coluna rolando por conta própria com a página parada; Biblioteca segue o mesmo modelo de altura fixa.
 
-Ritmo de espaçamento: 0.4rem entre itens de uma linha, 0.75rem dentro de um bloco, 1.1rem entre blocos, 2–3rem entre colunas. Só computador; abaixo de 1100px as faixas do Painel empilham em uma coluna.
+Ritmo de espaçamento: 0.4rem entre itens de uma linha, 0.6rem dentro de um bloco, 2–2.4rem entre blocos, 3–4rem entre colunas. Só computador; abaixo de 1100px as colunas empilham. Colunas de grade usam `minmax(0, 1fr)` para fórmulas largas rolarem dentro, sem empurrar a página.
 
 ### Named Rules
 **The Fio Único Rule.** Nunca dois fios encostados: um elemento logo depois de outro com fio não ganha o seu.
@@ -232,18 +237,29 @@ Precisos e discretos: formas mínimas e alinhadas, sem enfeite, com o estado sem
 - **Barra lateral:** fundo papel da lateral, marca STUDIA no topo, matéria como seletor serifado, itens em texto. Ativo: traço brasa de 2px à esquerda + negrito. Hover: traço brasa a 45%. Grupos separados por fio. Seletor de tema no rodapé: **Claro · Escuro · Sistema** em texto, o ativo sublinhado em brasa.
 - **Abas de unidade (1ª 2ª 3ª):** Fraunces 1.05rem, tinta suave; ativa em tinta com traço brasa de 1.5px embaixo.
 
-### Gaveta da IA (signature)
-Painel de 24rem que desliza da direita por cima da página (não a espreme), fundo papel da lateral, fio à esquerda e a sombra de gaveta. Dentro: seletor de nível **Dica · Caminho · Esboço · Resolução** (N1–N4 no nome acessível) numa única pílula leve com o ativo em fundo mais forte; **Resolução** abre antes uma confirmação de uma linha, menu `···` ao lado, a pergunta do aluno numa bolha leve de 10px alinhada à direita, a resposta em texto corrido, e o campo preso ao pé com o custo do mês em 0.78rem e "Enviar ↵" em brasa.
+### Sessão de hoje (signature)
+O foco de Hoje: rótulo "SESSÃO DE HOJE · S3" (com "feita" em verde quando há trabalho), o título da sessão em Fraunces 2rem, o detalhe em tinta suave e, depois de um fio, o material numa lista de definição (rótulo à esquerda, item à direita): **Livro** (abre o PDF na página), **Resumo**, **Fórmulas** (quantas, da seção), **Questões** (números por lista, com a marcação e um traço pontilhado quando há resolução gravada). Embaixo, a única ação forte da tela: "Começar pelas questões".
+
+### Questão aberta (Praticar)
+`15.4 #7` em Fraunces 1.6rem com "‹ Anterior · Próxima ›" à direita; o enunciado em 1.12rem; o enunciado original do livro logo abaixo, recuado por um fio de 1px à esquerda; a marcação; e, depois de um fio, **uma só área de ajuda em abas** (Ajuda da IA · Resposta do livro · Resolução · Fórmulas). A IA da questão traz o seletor de nível **Dica · Caminho · Esboço · Resolução** (N1–N4 no nome acessível) numa pílula leve; **Resolução** pergunta antes, numa linha.
+
+### Gaveta da IA
+A IA da matéria (plano e dúvidas gerais, ou a seção pedida da Biblioteca): painel de 24rem que desliza da direita por cima da página, fundo papel da lateral, fio à esquerda e a sombra de gaveta. No topo diz sobre o que conversa; embaixo, a chave do Gemini. A pergunta do aluno numa bolha leve de 10px à direita, a resposta em texto corrido, o campo preso ao pé com o custo do mês e "Enviar ↵" em brasa.
+
+### Primeiros passos
+Matéria vazia: título, uma frase, três passos numerados (número em Fraunces brasa; o arquivo em peso 500 e o que ele vira) e o botão forte "＋ Adicionar material".
 
 ### Linha com ações ocultas
-Linhas de Tópicos, Cronograma, Formulário e Histórico mostram ↑ ↓ editar e `···` só no hover, no foco por teclado ou com o menu aberto (transição de opacidade de 160ms).
+Linhas do mapa de Tópicos, do Plano, da Folha de fórmulas e do Histórico mostram ↑ ↓ editar e `···` só no hover, no foco por teclado ou com o menu aberto (transição de opacidade de 160ms).
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** separar seções com um rótulo em caixa alta (0.7rem, tracking 0.12em) e um fio de 1px (texto a 14%).
+- **Do** separar seções com um rótulo em caixa alta (0.7rem sobre 16px de base, tracking 0.1em) e um fio de 1px (texto a 14%).
+- **Do** organizar cada tela pelo que o aluno faz na sessão (a sessão de hoje, o tópico, a questão), não pelo tipo de dado guardado.
+- **Do** mostrar progresso que se deriva sozinho (datas do plano, marcações, resoluções); nunca pedir registro manual para a tela fazer sentido.
 - **Do** mostrar estado com cor e traço: 2px à esquerda para o item ativo de lista vertical, 2px embaixo para número marcado, 1.5px embaixo para aba e marcação.
-- **Do** usar Fraunces 3rem para o número que decide algo, com o sufixo pequeno em tinta suave.
+- **Do** limitar texto corrido a 42rem e quebrar títulos com `text-wrap: balance`.
 - **Do** escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.
 - **Do** deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.
 - **Do** derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.
@@ -259,3 +275,5 @@ Linhas de Tópicos, Cronograma, Formulário e Histórico mostram ↑ ↓ editar 
 - **Don't** colocar parágrafos explicativos fixos na tela; estado vazio é uma frase curta, ajuda longa vai para o `title` ou para o detalhe.
 - **Don't** encostar dois fios.
 - **Don't** trazer de volta o tema "Padrão" nem cores fora das duas paletas Editorial.
+- **Don't** pôr rótulo pequeno em cima do título da tela, nem texto abaixo de 11px.
+- **Don't** abrir uma segunda superfície de IA para a mesma coisa: a da questão fica na questão; a da matéria, na gaveta.

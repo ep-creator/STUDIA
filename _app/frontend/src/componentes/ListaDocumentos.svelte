@@ -106,7 +106,7 @@
   .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   .ia {
     display: inline-block; margin-left: 0.4rem; padding: 0 0.3rem; border-radius: 4px; vertical-align: 0.1em;
-    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque-texto);
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque-texto);
     border: 1px solid color-mix(in srgb, var(--destaque) 55%, transparent);
   }
 </style>
