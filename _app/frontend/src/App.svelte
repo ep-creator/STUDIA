@@ -3,12 +3,10 @@
   import { untrack } from 'svelte'
   import { requisitar } from './api/cliente'
   import type { ResumoMateria } from './api/tipos'
-  import { nomeUnidade } from './apresentacao'
   import Avisos from './componentes/Avisos.svelte'
   import BarraLateral from './componentes/BarraLateral.svelte'
   import GavetaIA from './componentes/GavetaIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
-  import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
   import BuscaMateria from './componentes/BuscaMateria.svelte'
@@ -27,7 +25,7 @@
   import Assistente from './rotas/Assistente.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
-  import Painel from './rotas/Painel.svelte'
+  import Hoje from './rotas/Hoje.svelte'
   import Topicos from './rotas/Topicos.svelte'
   import { analisarRota, type Rota, precisaListaDeMaterias } from './rotas/rota'
 
@@ -101,6 +99,19 @@
   })
 
   const painel = $derived(rota.tela !== 'materias' && estadoMateria.uid === rota.uid ? estadoMateria.painel : null)
+
+  // título da aba diz onde se está (leitor de tela e histórico do navegador)
+  const NOME_TELA: Record<string, string> = {
+    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano', documentos: 'Biblioteca', formulario: 'Fórmulas',
+    importar: 'Adicionar material', historico: 'Histórico', assistente: 'Assistente',
+  }
+  $effect(() => {
+    if (rota.tela === 'materias') document.title = 'STUDIA'
+    else {
+      const tela = NOME_TELA[rota.tela === 'materia' ? rota.area : rota.tela]
+      document.title = painel ? `${tela} · ${painel.materia.nome} — STUDIA` : 'STUDIA'
+    }
+  })
 </script>
 
 <svelte:window onkeydown={teclado} />
@@ -122,15 +133,9 @@
               <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>IA ›</button>
             {/snippet}
           </Topo>
-          <MolduraEditorial
-            ajustada={rota.area === 'documentos' || rota.area === 'listas'}
-            topo={`${painel.materia.nome}${painel.materia.periodo ? ` · ${painel.materia.periodo}` : ''}`}
-            base={painel.unidade ? nomeUnidade(painel.unidade) : 'sem unidades'}
-          >
-            {#if rota.area === 'painel'}
-              <Painel {painel} />
-            {:else if !painel.unidade}
-              <Painel {painel} />
+          <div class="area" class:ajustada={rota.area === 'documentos' || rota.area === 'listas'}>
+            {#if rota.area === 'painel' || !painel.unidade}
+              <Hoje {painel} />
             {:else if rota.area === 'listas'}
               <Listas {painel} />
             {:else if rota.area === 'topicos'}
@@ -144,7 +149,7 @@
             {:else}
               <p class="suave">Esta área chega nas próximas etapas.</p>
             {/if}
-          </MolduraEditorial>
+          </div>
         {:else if rota.tela === 'importar'}
           <Importacao {painel} />
         {:else if rota.tela === 'historico'}
@@ -171,5 +176,7 @@
   main { flex: 1; min-width: 0; padding: 0.5rem 2rem 3rem; }
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
-  @media print { main.ajustada { height: auto; display: block; } }
+  .area { display: flex; flex-direction: column; gap: 1.2rem; padding-top: 0.6rem; }
+  .area.ajustada { flex: 1; min-height: 0; }
+  @media print { main.ajustada, .area.ajustada { height: auto; display: block; } }
 </style>

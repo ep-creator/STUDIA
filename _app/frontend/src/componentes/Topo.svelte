@@ -25,7 +25,8 @@
       >{ordinal(u.numero)}</a>
     {/each}
   </nav>
-  {#if unidade}<span class="suave contagem" class:perto={provaPerto(prova, hoje)}>{textoTopoProva(prova, hoje)}</span>{/if}
+  <!-- em Hoje a prova já está no cabeçalho da tela -->
+  {#if unidade && area !== 'painel'}<span class="suave contagem" class:perto={provaPerto(prova, hoje)}>{textoTopoProva(prova, hoje)}</span>{/if}
   <button class="buscar" onclick={() => (busca.aberta = true)} aria-label="Buscar na matéria (Ctrl K)">
     <span>Buscar na matéria…</span><kbd>Ctrl K</kbd>
   </button>

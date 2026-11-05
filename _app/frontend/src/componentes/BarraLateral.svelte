@@ -12,11 +12,12 @@
     pendencias: number
   } = $props()
 
-  const AREAS: [Area, string][] = [
-    ['painel', 'Painel'], ['topicos', 'Tópicos'], ['listas', 'Listas'], ['cronograma', 'Cronograma'],
-    ['documentos', 'Documentos'], ['formulario', 'Formulário'],
-  ]
+  // As quatro áreas do estudo; abaixo, o que se usa de vez em quando (plano inteiro, folha, material, histórico)
+  const AREAS: [Area, string][] = [['painel', 'Hoje'], ['topicos', 'Tópicos'], ['listas', 'Praticar'], ['documentos', 'Biblioteca']]
+  const APOIO: [Area, string][] = [['cronograma', 'Plano completo'], ['formulario', 'Folha de fórmulas']]
   const ativa = $derived(rota.tela === 'materia' ? rota.area : null)
+  const hrefArea = (area: Area) =>
+    montarHash({ tela: 'materia', uid: rota.uid, unidade: area === 'painel' && unidade === null ? null : unidade, area })
 </script>
 
 <nav class="lateral nao-imprimir" aria-label="Áreas da matéria">
@@ -29,32 +30,22 @@
     onmudar={(uid) => (location.hash = montarHash({ tela: 'materia', uid, unidade: null, area: 'painel' }))}
   />
 
-  <ul>
+  <ul class="principais">
     {#each AREAS as [area, nome] (area)}
-      <li>
-        <a
-          class:ativa={ativa === area}
-          aria-current={ativa === area ? 'page' : undefined}
-          href={montarHash({ tela: 'materia', uid: rota.uid, unidade: area === 'painel' && unidade === null ? null : unidade, area })}
-        >{nome}</a>
-      </li>
+      <li><a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a></li>
     {/each}
   </ul>
   <hr />
-  <ul>
+  <ul class="apoio">
+    {#each APOIO as [area, nome] (area)}
+      <li><a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a></li>
+    {/each}
     <li>
-      <a class:ativa={rota.tela === 'assistente'} aria-current={rota.tela === 'assistente' ? 'page' : undefined}
-        href={montarHash({ tela: 'assistente', uid: rota.uid })}>Assistente</a>
-    </li>
-  </ul>
-  <hr />
-  <ul>
-    <li>
-      <a class:ativa={rota.tela === 'importar'} href={montarHash({ tela: 'importar', uid: rota.uid })}>
-        Importar {#if pendencias > 0}<span class="selo" aria-label={`${pendencias} pendentes`}>{pendencias}</span>{/if}
+      <a class:ativa={rota.tela === 'importar'} aria-current={rota.tela === 'importar' ? 'page' : undefined} href={montarHash({ tela: 'importar', uid: rota.uid })}>
+        ＋ Material{#if pendencias > 0}<span class="selo" aria-label={`, ${pendencias} para conferir`}>{pendencias}</span>{/if}
       </a>
     </li>
-    <li><a class:ativa={rota.tela === 'historico'} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>
+    <li><a class:ativa={rota.tela === 'historico'} aria-current={rota.tela === 'historico' ? 'page' : undefined} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>
   </ul>
 
   <div class="rodape"><SeletorTema /></div>
@@ -71,6 +62,10 @@
   ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   hr { border: 0; border-top: 1px solid var(--borda); opacity: 0.4; width: 100%; }
-  .selo { background: var(--dub); color: #000; border-radius: 999px; padding: 0 0.45rem; font-size: 0.75rem; margin-left: 0.25rem; }
+  .principais a { font-size: 1.02rem; padding-top: 0.32rem; padding-bottom: 0.32rem; }
+  .apoio a { color: var(--suave); font-size: 0.92rem; }
+  .apoio a:hover, .apoio a.ativa { color: var(--texto); }
+  /* número de pendências: texto na brasa, sem pílula (o amarelo é da dúvida) */
+  .selo { color: var(--destaque-texto); font-weight: 600; font-size: 0.85rem; margin-left: 0.45rem; font-variant-numeric: tabular-nums; }
   .rodape { margin-top: auto; }
 </style>

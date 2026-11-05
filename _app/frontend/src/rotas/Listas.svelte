@@ -5,13 +5,18 @@
   import GradeQuestoes from '../componentes/GradeQuestoes.svelte'
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
-  import { consumirQuestao } from '../estado/pedido.svelte'
+  import { consumirQuestao, pedido } from '../estado/pedido.svelte'
   import { montarHash } from './rota'
 
   let { painel }: { painel: Painel } = $props()
 
-  // o painel pode ter pedido uma questão específica ("Para revisar")
-  let selecionada = $state<number | null>(consumirQuestao())
+  // Hoje (ou a busca) pode ter pedido uma questão específica; se for de outra unidade, ela chega quando o painel dela
+  // carregar, então o pedido só é consumido quando a questão aparece aqui
+  let selecionada = $state<number | null>(null)
+  $effect(() => {
+    const pedida = pedido.questao
+    if (pedida !== null && painel.listas.some((l) => l.questoes.some((q) => q.id === pedida))) selecionada = consumirQuestao()
+  })
   let menu = $state<HTMLElement>()
 
   // outra questão aberta: o menu volta ao topo dela

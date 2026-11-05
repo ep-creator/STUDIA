@@ -1,12 +1,21 @@
-import { render, screen } from '@testing-library/svelte'
+import { render, screen, within } from '@testing-library/svelte'
 import { expect, test } from 'vitest'
 import BarraLateral from './BarraLateral.svelte'
 
-test('Assistente fica num grupo próprio e marca a página atual', () => {
-  render(BarraLateral, { rota: { tela: 'assistente', uid: 'u1' }, materias: [], unidade: 1, pendencias: 0 })
-  const link = screen.getByRole('link', { name: 'Assistente' })
-  expect(link).toHaveAttribute('href', '#/m/u1/assistente')
+test('quatro áreas de estudo em cima, o apoio embaixo; a atual marcada', () => {
+  render(BarraLateral, { rota: { tela: 'materia', uid: 'u1', unidade: 3, area: 'listas' }, materias: [], unidade: 3, pendencias: 0 })
+  const nav = screen.getByRole('navigation', { name: 'Áreas da matéria' })
+  const [principais, apoio] = within(nav).getAllByRole('list')
+  expect(within(principais).getAllByRole('link').map((a) => a.textContent)).toEqual(['Hoje', 'Tópicos', 'Praticar', 'Biblioteca'])
+  expect(within(apoio).getAllByRole('link').map((a) => a.textContent?.trim())).toEqual(['Plano completo', 'Folha de fórmulas', '＋ Material', 'Histórico'])
+  expect(screen.getByRole('link', { name: 'Praticar' })).toHaveAttribute('aria-current', 'page')
+  expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('href', '#/m/u1/u/3/painel')
+  expect(screen.queryByRole('link', { name: 'Assistente' })).toBeNull()
+})
+
+test('material para conferir aparece como número no ＋ Material', () => {
+  render(BarraLateral, { rota: { tela: 'importar', uid: 'u1' }, materias: [], unidade: null, pendencias: 2 })
+  const link = screen.getByRole('link', { name: /Material, 2 para conferir/ })
+  expect(link).toHaveAttribute('href', '#/m/u1/importar')
   expect(link).toHaveAttribute('aria-current', 'page')
-  const grupo = link.closest('ul')!
-  expect(grupo.querySelectorAll('a')).toHaveLength(1)
 })
