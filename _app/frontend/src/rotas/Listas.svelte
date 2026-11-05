@@ -6,6 +6,7 @@
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import { consumirQuestao, pedido } from '../estado/pedido.svelte'
+  import { citaSecao } from '../apresentacao'
   import { montarHash } from './rota'
 
   let { painel }: { painel: Painel } = $props()
@@ -34,6 +35,17 @@
     return null
   })
 
+  // a ordem da grade: anterior e próxima andam por ela
+  const ordem = $derived(painel.listas.flatMap((l) => l.questoes.map((q) => q.id)))
+  const passo = (delta: number) => {
+    const i = ordem.indexOf(selecionada ?? -1)
+    const alvo = ordem[i + delta]
+    if (alvo !== undefined) selecionada = alvo
+  }
+  // fórmulas da seção da lista aberta: pela seção ou pelo código "(15.4)" no título (a mesma regra do motor)
+  const formulasDa = (codigo: string | undefined, secaoId: number | undefined) =>
+    codigo === undefined ? [] : painel.formulas.filter((f) => f.secao_id === secaoId || citaSecao(f.titulo, codigo))
+
   function aoMarcar(questaoId: number, marca: Marca) {
     const anterior = marcaDe(questaoId)
     const alvo = painel.listas.flatMap((l) => l.questoes.map((q) => ({ l, q }))).find((x) => x.q.id === questaoId)
@@ -61,10 +73,14 @@
         marca={marcaDe(achada.questao.id)}
         secao={painel.vinculos.listas[String(achada.lista.id)]?.secao ?? null}
         resolucao={painel.documentos.find((d) => d.tipo === 'resolucao' && d.questao_id === achada.questao.id) ?? null}
+        formulas={formulasDa(painel.vinculos.listas[String(achada.lista.id)]?.secao?.codigo, painel.vinculos.listas[String(achada.lista.id)]?.secao?.secao_id)}
         onmarcar={aoMarcar}
+        onanterior={ordem.indexOf(achada.questao.id) > 0 ? () => passo(-1) : undefined}
+        onproxima={ordem.indexOf(achada.questao.id) < ordem.length - 1 ? () => passo(1) : undefined}
       />
     {:else}
-      <p class="suave dica">Escolha uma questão. Setas andam · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
+      <p class="dica">Escolha uma questão.</p>
+      <p class="suave atalhos">No teclado: setas andam · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
     {/if}
     </div>
   </div>
@@ -72,10 +88,12 @@
 
 <style>
   /* As questões e o menu rolam cada um no seu espaço (a página fica parada), como em Documentos */
-  .listas { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(22rem, 1fr); gap: 1.75rem; }
+  /* a questão aberta é o lugar de trabalho: ganha a maior parte da largura */
+  .listas { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(17rem, 0.8fr) minmax(0, 1.5fr); gap: 1.75rem; }
   .coluna { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.6rem; }
   /* a questão aberta fica separada da lista por um fio, sem cartão */
   .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
-  .dica { margin: 0; }
+  .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
+  .atalhos { margin: 0; font-size: 0.9rem; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }
 </style>

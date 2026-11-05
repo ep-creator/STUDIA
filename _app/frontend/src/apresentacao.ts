@@ -34,7 +34,13 @@ export function provaPerto(prova: { data: string; hora_inicio: string | null } |
   return dias >= 0 && dias <= 7
 }
 
-const DIAS_SEMANA =['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+/** O título cita a seção pelo código ("Massa (15.5)" cita 15.5, mas não 15.50 nem 115.5) — a mesma regra do motor. */
+export function citaSecao(titulo: string, codigo: string): boolean {
+  const escapado = codigo.replace(/\./g, '\\.')
+  return new RegExp(`(?<![\\d.])${escapado}(?![\\d.])`).test(titulo)
+}
+
+const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 
 /** "seg 14/09" (e " · 14:30" quando há hora). */
 export function dataCurta(data: string, hora?: string | null): string {

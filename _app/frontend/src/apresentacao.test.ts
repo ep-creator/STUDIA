@@ -48,6 +48,14 @@ test('prova perto: de hoje até 7 dias, nunca depois de passar', async () => {
   expect(provaPerto(null, hoje)).toBe(false)
 })
 
+test('título que cita a seção pelo código', async () => {
+  const { citaSecao } = await import('./apresentacao')
+  expect(citaSecao('Massa de uma lâmina (15.5)', '15.5')).toBe(true)
+  expect(citaSecao('Coordenadas (15.50)', '15.5')).toBe(false)
+  expect(citaSecao('Seção 115.5', '15.5')).toBe(false)
+  expect(citaSecao('Polares 1525', '15.5')).toBe(false)
+})
+
 test('ordem natural de nomes', async () => {
   const { compararNomes } = await import('./apresentacao')
   expect(['Aula 10', 'Aula 2', 'Aula 1'].sort(compararNomes)).toEqual(['Aula 1', 'Aula 2', 'Aula 10'])
