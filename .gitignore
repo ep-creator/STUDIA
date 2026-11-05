@@ -57,3 +57,6 @@ _app/.segredos.toml
 !/docs/
 !/.github/
 !/_modelo-materia/
+# Sistema de design do Impeccable (DESIGN.md em versão técnica); a config local fica só no PC
+!/.impeccable/
+.impeccable/config.local.json

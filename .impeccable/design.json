@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T12:00:00-03:00",
+  "title": "Design System: STUDIA",
+  "extensions": {
+    "colorMeta": {
+      "brasa": { "role": "primary", "displayName": "Laranja brasa", "canonical": "#d9572b", "tonalRamp": ["oklch(25% 0.06 40)", "oklch(35% 0.09 40)", "oklch(45% 0.13 40)", "oklch(55% 0.16 40)", "oklch(62% 0.17 42)", "oklch(72% 0.13 45)", "oklch(84% 0.07 50)", "oklch(94% 0.025 55)"] },
+      "brasa-noite": { "role": "primary", "displayName": "Laranja brasa (escuro)", "canonical": "#f07a45" },
+      "papel": { "role": "neutral", "displayName": "Papel", "canonical": "#f3ece0", "tonalRamp": ["oklch(18% 0.008 75)", "oklch(28% 0.01 75)", "oklch(40% 0.012 75)", "oklch(52% 0.014 75)", "oklch(64% 0.016 75)", "oklch(76% 0.018 78)", "oklch(88% 0.02 80)", "oklch(94.5% 0.018 80)"] },
+      "papel-lateral": { "role": "neutral", "displayName": "Papel da lateral", "canonical": "#ece3d3" },
+      "papel-elevado": { "role": "neutral", "displayName": "Papel elevado", "canonical": "#f8f2e8" },
+      "tinta": { "role": "neutral", "displayName": "Tinta", "canonical": "#141413" },
+      "tinta-suave": { "role": "neutral", "displayName": "Tinta suave", "canonical": "#5f5a52" },
+      "noite": { "role": "neutral", "displayName": "Noite", "canonical": "#191714" },
+      "noite-lateral": { "role": "neutral", "displayName": "Noite da lateral", "canonical": "#201d19" },
+      "noite-elevado": { "role": "neutral", "displayName": "Noite elevada", "canonical": "#221f1a" },
+      "giz": { "role": "neutral", "displayName": "Giz", "canonical": "#efe6d6" },
+      "giz-suave": { "role": "neutral", "displayName": "Giz suave", "canonical": "#b3a994" },
+      "acerto": { "role": "semantic", "displayName": "Acerto", "canonical": "#2e7d32" },
+      "erro": { "role": "semantic", "displayName": "Erro", "canonical": "#c62828" },
+      "duvida": { "role": "semantic", "displayName": "Dúvida", "canonical": "#f9a825" },
+      "acerto-noite": { "role": "semantic", "displayName": "Acerto (escuro)", "canonical": "#8fcf8f" },
+      "erro-noite": { "role": "semantic", "displayName": "Erro (escuro)", "canonical": "#f28b82" },
+      "duvida-noite": { "role": "semantic", "displayName": "Dúvida (escuro)", "canonical": "#f2c25b" }
+    },
+    "derivedColors": [
+      { "name": "fio", "value": "color-mix(in srgb, var(--texto) 14%, transparent)", "purpose": "Separador de seções e faixas." },
+      { "name": "leve", "value": "color-mix(in srgb, var(--texto) 6%, transparent)", "purpose": "Fundo de ação suave, campo, bolha e seletor N1–N4." },
+      { "name": "realce", "value": "color-mix(in srgb, var(--destaque) 9%, transparent)", "purpose": "Hover discreto." }
+    ],
+    "typographyMeta": {
+      "display": { "displayName": "Número grande", "purpose": "Dias até a prova, x/y, porcentagens." },
+      "headline": { "displayName": "Questão aberta", "purpose": "Identificação da questão (14.1 #22)." },
+      "title": { "displayName": "Título serifado", "purpose": "Assuntos, listas, abas de unidade, próxima aula." },
+      "body": { "displayName": "Texto", "purpose": "Texto corrido, navegação, respostas do assistente." },
+      "small": { "displayName": "Secundário", "purpose": "Metadados, contagens, custo." },
+      "label": { "displayName": "Rótulo", "purpose": "Rótulos de seção em caixa alta." },
+      "marca": { "displayName": "Marca", "purpose": "Só o nome STUDIA, em caixa alta." }
+    },
+    "shadows": [
+      { "name": "gaveta", "value": "-18px 0 40px rgb(0 0 0 / 35%)", "purpose": "Gaveta da IA por cima da página." },
+      { "name": "menu", "value": "0 8px 24px rgb(0 0 0 / 30%)", "purpose": "Menu ···." },
+      { "name": "opcoes", "value": "0 12px 32px rgb(0 0 0 / 28%)", "purpose": "Lista aberta do seletor." },
+      { "name": "dialogo", "value": "0 24px 60px rgb(0 0 0 / 35%)", "purpose": "Busca da matéria." },
+      { "name": "aviso", "value": "0 4px 16px rgb(0 0 0 / 20%)", "purpose": "Avisos flutuantes." }
+    ],
+    "motion": [
+      { "name": "transicao", "value": "160ms ease", "purpose": "Cor, fundo, borda e opacidade em hover/foco; desligada com prefers-reduced-motion." },
+      { "name": "surgir", "value": "120ms ease-out, translateY(-4px) → 0", "purpose": "Abertura de listas de opções." }
+    ],
+    "breakpoints": [
+      { "name": "painel-empilha", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Ação forte",
+      "kind": "button",
+      "refersTo": "acao-forte",
+      "description": "Uma por tela, no máximo (Confirmar no Importar).",
+      "html": "<button class=\"ds-acao-forte\">Confirmar</button>",
+      "css": ".ds-acao-forte { font: inherit; font-weight: 500; background: var(--texto, #141413); color: var(--fundo, #f3ece0); border: 0; border-radius: 999px; padding: 0.25rem 1rem; cursor: pointer; transition: color 160ms ease, background-color 160ms ease; } .ds-acao-forte:hover { background: var(--destaque, #d9572b); color: var(--texto-sobre-destaque, #fff); } .ds-acao-forte:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ação suave",
+      "kind": "button",
+      "refersTo": "acao-suave",
+      "description": "Ação principal de uma área (Ver no livro, Ver resolução).",
+      "html": "<button class=\"ds-acao-suave\">Ver no livro</button>",
+      "css": ".ds-acao-suave { font: inherit; background: color-mix(in srgb, var(--texto, #141413) 6%, transparent); color: var(--texto, #141413); border: 0; border-radius: 999px; padding: 0.32rem 1rem; cursor: pointer; transition: background-color 160ms ease; } .ds-acao-suave:hover { background: color-mix(in srgb, var(--texto, #141413) 11%, transparent); } .ds-acao-suave:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ação de texto",
+      "kind": "button",
+      "refersTo": "acao-texto",
+      "description": "Ação secundária: descartar, detalhes, fechar, desfazer.",
+      "html": "<button class=\"ds-acao-texto\">descartar</button>",
+      "css": ".ds-acao-texto { font: inherit; background: none; border: 0; padding: 0; color: var(--suave, #5f5a52); cursor: pointer; text-underline-offset: 3px; transition: color 160ms ease; } .ds-acao-texto:hover { color: var(--texto, #141413); text-decoration: underline; text-decoration-color: var(--destaque, #d9572b); } .ds-acao-texto:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "campo",
+      "description": "Campo sem borda com fundo leve (chat, chave da API).",
+      "html": "<textarea class=\"ds-campo\" rows=\"2\" placeholder=\"Pergunte sobre o que está aberto...\"></textarea>",
+      "css": ".ds-campo { width: 100%; box-sizing: border-box; font: inherit; border: 0; border-radius: 8px; padding: 0.5rem 0.7rem; background: color-mix(in srgb, var(--texto, #141413) 6%, transparent); color: var(--texto, #141413); resize: vertical; } .ds-campo:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Navegação lateral",
+      "kind": "nav",
+      "refersTo": "barra-lateral",
+      "description": "Itens em texto; ativo com traço brasa de 2px à esquerda e negrito.",
+      "html": "<nav class=\"ds-lateral\"><a href=\"#\" class=\"ds-ativa\">Painel</a><a href=\"#\">Tópicos</a><a href=\"#\">Listas</a></nav>",
+      "css": ".ds-lateral { display: grid; gap: 0.15rem; width: 13rem; padding: 1rem; background: var(--lateral, #ece3d3); } .ds-lateral a { display: block; text-decoration: none; color: var(--texto, #141413); padding: 0.25rem 0.5rem; border-left: 2px solid transparent; transition: border-color 160ms ease; } .ds-lateral a:hover:not(.ds-ativa) { border-left-color: color-mix(in srgb, var(--destaque, #d9572b) 45%, transparent); } .ds-lateral a.ds-ativa { border-left-color: var(--destaque, #d9572b); font-weight: 600; } .ds-lateral a:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Abas de unidade",
+      "kind": "nav",
+      "description": "1ª 2ª 3ª em Fraunces; ativa com traço brasa embaixo.",
+      "html": "<nav class=\"ds-abas\"><a href=\"#\">1ª</a><a href=\"#\">2ª</a><a href=\"#\" class=\"ds-ativa\">3ª</a></nav>",
+      "css": ".ds-abas { display: flex; gap: 1.1rem; font-family: 'Fraunces Variable', Georgia, serif; font-size: 1.05rem; } .ds-abas a { text-decoration: none; color: var(--suave, #5f5a52); padding-bottom: 2px; border-bottom: 1.5px solid transparent; transition: color 160ms ease; } .ds-abas a:hover { color: var(--texto, #141413); } .ds-abas a.ds-ativa { color: var(--texto, #141413); border-bottom-color: var(--destaque, #d9572b); }"
+    },
+    {
+      "name": "Grade de questões",
+      "kind": "custom",
+      "description": "Números soltos; marcados ganham cor semântica e traço de 2px; aberta em negrito.",
+      "html": "<div class=\"ds-grade\"><button class=\"ds-q ds-ok ds-sel\">22</button><button class=\"ds-q ds-ok\">30</button><button class=\"ds-q ds-err\">46</button><button class=\"ds-q ds-dub\">50</button><button class=\"ds-q\">68</button></div>",
+      "css": ".ds-grade { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; } .ds-q { min-width: 1.6rem; padding: 0 2px; background: none; border: 0; border-bottom: 2px solid transparent; font: inherit; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--suave, #5f5a52); cursor: pointer; transition: color 160ms ease; } .ds-q:hover { color: var(--destaque, #d9572b); } .ds-q.ds-ok { color: var(--ok, #2e7d32); border-bottom-color: var(--ok, #2e7d32); } .ds-q.ds-err { color: var(--err, #c62828); border-bottom-color: var(--err, #c62828); } .ds-q.ds-dub { color: var(--dub, #f9a825); border-bottom-color: var(--dub, #f9a825); } .ds-q.ds-sel { font-weight: 600; } .ds-q:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Seletor de nível N1–N4",
+      "kind": "chip",
+      "description": "Quatro níveis de ajuda numa única pílula leve; o ativo em fundo mais forte.",
+      "html": "<div class=\"ds-niveis\"><button>N1</button><button class=\"ds-ativo\">N2</button><button>N3</button><button>N4</button></div>",
+      "css": ".ds-niveis { display: inline-flex; background: color-mix(in srgb, var(--texto, #141413) 6%, transparent); border-radius: 999px; padding: 2px; } .ds-niveis button { background: none; border: 0; border-radius: 999px; padding: 0.15rem 0.8rem; font: inherit; font-size: 0.85rem; color: var(--suave, #5f5a52); cursor: pointer; transition: color 160ms ease, background-color 160ms ease; } .ds-niveis button:hover, .ds-niveis button.ds-ativo { color: var(--texto, #141413); } .ds-niveis button.ds-ativo { background: color-mix(in srgb, var(--texto, #141413) 11%, transparent); } .ds-niveis button:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque, #d9572b) 70%, transparent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Rótulo de seção",
+      "kind": "custom",
+      "description": "Rótulo pequeno em caixa alta sobre um fio: o separador padrão.",
+      "html": "<section class=\"ds-secao\"><div class=\"ds-rotulo\">Para revisar</div><p>Nada para revisar ainda.</p></section>",
+      "css": ".ds-secao { border-top: 1px solid color-mix(in srgb, var(--texto, #141413) 14%, transparent); padding-top: 1.1rem; } .ds-rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave, #5f5a52); } .ds-secao p { margin: 0.4rem 0 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A mesa silenciosa",
+    "overview": "O STUDIA é o lugar onde se estuda por horas: pouca coisa na mesa, tudo no lugar, um único sinal de cor. A tela é papel creme (ou noite quente, no escuro) com tinta escura, e a hierarquia vem só da tipografia — Fraunces para o que tem nome e número, Inter para o resto. Não há caixas, contornos nem cartões: seções são um rótulo pequeno em caixa alta e um fio de 1px.\n\nA densidade é de ferramenta, não de vitrine. Na visão geral aparece só o assunto e os números (dias até a prova, `9/9`, `0%`); enunciados, legendas e referências moram no detalhe, quando o item é aberto. O que é raro fica a um gesto: ações de linha aparecem no hover ou no foco, e apagar mora no menu `···`.\n\nO laranja brasa é o sinal único de \"aqui\" e \"agora\": o item ativo, a aba atual, o traço do hover, a próxima aula. Verde, vermelho e amarelo existem só para marcar acerto, erro e dúvida. Rejeições confirmadas: o tema \"Padrão\" antigo, caixas com borda, botões com contorno e texto explicativo fixo na tela.",
+    "keyCharacteristics": [
+      "Texto puro em repouso; estado mostrado por cor e por um traço (embaixo ou à esquerda), nunca por moldura.",
+      "Fraunces para títulos, unidades e números grandes; Inter para o texto corrido e controles.",
+      "Um laranja de sinal; três cores semânticas só para marcação.",
+      "Plano: sombra só no que flutua (gaveta, menus, busca, avisos).",
+      "Dois temas de igual peso: Editorial claro e Editorial escuro."
+    ],
+    "rules": [
+      { "name": "The Um Sinal Rule", "body": "O laranja brasa marca uma coisa por região: o ativo, o próximo, o foco. Se dois elementos vizinhos pedem laranja, um deles está errado.", "section": "colors" },
+      { "name": "The Cor É Dado Rule", "body": "Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.", "section": "colors" },
+      { "name": "The Serifa Nomeia Rule", "body": "Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.", "section": "typography" },
+      { "name": "The Fio Único Rule", "body": "Nunca dois fios encostados: um elemento logo depois de outro com fio não ganha o seu.", "section": "layout" },
+      { "name": "The Só Flutua Rule", "body": "Nada que está no fluxo da página tem sombra. Se tem sombra, está por cima de algo.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do separar seções com um rótulo em caixa alta (0.7rem, tracking 0.12em) e um fio de 1px (texto a 14%).",
+      "Do mostrar estado com cor e traço: 2px à esquerda para o item ativo de lista vertical, 2px embaixo para número marcado, 1.5px embaixo para aba e marcação.",
+      "Do usar Fraunces 3rem para o número que decide algo, com o sufixo pequeno em tinta suave.",
+      "Do escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.",
+      "Do deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.",
+      "Do derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.",
+      "Do transições curtas (160ms ease) e respeitar `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "Don't usar caixas, cartões com borda ou contornos em botões.",
+      "Don't usar o laranja brasa como decoração ou em mais de um sinal por região.",
+      "Don't usar verde, vermelho ou amarelo fora da marcação de acerto, erro e dúvida.",
+      "Don't pôr sombra em nada que está no fluxo da página.",
+      "Don't colocar parágrafos explicativos fixos na tela; estado vazio é uma frase curta, ajuda longa vai para o `title` ou para o detalhe.",
+      "Don't encostar dois fios.",
+      "Don't trazer de volta o tema \"Padrão\" nem cores fora das duas paletas Editorial."
+    ]
+  }
+}
