@@ -59,6 +59,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/hoje": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hoje
+         * @description `data` só serve para testar e conferir outro dia; sem ela, vale hoje.
+         */
+        get: operations["hoje_api_materias__materia_uid__hoje_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/marcacoes/{questao_id}": {
         parameters: {
             query?: never;
@@ -1082,10 +1102,40 @@ export interface components {
             /** Desfeito Em */
             desfeito_em: string | null;
         };
+        /** GrupoRevisar */
+        GrupoRevisar: {
+            /** Lista Id */
+            lista_id: number;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Lista Titulo */
+            lista_titulo: string;
+            /** Unidade */
+            unidade: number;
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoRevisar"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Hoje */
+        Hoje: {
+            /** Data */
+            data: string;
+            /** Unidade */
+            unidade: number | null;
+            prova: components["schemas"]["ProvaHoje"] | null;
+            /** Reta Final */
+            reta_final: boolean;
+            sessao: components["schemas"]["SessaoHoje"] | null;
+            /** Proximos */
+            proximos: components["schemas"]["ItemProximo"][];
+            /** Revisar */
+            revisar: components["schemas"]["GrupoRevisar"][];
+            /** Topicos */
+            topicos: components["schemas"]["TopicoProgresso"][];
         };
         /** ImportacaoSaida */
         ImportacaoSaida: {
@@ -1107,6 +1157,30 @@ export interface components {
             confirmada_em: string | null;
             /** Pendencias */
             pendencias: number;
+        };
+        /** ItemMaterial */
+        ItemMaterial: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+        };
+        /** ItemProximo */
+        ItemProximo: {
+            /** Tipo */
+            tipo: string;
+            /** Data */
+            data: string;
+            /** Hora Inicio */
+            hora_inicio: string | null;
+            /** Codigo */
+            codigo: string | null;
+            /** Titulo */
+            titulo: string;
+            /** Estado */
+            estado: string | null;
+            /** Unidade */
+            unidade: number | null;
         };
         /** Ligados */
         Ligados: {
@@ -1328,6 +1402,17 @@ export interface components {
             /** Taxa Acerto */
             taxa_acerto: number | null;
         };
+        /** ProvaHoje */
+        ProvaHoje: {
+            /** Data */
+            data: string;
+            /** Hora Inicio */
+            hora_inicio: string | null;
+            /** Unidade */
+            unidade: number;
+            /** Dias */
+            dias: number;
+        };
         /** ProximaProva */
         ProximaProva: {
             /** Data */
@@ -1378,6 +1463,32 @@ export interface components {
             pagina_pdf?: number | null;
             /** Figura */
             figura?: string | null;
+        };
+        /** QuestaoRevisar */
+        QuestaoRevisar: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Estado */
+            estado: string;
+        };
+        /** QuestaoSessao */
+        QuestaoSessao: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Lista Id */
+            lista_id: number;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Unidade */
+            unidade: number;
+            /** Estado */
+            estado: string | null;
+            /** Resolucao Id */
+            resolucao_id: number | null;
         };
         /** Resultado */
         Resultado: {
@@ -1577,6 +1688,31 @@ export interface components {
             /** Ordem */
             ordem?: number | null;
         };
+        /** SessaoHoje */
+        SessaoHoje: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Data */
+            data: string | null;
+            /** Unidade */
+            unidade: number;
+            /** Titulo */
+            titulo: string;
+            /** Detalhe */
+            detalhe: string;
+            /** Estado */
+            estado: string;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoVinculada"][];
+            /** Resumos */
+            resumos: components["schemas"]["ItemMaterial"][];
+            /** Formulas */
+            formulas: components["schemas"]["ItemMaterial"][];
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoSessao"][];
+        };
         /** SugestaoSecao */
         SugestaoSecao: {
             /** Secao Id */
@@ -1646,6 +1782,27 @@ export interface components {
             ordem?: number | null;
             /** Pai Id */
             pai_id?: number | null;
+        };
+        /** TopicoProgresso */
+        TopicoProgresso: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+            /** Estado */
+            estado: string;
+            /** Secoes */
+            secoes: string[];
+            /** Total */
+            total: number;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Ok */
+            ok: number;
+            /** Err */
+            err: number;
+            /** Dub */
+            dub: number;
         };
         /** Unidade */
         Unidade: {
@@ -1822,6 +1979,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Painel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hoje_api_materias__materia_uid__hoje_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hoje"];
                 };
             };
             /** @description Validation Error */

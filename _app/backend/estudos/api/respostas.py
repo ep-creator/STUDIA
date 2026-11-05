@@ -99,6 +99,89 @@ class Painel(TypedDict):
     importacoes_pendentes: int
 
 
+class ItemMaterial(TypedDict):
+    id: int
+    titulo: str
+
+
+class QuestaoSessao(TypedDict):
+    id: int
+    rotulo: str
+    lista_id: int
+    lista_codigo: str
+    unidade: int
+    estado: str | None          # ok, err, dub ou None
+    resolucao_id: int | None    # resolução gravada, se houver
+
+
+class SessaoHoje(TypedDict):
+    id: int
+    codigo: str
+    data: str | None
+    unidade: int
+    titulo: str
+    detalhe: str
+    estado: str                 # feita, hoje, passou ou futura (derivado)
+    secoes: list[SecaoVinculada]
+    resumos: list[ItemMaterial]
+    formulas: list[ItemMaterial]
+    questoes: list[QuestaoSessao]
+
+
+class ItemProximo(TypedDict):
+    tipo: str                   # sessao ou o tipo do evento (aula, prova…)
+    data: str
+    hora_inicio: str | None
+    codigo: str | None
+    titulo: str
+    estado: str | None
+    unidade: int | None
+
+
+class QuestaoRevisar(TypedDict):
+    id: int
+    rotulo: str
+    estado: str
+
+
+class GrupoRevisar(TypedDict):
+    lista_id: int
+    lista_codigo: str
+    lista_titulo: str
+    unidade: int
+    questoes: list[QuestaoRevisar]
+
+
+class TopicoProgresso(TypedDict):
+    id: int
+    titulo: str
+    estado: str                 # hoje, visto ou a seguir (derivado)
+    secoes: list[str]
+    total: int
+    trabalhadas: int
+    ok: int
+    err: int
+    dub: int
+
+
+class ProvaHoje(TypedDict):
+    data: str
+    hora_inicio: str | None
+    unidade: int
+    dias: int
+
+
+class Hoje(TypedDict):
+    data: str
+    unidade: int | None
+    prova: ProvaHoje | None
+    reta_final: bool
+    sessao: SessaoHoje | None
+    proximos: list[ItemProximo]
+    revisar: list[GrupoRevisar]
+    topicos: list[TopicoProgresso]
+
+
 class Marcado(TypedDict):
     placar: Placar
 
