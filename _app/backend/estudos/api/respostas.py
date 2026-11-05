@@ -182,6 +182,37 @@ class Hoje(TypedDict):
     topicos: list[TopicoProgresso]
 
 
+class QuestaoTopico(TypedDict):
+    id: int
+    rotulo: str
+    estado: str | None
+    resolucao_id: int | None
+
+
+class ListaTopico(TypedDict):
+    id: int
+    codigo: str
+    titulo: str
+    unidade: int
+    questoes: list[QuestaoTopico]
+
+
+class ResolucaoTopico(TypedDict):
+    id: int
+    questao_id: int
+    rotulo: str
+
+
+class TopicoPagina(TypedDict):
+    topico: TopicoProgresso
+    unidade: int
+    secoes: list[SecaoVinculada]
+    resumos: list[ItemMaterial]
+    formulas: list[Formula]
+    listas: list[ListaTopico]
+    resolucoes: list[ResolucaoTopico]
+
+
 class Marcado(TypedDict):
     placar: Placar
 

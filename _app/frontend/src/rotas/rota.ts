@@ -5,7 +5,7 @@ export type Area = (typeof AREAS)[number]
 
 export type Rota =
   | { tela: 'materias' }
-  | { tela: 'materia'; uid: string; unidade: number | null; area: Area }
+  | { tela: 'materia'; uid: string; unidade: number | null; area: Area; topico?: number | null }
   | { tela: 'importar' | 'historico' | 'assistente'; uid: string }
 
 const INICIO: Rota = { tela: 'materias' }
@@ -28,6 +28,14 @@ export function analisarRota(hash: string): Rota {
     const area = partes[4] as Area
     if (Number.isInteger(unidade) && unidade >= 1 && AREAS.includes(area)) return { tela: 'materia', uid, unidade, area }
   }
+  // página de um tópico: #/m/<uid>/u/<n>/topicos/<id>
+  if (partes.length === 6 && partes[2] === 'u' && partes[4] === 'topicos') {
+    const unidade = Number(partes[3])
+    const topico = Number(partes[5])
+    if (Number.isInteger(unidade) && unidade >= 1 && Number.isInteger(topico) && topico >= 1) {
+      return { tela: 'materia', uid, unidade, area: 'topicos', topico }
+    }
+  }
   return INICIO
 }
 
@@ -36,7 +44,8 @@ export function montarHash(rota: Rota): string {
   const base = `#/m/${encodeURIComponent(rota.uid)}`
   if (rota.tela !== 'materia') return `${base}/${rota.tela}`
   if (rota.unidade === null) return base
-  return `${base}/u/${rota.unidade}/${rota.area}`
+  const topico = rota.area === 'topicos' && rota.topico ? `/${rota.topico}` : ''
+  return `${base}/u/${rota.unidade}/${rota.area}${topico}`
 }
 
 /**

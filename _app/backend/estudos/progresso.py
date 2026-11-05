@@ -14,6 +14,7 @@ import re
 import sqlite3
 from datetime import date, timedelta
 
+from estudos.erros import NaoEncontrado
 from estudos.repos import unidades
 
 DIAS_RETA_FINAL = 7
@@ -179,6 +180,14 @@ def _material(con: sqlite3.Connection, sessao: dict) -> dict:
 
 # ---------- tópicos ----------
 
+def _ligacoes(con: sqlite3.Connection, topico_id: int, secoes_lista: dict[int, set[int]]) -> tuple[set[int], set[int]]:
+    """Seções do tópico e as listas dele: as ligadas ao tópico e as das suas seções."""
+    secoes = {l[0] for l in con.execute("SELECT secao_id FROM topico_secao WHERE topico_id = ?", (topico_id,))}
+    listas_ids = {l[0] for l in con.execute("SELECT lista_id FROM lista_topico WHERE topico_id = ?", (topico_id,))}
+    listas_ids |= {lista for lista, ss in secoes_lista.items() if ss & secoes}
+    return secoes, listas_ids
+
+
 def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[dict] | None = None) -> list[dict]:
     """Tópicos da unidade com estado derivado e o placar das questões ligadas (listas do tópico ou das suas seções)."""
     todas = sessoes(con, hoje) if todas is None else todas
@@ -190,9 +199,7 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
     iso = hoje.isoformat()
     resultado = []
     for t in con.execute("SELECT * FROM topico WHERE unidade_id = ? ORDER BY ordem, id", (unidade_id,)):
-        secoes = {l[0] for l in con.execute("SELECT secao_id FROM topico_secao WHERE topico_id = ?", (t["id"],))}
-        listas_ids = {l[0] for l in con.execute("SELECT lista_id FROM lista_topico WHERE topico_id = ?", (t["id"],))}
-        listas_ids |= {lista for lista, ss in secoes_lista.items() if ss & secoes}
+        secoes, listas_ids = _ligacoes(con, t["id"], secoes_lista)
         ids = [q for q, d in questoes.items() if d["lista_id"] in listas_ids]
 
         def cobre(s: dict) -> bool:
@@ -225,6 +232,64 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
             "dub": sum(1 for q in ids if marcas.get(q) == "dub"),
         })
     return resultado
+
+
+def topicos_da_unidade(con: sqlite3.Connection, numero: int, hoje: date) -> list[dict]:
+    linha = con.execute("SELECT id FROM unidade WHERE numero = ?", (numero,)).fetchone()
+    if linha is None:
+        raise NaoEncontrado(f"Unidade {numero} não existe nesta matéria")
+    return topicos(con, linha["id"], hoje)
+
+
+def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
+    """Tudo do tópico numa página: seções, resumos, fórmulas, listas com as marcações e as resoluções gravadas."""
+    t = con.execute(
+        "SELECT t.id, t.unidade_id, u.numero FROM topico t JOIN unidade u ON u.id = t.unidade_id WHERE t.id = ?", (topico_id,)
+    ).fetchone()
+    if t is None:
+        raise NaoEncontrado(f"Tópico {topico_id} não existe")
+    progresso_topico = next(x for x in topicos(con, t["unidade_id"], hoje) if x["id"] == topico_id)
+    secoes_lista = _secoes_das_listas(con)
+    secoes, listas_ids = _ligacoes(con, topico_id, secoes_lista)
+    secao_ids = sorted(secoes, key=lambda s: _secao(con, s)["pagina_pdf_ini"])
+    codigos = {_secao(con, s)["codigo"] for s in secao_ids}
+    marcas = _marcacoes(con)
+    resolucoes = _resolucoes(con)
+    questoes = _questoes(con)
+    marca = ",".join("?" * len(secao_ids))
+    resumos = [
+        {"id": l["id"], "titulo": l["titulo"]}
+        for l in con.execute(
+            f"SELECT id, titulo FROM documento WHERE tipo = 'resumo' AND secao_id IN ({marca}) ORDER BY titulo", secao_ids
+        )
+    ] if secao_ids else []
+    formulas = [
+        {k: l[k] for k in ("id", "unidade_id", "secao_id", "titulo", "corpo_tex", "notas_md", "ordem", "origem")}
+        for l in con.execute("SELECT * FROM formula ORDER BY unidade_id, ordem")
+        if l["secao_id"] in secoes or codigos & set(CODIGO_SECAO.findall(l["titulo"]))
+    ]
+    listas = []
+    for l in con.execute(
+        "SELECT l.id, l.codigo, l.titulo, u.numero FROM lista l JOIN unidade u ON u.id = l.unidade_id "
+        "ORDER BY u.numero, l.ordem, l.id"
+    ):
+        if l["id"] not in listas_ids:
+            continue
+        listas.append({
+            "id": l["id"], "codigo": l["codigo"], "titulo": l["titulo"], "unidade": l["numero"],
+            "questoes": [
+                {"id": q, "rotulo": d["rotulo"], "estado": marcas.get(q), "resolucao_id": resolucoes.get(q)}
+                for q, d in questoes.items() if d["lista_id"] == l["id"]
+            ],
+        })
+    resolvidas = [
+        {"id": resolucoes[q], "questao_id": q, "rotulo": d["lista_codigo"] + " #" + d["rotulo"]}
+        for q, d in questoes.items() if d["lista_id"] in listas_ids and q in resolucoes
+    ]
+    return {
+        "topico": progresso_topico, "unidade": t["numero"], "secoes": [_secao(con, s) for s in secao_ids],
+        "resumos": resumos, "formulas": formulas, "listas": listas, "resolucoes": resolvidas,
+    }
 
 
 # ---------- revisar e próximos dias ----------

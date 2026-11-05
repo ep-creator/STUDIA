@@ -161,3 +161,46 @@ def test_rota_hoje(tmp_path):
     r = cliente.get(f"/api/materias/{uid}/hoje?data=2099-03-10")
     assert r.status_code == 200
     assert r.json()["data"] == "2099-03-10" and r.json()["sessao"] is None
+
+
+def test_pagina_do_topico_junta_secao_resumo_formulas_questoes_e_resolucoes(con, plano):
+    p = progresso.pagina_topico(con, plano.polares, HOJE)
+    assert (p["topico"]["titulo"], p["topico"]["estado"], p["unidade"]) == ("Integrais em polares", "visto", 1)
+    assert [s["codigo"] for s in p["secoes"]] == ["15.4"]
+    assert p["resumos"] == []                                   # só a 15.5 tem resumo
+    assert [f["titulo"] for f in p["formulas"]] == ["Área polar"]
+    [lista] = p["listas"]
+    assert (lista["codigo"], [(q["rotulo"], q["estado"], q["resolucao_id"]) for q in lista["questoes"]]) == (
+        "15.4", [("1", "err", None), ("2", "ok", None), ("3", None, plano.resolucao)])
+    assert [(r["id"], r["rotulo"]) for r in p["resolucoes"]] == [(plano.resolucao, "15.4 #3")]
+
+
+def test_pagina_do_topico_pela_formula_no_titulo_e_lista_ligada(con, plano):
+    p = progresso.pagina_topico(con, plano.aplicacoes, HOJE)
+    assert [d["id"] for d in p["resumos"]] == [plano.resumo]
+    assert [f["id"] for f in p["formulas"]] == [plano.f_titulo]
+    assert [l["codigo"] for l in p["listas"]] == ["15.5", "L5"]
+
+
+def test_progresso_de_outra_unidade(con, plano):
+    assert progresso.topicos_da_unidade(con, 2, HOJE) == []
+    assert [t["id"] for t in progresso.topicos_da_unidade(con, 1, HOJE)][:2] == [plano.polares, plano.aplicacoes]
+
+
+def test_pagina_de_topico_que_nao_existe(con, plano):
+    from estudos.erros import NaoEncontrado
+    with pytest.raises(NaoEncontrado):
+        progresso.pagina_topico(con, 999, HOJE)
+
+
+def test_rotas_de_progresso_e_pagina(tmp_path):
+    from fastapi.testclient import TestClient
+
+    from estudos.config import carregar_settings
+    from estudos.main import create_app
+
+    (tmp_path / "_app").mkdir()
+    cliente = TestClient(create_app(carregar_settings(tmp_path / "_app", tmp_path)), base_url="http://127.0.0.1:8790")
+    uid = cliente.post("/api/materias", json={"nome": "Nova"}).json()["uid"]
+    assert cliente.get(f"/api/materias/{uid}/progresso?unidade=1").status_code == 404
+    assert cliente.get(f"/api/materias/{uid}/topicos/1/pagina").status_code == 404

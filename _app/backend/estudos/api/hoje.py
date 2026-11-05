@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 
 from estudos import progresso
 from estudos.api.deps import Contexto, contexto_dep
-from estudos.api.respostas import Hoje
+from estudos.api.respostas import Hoje, TopicoPagina, TopicoProgresso
 
 router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["hoje"])
 
@@ -15,3 +15,14 @@ router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["hoje"])
 def hoje(data: date | None = None, ctx: Contexto = Depends(contexto_dep)) -> Hoje:
     """`data` só serve para testar e conferir outro dia; sem ela, vale hoje."""
     return progresso.hoje(ctx.con, data or date.today())
+
+
+@router.get("/progresso")
+def progresso_da_unidade(unidade: int, data: date | None = None, ctx: Contexto = Depends(contexto_dep)) -> list[TopicoProgresso]:
+    """Tópicos da unidade com o estado e o placar derivados."""
+    return progresso.topicos_da_unidade(ctx.con, unidade, data or date.today())
+
+
+@router.get("/topicos/{topico_id}/pagina")
+def pagina_do_topico(topico_id: int, data: date | None = None, ctx: Contexto = Depends(contexto_dep)) -> TopicoPagina:
+    return progresso.pagina_topico(ctx.con, topico_id, data or date.today())

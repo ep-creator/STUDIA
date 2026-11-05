@@ -41,3 +41,11 @@ test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a mat
   // workspace sem matérias: a lista vazia também é pedida uma vez só por matéria
   expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], 'a')).toBe(false)
 })
+
+test('página de um tópico tem endereço próprio', () => {
+  const rota = analisarRota('#/m/ab/u/3/topicos/14')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', topico: 14 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/topicos/14')
+  expect(analisarRota('#/m/ab/u/3/topicos/x')).toEqual({ tela: 'materias' })
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', topico: 14 })).toBe('#/m/ab/u/3/listas')
+})

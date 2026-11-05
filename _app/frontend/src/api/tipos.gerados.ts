@@ -79,6 +79,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/progresso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Progresso Da Unidade
+         * @description Tópicos da unidade com o estado e o placar derivados.
+         */
+        get: operations["progresso_da_unidade_api_materias__materia_uid__progresso_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/topicos/{topico_id}/pagina": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pagina Do Topico */
+        get: operations["pagina_do_topico_api_materias__materia_uid__topicos__topico_id__pagina_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/marcacoes/{questao_id}": {
         parameters: {
             query?: never;
@@ -1235,6 +1272,19 @@ export interface components {
             /** Liberacao */
             liberacao?: string | null;
         };
+        /** ListaTopico */
+        ListaTopico: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Titulo */
+            titulo: string;
+            /** Unidade */
+            unidade: number;
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoTopico"][];
+        };
         /** MarcacaoDefinir */
         MarcacaoDefinir: {
             /** Estado */
@@ -1489,6 +1539,26 @@ export interface components {
             estado: string | null;
             /** Resolucao Id */
             resolucao_id: number | null;
+        };
+        /** QuestaoTopico */
+        QuestaoTopico: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Estado */
+            estado: string | null;
+            /** Resolucao Id */
+            resolucao_id: number | null;
+        };
+        /** ResolucaoTopico */
+        ResolucaoTopico: {
+            /** Id */
+            id: number;
+            /** Questao Id */
+            questao_id: number;
+            /** Rotulo */
+            rotulo: string;
         };
         /** Resultado */
         Resultado: {
@@ -1783,6 +1853,22 @@ export interface components {
             /** Pai Id */
             pai_id?: number | null;
         };
+        /** TopicoPagina */
+        TopicoPagina: {
+            topico: components["schemas"]["TopicoProgresso"];
+            /** Unidade */
+            unidade: number;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoVinculada"][];
+            /** Resumos */
+            resumos: components["schemas"]["ItemMaterial"][];
+            /** Formulas */
+            formulas: components["schemas"]["Formula"][];
+            /** Listas */
+            listas: components["schemas"]["ListaTopico"][];
+            /** Resolucoes */
+            resolucoes: components["schemas"]["ResolucaoTopico"][];
+        };
         /** TopicoProgresso */
         TopicoProgresso: {
             /** Id */
@@ -2012,6 +2098,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Hoje"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    progresso_da_unidade_api_materias__materia_uid__progresso_get: {
+        parameters: {
+            query: {
+                unidade: number;
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicoProgresso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pagina_do_topico_api_materias__materia_uid__topicos__topico_id__pagina_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                topico_id: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicoPagina"];
                 };
             };
             /** @description Validation Error */

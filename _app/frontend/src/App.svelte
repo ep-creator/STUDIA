@@ -139,7 +139,7 @@
             {:else if rota.area === 'listas'}
               <Listas {painel} />
             {:else if rota.area === 'topicos'}
-              <Topicos {painel} />
+              <Topicos {painel} topico={rota.topico ?? null} />
             {:else if rota.area === 'cronograma'}
               <Cronograma {painel} />
             {:else if rota.area === 'documentos'}

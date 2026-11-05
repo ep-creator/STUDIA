@@ -212,7 +212,7 @@
             <ul class="topicos">
               {#each dados.topicos as t (t.id)}
                 <li>
-                  <a class="nome-topico" href={href('topicos', dados.unidade)}>{t.titulo}</a>
+                  <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
                   <span class="estado-topico {t.estado === 'a seguir' ? 'seguir' : t.estado}">{t.estado}</span>
                   {#if t.total}
                     <span class="placar suave" title="questões trabalhadas (marcadas ou com resolução) / questões ligadas">{t.trabalhadas}/{t.total}</span>
@@ -240,8 +240,8 @@
   .prova.perto { color: var(--destaque-texto); font-weight: 500; }
 
   .colunas { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 1fr); gap: 2.5rem 4rem; align-items: start; }
-  .principal, .lateral-hoje { display: grid; gap: 2.4rem; align-content: start; min-width: 0; }
-  section { display: grid; gap: 0.6rem; align-content: start; min-width: 0; }
+  .principal, .lateral-hoje { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.4rem; align-content: start; min-width: 0; }
+  section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-content: start; min-width: 0; }
   h2.rotulo { margin: 0; font-family: var(--fonte-texto); font-weight: 400; display: flex; gap: 0.6rem; align-items: baseline; }
   .feita { color: var(--ok); letter-spacing: 0.12em; }
 
