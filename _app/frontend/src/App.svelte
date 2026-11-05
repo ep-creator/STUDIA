@@ -93,7 +93,9 @@
 
   // Painel da matéria/unidade da rota (só recarrega quando muda a matéria ou a unidade pedida).
   $effect(() => {
-    const alvo = painelACarregar(rota, { uid: estadoMateria.uid, unidade: estadoMateria.unidade })
+    const alvo = painelACarregar(rota, {
+      uid: estadoMateria.uid, unidade: estadoMateria.unidade, unidades: estadoMateria.painel?.unidades.map((u) => u.numero) ?? null,
+    })
     if (alvo) void carregarPainel(alvo.uid, alvo.unidade)
   })
 
@@ -120,9 +122,10 @@
 {#if rota.tela === 'materias'}
   <Materias {materias} onmudou={() => void carregarMaterias()} />
 {:else}
+  <a class="pular" href="#conteudo" onclick={(e) => { e.preventDefault(); document.getElementById('conteudo')?.focus() }}>Pular para o conteúdo</a>
   <div class="app">
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />
-    <main class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
+    <main id="conteudo" tabindex="-1" class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
         {#if rota.tela === 'materia'}
           <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
@@ -136,7 +139,7 @@
             {#if rota.area === 'painel' || !painel.unidade}
               <Hoje {painel} />
             {:else if rota.area === 'listas'}
-              <Listas {painel} />
+              <Listas {painel} questao={rota.questao ?? null} />
             {:else if rota.area === 'topicos'}
               <Topicos {painel} topico={rota.topico ?? null} />
             {:else if rota.area === 'cronograma'}
@@ -170,6 +173,10 @@
 
 <style>
   .app { display: flex; min-height: 100vh; }
+  main:focus { outline: none; }
+  /* aparece só com o foco do teclado, no canto, por cima de tudo */
+  .pular { position: absolute; left: 0.75rem; top: -3rem; z-index: 70; padding: 0.4rem 0.9rem; border-radius: 999px; background: var(--texto); color: var(--fundo); text-decoration: none; }
+  .pular:focus { top: 0.75rem; }
   main { flex: 1; min-width: 0; padding: 0.5rem 2rem 3rem; }
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }

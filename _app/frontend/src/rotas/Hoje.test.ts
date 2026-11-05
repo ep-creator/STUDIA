@@ -71,8 +71,7 @@ test('questões da sessão por lista; clicar abre em Praticar', async () => {
   const sessao = await screen.findByRole('region', { name: /Sessão de hoje/ })
   const q18 = within(sessao).getByRole('button', { name: '15.5 #18' })
   await userEvent.click(q18)
-  expect(pedido.questao).toBe(160)
-  expect(location.hash).toBe('#/m/ab/u/3/listas')
+  expect(location.hash).toBe('#/m/ab/u/3/listas/160')
   expect(within(sessao).getByRole('button', { name: /L5 #8, errei/ })).toBeInTheDocument()
   expect(within(sessao).getByRole('button', { name: /15\.5 #11, resolução gravada/ })).toBeInTheDocument()
 })
@@ -83,7 +82,7 @@ test('a sessão começada mostra quantas faltam; a ação continua pela primeira
   expect(sessao).toHaveTextContent('2 de 3')
   expect(screen.getByRole('region', { name: 'Próximos 7 dias' })).toHaveTextContent('2/3')
   await userEvent.click(screen.getByRole('button', { name: 'Continuar pelas questões' }))
-  expect(pedido.questao).toBe(160)
+  expect(location.hash).toBe('#/m/ab/u/3/listas/160')
 })
 
 test('sessão feita: a ação forte passa a ser revisar o que ficou marcado', async () => {
@@ -93,8 +92,7 @@ test('sessão feita: a ação forte passa a ser revisar o que ficou marcado', as
   })
   render(Hoje, { painel: p3 })
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar 1 questão marcada' }))
-  expect(pedido.questao).toBe(4)
-  expect(location.hash).toBe('#/m/ab/u/1/listas')
+  expect(location.hash).toBe('#/m/ab/u/1/listas/4')
 })
 
 test('na reta final a ação forte é revisar, mesmo com a sessão por fazer', async () => {
@@ -109,8 +107,7 @@ test('para revisar junta todas as unidades e abre na unidade certa', async () =>
   const revisar = await screen.findByRole('region', { name: 'Para revisar' })
   expect(revisar).toHaveTextContent('1ª unidade')
   await userEvent.click(within(revisar).getByRole('button', { name: '14.1 #46, errei' }))
-  expect(pedido.questao).toBe(4)
-  expect(location.hash).toBe('#/m/ab/u/1/listas')
+  expect(location.hash).toBe('#/m/ab/u/1/listas/4')
 })
 
 test('próximos 7 dias e tópicos com estado derivado', async () => {

@@ -41,6 +41,12 @@ test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a mat
   expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], 'a')).toBe(false)
 })
 
+test('a questão aberta em Praticar fica no endereço', () => {
+  const rota = analisarRota('#/m/ab/u/1/listas/46')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 1, area: 'listas', questao: 46 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/1/listas/46')
+})
+
 test('página de um tópico tem endereço próprio', () => {
   const rota = analisarRota('#/m/ab/u/3/topicos/14')
   expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', topico: 14 })

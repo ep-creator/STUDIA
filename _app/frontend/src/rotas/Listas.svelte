@@ -9,7 +9,7 @@
   import { citaSecao } from '../apresentacao'
   import { montarHash } from './rota'
 
-  let { painel }: { painel: Painel } = $props()
+  let { painel, questao = null }: { painel: Painel; questao?: number | null } = $props()
 
   // Hoje (ou a busca) pode ter pedido uma questão específica; se for de outra unidade, ela chega quando o painel dela
   // carregar, então o pedido só é consumido quando a questão aparece aqui
@@ -17,6 +17,10 @@
   $effect(() => {
     const pedida = pedido.questao
     if (pedida !== null && painel.listas.some((l) => l.questoes.some((q) => q.id === pedida))) selecionada = consumirQuestao()
+  })
+  // a questão do endereço (#/…/listas/<id>): voltar, recarregar e favoritos reabrem a mesma
+  $effect(() => {
+    if (questao !== null) selecionada = questao
   })
   let menu = $state<HTMLElement>()
 
@@ -33,6 +37,12 @@
       if (q) return { lista: l, questao: q }
     }
     return null
+  })
+  // e a questão aberta vai para o endereço (sem empilhar no histórico a cada seta), só quando já está nesta unidade
+  $effect(() => {
+    if (!achada || painel.unidade === null) return
+    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', questao: achada.questao.id })
+    if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
   })
 
   // a ordem da grade: anterior e próxima andam por ela

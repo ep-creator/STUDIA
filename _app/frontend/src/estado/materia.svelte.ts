@@ -15,11 +15,13 @@ export const estadoMateria = $state<{
 /** Qual painel a rota pede, ou null se o que está carregado já serve. Outra matéria nunca herda a unidade da anterior. */
 export function painelACarregar(
   rota: Rota,
-  atual: { uid: string | null; unidade: number | null },
+  atual: { uid: string | null; unidade: number | null; unidades?: number[] | null },
 ): { uid: string; unidade: number | null } | null {
   if (rota.tela === 'materias') return null
   const pedida = rota.tela === 'materia' ? rota.unidade : null
   if (rota.uid !== atual.uid) return { uid: rota.uid, unidade: pedida }
+  // a unidade pedida não existe nesta matéria (já carregada): o motor devolveu a atual, pedir de novo seria um laço
+  if (pedida !== null && atual.unidades && !atual.unidades.includes(pedida)) return null
   if (pedida !== null && pedida !== atual.unidade) return { uid: rota.uid, unidade: pedida }
   return null
 }

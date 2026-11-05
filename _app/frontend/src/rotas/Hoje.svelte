@@ -32,8 +32,7 @@
     `${lista} #${rotulo}${estado ? `, ${NOME_MARCA[estado]}` : ''}${resolvida ? ', resolução gravada' : ''}`
 
   function abrirQuestao(id: number, unidade: number) {
-    pedido.questao = id
-    location.hash = href('listas', unidade)
+    location.hash = montarHash({ tela: 'materia', uid, unidade, area: 'listas', questao: id })
   }
   function abrirSecao(s: SecaoVinculada, unidade: number) {
     pedido.fonte = { id: s.fonte_id, pagina: s.pagina_pdf_ini }

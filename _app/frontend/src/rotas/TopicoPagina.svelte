@@ -37,8 +37,7 @@
   const href = (area: Area, unidade: number) => montarHash({ tela: 'materia', uid, unidade, area })
 
   function abrirQuestao(id: number, unidade: number) {
-    pedido.questao = id
-    location.hash = href('listas', unidade)
+    location.hash = montarHash({ tela: 'materia', uid, unidade, area: 'listas', questao: id })
   }
   function abrirSecao(s: SecaoVinculada) {
     pedido.fonte = { id: s.fonte_id, pagina: s.pagina_pdf_ini }
@@ -160,9 +159,12 @@
   .abas button { background: none; border: 0; padding: 0 0 2px; font: inherit; font-family: var(--fonte-titulo); color: var(--suave); border-bottom: 1.5px solid transparent; cursor: pointer; }
   .abas button.ativa { color: var(--texto); border-bottom-color: var(--destaque); }
   .editar { margin-top: 0.6rem; font-size: 0.9rem; }
+  /* o resumo traz o próprio título (# …): aqui ele fica um degrau abaixo do nome do tópico */
+  .leitura :global(.markdown h1) { font-size: 1.5rem; }
+  .leitura :global(.markdown h2) { font-size: 1.25rem; }
   .sem-resumo { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.25rem; }
 
-  .apoio { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; min-width: 0; }
+  .apoio { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; min-width: 0; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding-right: 0.4rem; }
   section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-content: start; min-width: 0; }
   h2.rotulo { margin: 0; font-family: var(--fonte-texto); font-weight: 400; }
   .lista { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.8rem; padding: 0.35rem 0; border-top: 1px solid var(--fio); }
