@@ -104,7 +104,7 @@
   .grade { display: grid; gap: 1rem; }
   header { display: flex; align-items: center; gap: 0.4rem 1rem; flex-wrap: wrap; }
   .assunto { display: flex; align-items: center; gap: 0.45rem; background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-align: left; }
-  .assunto:hover h3, .assunto:hover .seta { color: var(--destaque); }
+  .assunto:hover h3, .assunto:hover .seta { color: var(--destaque-texto); }
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
   h3 { transition: color var(--transicao); }
@@ -114,10 +114,12 @@
   /* Número solto: a marca aparece pela cor e por um traço embaixo; a questão aberta fica em negrito */
   .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.3rem; }
   .questao { min-width: 1.6rem; padding: 0 2px; background: none; border: 0; border-bottom: 2px solid transparent; font: inherit; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--suave); cursor: pointer; }
-  .questao:hover { color: var(--destaque); }
+  .questao:hover { color: var(--destaque-texto); }
   .questao.ok { color: var(--ok); border-bottom-color: var(--ok); }
   .questao.err { color: var(--err); border-bottom-color: var(--err); }
-  .questao.dub { color: var(--dub); border-bottom-color: var(--dub); }
+  .questao.dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
   .questao.selecionada { color: var(--texto); font-weight: 600; }
   .questao { outline: 2px solid transparent; outline-offset: 2px; }
+  /* o contorno transparente acima serve à animação do clique; com foco do teclado ele precisa aparecer, porque 1/2/3/0 gravam na questão focada */
+  .questao:focus-visible { outline-color: color-mix(in srgb, var(--destaque) 70%, transparent); }
 </style>

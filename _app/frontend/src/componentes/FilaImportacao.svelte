@@ -118,7 +118,7 @@
   li button:hover:not(.ativa) { border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .estado { font-size: 0.78rem; font-weight: 400; }
-  .revisar { color: var(--dub); }
+  .revisar { color: var(--dub-texto); }
   .pronto { color: var(--ok); }
   .confirmar { justify-self: start; }
 </style>

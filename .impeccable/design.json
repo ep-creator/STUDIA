@@ -1,55 +1,221 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T12:00:00-03:00",
+  "generatedAt": "2026-11-05T17:10:00-03:00",
   "title": "Design System: STUDIA",
   "extensions": {
     "colorMeta": {
-      "brasa": { "role": "primary", "displayName": "Laranja brasa", "canonical": "#d9572b", "tonalRamp": ["oklch(25% 0.06 40)", "oklch(35% 0.09 40)", "oklch(45% 0.13 40)", "oklch(55% 0.16 40)", "oklch(62% 0.17 42)", "oklch(72% 0.13 45)", "oklch(84% 0.07 50)", "oklch(94% 0.025 55)"] },
-      "brasa-noite": { "role": "primary", "displayName": "Laranja brasa (escuro)", "canonical": "#f07a45" },
-      "papel": { "role": "neutral", "displayName": "Papel", "canonical": "#f3ece0", "tonalRamp": ["oklch(18% 0.008 75)", "oklch(28% 0.01 75)", "oklch(40% 0.012 75)", "oklch(52% 0.014 75)", "oklch(64% 0.016 75)", "oklch(76% 0.018 78)", "oklch(88% 0.02 80)", "oklch(94.5% 0.018 80)"] },
-      "papel-lateral": { "role": "neutral", "displayName": "Papel da lateral", "canonical": "#ece3d3" },
-      "papel-elevado": { "role": "neutral", "displayName": "Papel elevado", "canonical": "#f8f2e8" },
-      "tinta": { "role": "neutral", "displayName": "Tinta", "canonical": "#141413" },
-      "tinta-suave": { "role": "neutral", "displayName": "Tinta suave", "canonical": "#5f5a52" },
-      "noite": { "role": "neutral", "displayName": "Noite", "canonical": "#191714" },
-      "noite-lateral": { "role": "neutral", "displayName": "Noite da lateral", "canonical": "#201d19" },
-      "noite-elevado": { "role": "neutral", "displayName": "Noite elevada", "canonical": "#221f1a" },
-      "giz": { "role": "neutral", "displayName": "Giz", "canonical": "#efe6d6" },
-      "giz-suave": { "role": "neutral", "displayName": "Giz suave", "canonical": "#b3a994" },
-      "acerto": { "role": "semantic", "displayName": "Acerto", "canonical": "#2e7d32" },
-      "erro": { "role": "semantic", "displayName": "Erro", "canonical": "#c62828" },
-      "duvida": { "role": "semantic", "displayName": "Dúvida", "canonical": "#f9a825" },
-      "acerto-noite": { "role": "semantic", "displayName": "Acerto (escuro)", "canonical": "#8fcf8f" },
-      "erro-noite": { "role": "semantic", "displayName": "Erro (escuro)", "canonical": "#f28b82" },
-      "duvida-noite": { "role": "semantic", "displayName": "Dúvida (escuro)", "canonical": "#f2c25b" }
+      "brasa": {
+        "role": "primary",
+        "displayName": "Laranja brasa",
+        "canonical": "#d9572b",
+        "tonalRamp": [
+          "oklch(25% 0.06 40)",
+          "oklch(35% 0.09 40)",
+          "oklch(45% 0.13 40)",
+          "oklch(55% 0.16 40)",
+          "oklch(62% 0.17 42)",
+          "oklch(72% 0.13 45)",
+          "oklch(84% 0.07 50)",
+          "oklch(94% 0.025 55)"
+        ]
+      },
+      "brasa-noite": {
+        "role": "primary",
+        "displayName": "Laranja brasa (escuro)",
+        "canonical": "#f07a45"
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "#f3ece0",
+        "tonalRamp": [
+          "oklch(18% 0.008 75)",
+          "oklch(28% 0.01 75)",
+          "oklch(40% 0.012 75)",
+          "oklch(52% 0.014 75)",
+          "oklch(64% 0.016 75)",
+          "oklch(76% 0.018 78)",
+          "oklch(88% 0.02 80)",
+          "oklch(94.5% 0.018 80)"
+        ]
+      },
+      "papel-lateral": {
+        "role": "neutral",
+        "displayName": "Papel da lateral",
+        "canonical": "#ece3d3"
+      },
+      "papel-elevado": {
+        "role": "neutral",
+        "displayName": "Papel elevado",
+        "canonical": "#f8f2e8"
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#141413"
+      },
+      "tinta-suave": {
+        "role": "neutral",
+        "displayName": "Tinta suave",
+        "canonical": "#5f5a52"
+      },
+      "noite": {
+        "role": "neutral",
+        "displayName": "Noite",
+        "canonical": "#191714"
+      },
+      "noite-lateral": {
+        "role": "neutral",
+        "displayName": "Noite da lateral",
+        "canonical": "#201d19"
+      },
+      "noite-elevado": {
+        "role": "neutral",
+        "displayName": "Noite elevada",
+        "canonical": "#221f1a"
+      },
+      "giz": {
+        "role": "neutral",
+        "displayName": "Giz",
+        "canonical": "#efe6d6"
+      },
+      "giz-suave": {
+        "role": "neutral",
+        "displayName": "Giz suave",
+        "canonical": "#b3a994"
+      },
+      "acerto": {
+        "role": "semantic",
+        "displayName": "Acerto",
+        "canonical": "#276d2c"
+      },
+      "erro": {
+        "role": "semantic",
+        "displayName": "Erro",
+        "canonical": "#c62828"
+      },
+      "duvida": {
+        "role": "semantic",
+        "displayName": "Dúvida",
+        "canonical": "#f9a825"
+      },
+      "acerto-noite": {
+        "role": "semantic",
+        "displayName": "Acerto (escuro)",
+        "canonical": "#8fcf8f"
+      },
+      "erro-noite": {
+        "role": "semantic",
+        "displayName": "Erro (escuro)",
+        "canonical": "#f28b82"
+      },
+      "duvida-noite": {
+        "role": "semantic",
+        "displayName": "Dúvida (escuro)",
+        "canonical": "#f2c25b"
+      },
+      "brasa-texto": {
+        "role": "primary",
+        "displayName": "Brasa de texto",
+        "canonical": "#ad3e18"
+      },
+      "duvida-texto": {
+        "role": "semantic",
+        "displayName": "Dúvida de texto",
+        "canonical": "#855800"
+      }
     },
     "derivedColors": [
-      { "name": "fio", "value": "color-mix(in srgb, var(--texto) 14%, transparent)", "purpose": "Separador de seções e faixas." },
-      { "name": "leve", "value": "color-mix(in srgb, var(--texto) 6%, transparent)", "purpose": "Fundo de ação suave, campo, bolha e seletor N1–N4." },
-      { "name": "realce", "value": "color-mix(in srgb, var(--destaque) 9%, transparent)", "purpose": "Hover discreto." }
+      {
+        "name": "fio",
+        "value": "color-mix(in srgb, var(--texto) 14%, transparent)",
+        "purpose": "Separador de seções e faixas."
+      },
+      {
+        "name": "leve",
+        "value": "color-mix(in srgb, var(--texto) 6%, transparent)",
+        "purpose": "Fundo de ação suave, campo, bolha e seletor N1–N4."
+      },
+      {
+        "name": "realce",
+        "value": "color-mix(in srgb, var(--destaque) 9%, transparent)",
+        "purpose": "Hover discreto."
+      }
     ],
     "typographyMeta": {
-      "display": { "displayName": "Número grande", "purpose": "Dias até a prova, x/y, porcentagens." },
-      "headline": { "displayName": "Questão aberta", "purpose": "Identificação da questão (14.1 #22)." },
-      "title": { "displayName": "Título serifado", "purpose": "Assuntos, listas, abas de unidade, próxima aula." },
-      "body": { "displayName": "Texto", "purpose": "Texto corrido, navegação, respostas do assistente." },
-      "small": { "displayName": "Secundário", "purpose": "Metadados, contagens, custo." },
-      "label": { "displayName": "Rótulo", "purpose": "Rótulos de seção em caixa alta." },
-      "marca": { "displayName": "Marca", "purpose": "Só o nome STUDIA, em caixa alta." }
+      "display": {
+        "displayName": "Número grande",
+        "purpose": "Dias até a prova, x/y, porcentagens."
+      },
+      "headline": {
+        "displayName": "Questão aberta",
+        "purpose": "Identificação da questão (14.1 #22)."
+      },
+      "title": {
+        "displayName": "Título serifado",
+        "purpose": "Assuntos, listas, abas de unidade, próxima aula."
+      },
+      "body": {
+        "displayName": "Texto",
+        "purpose": "Texto corrido, navegação, respostas do assistente."
+      },
+      "small": {
+        "displayName": "Secundário",
+        "purpose": "Metadados, contagens, custo."
+      },
+      "label": {
+        "displayName": "Rótulo",
+        "purpose": "Rótulos de seção em caixa alta."
+      },
+      "marca": {
+        "displayName": "Marca",
+        "purpose": "Só o nome STUDIA, em caixa alta."
+      }
     },
     "shadows": [
-      { "name": "gaveta", "value": "-18px 0 40px rgb(0 0 0 / 35%)", "purpose": "Gaveta da IA por cima da página." },
-      { "name": "menu", "value": "0 8px 24px rgb(0 0 0 / 30%)", "purpose": "Menu ···." },
-      { "name": "opcoes", "value": "0 12px 32px rgb(0 0 0 / 28%)", "purpose": "Lista aberta do seletor." },
-      { "name": "dialogo", "value": "0 24px 60px rgb(0 0 0 / 35%)", "purpose": "Busca da matéria." },
-      { "name": "aviso", "value": "0 4px 16px rgb(0 0 0 / 20%)", "purpose": "Avisos flutuantes." }
+      {
+        "name": "gaveta",
+        "value": "-18px 0 40px rgb(0 0 0 / 35%)",
+        "purpose": "Gaveta da IA por cima da página."
+      },
+      {
+        "name": "menu",
+        "value": "0 8px 24px rgb(0 0 0 / 30%)",
+        "purpose": "Menu ···."
+      },
+      {
+        "name": "opcoes",
+        "value": "0 12px 32px rgb(0 0 0 / 28%)",
+        "purpose": "Lista aberta do seletor."
+      },
+      {
+        "name": "dialogo",
+        "value": "0 24px 60px rgb(0 0 0 / 35%)",
+        "purpose": "Busca da matéria."
+      },
+      {
+        "name": "aviso",
+        "value": "0 4px 16px rgb(0 0 0 / 20%)",
+        "purpose": "Avisos flutuantes."
+      }
     ],
     "motion": [
-      { "name": "transicao", "value": "160ms ease", "purpose": "Cor, fundo, borda e opacidade em hover/foco; desligada com prefers-reduced-motion." },
-      { "name": "surgir", "value": "120ms ease-out, translateY(-4px) → 0", "purpose": "Abertura de listas de opções." }
+      {
+        "name": "transicao",
+        "value": "160ms ease",
+        "purpose": "Cor, fundo, borda e opacidade em hover/foco; desligada com prefers-reduced-motion."
+      },
+      {
+        "name": "surgir",
+        "value": "120ms ease-out, translateY(-4px) → 0",
+        "purpose": "Abertura de listas de opções."
+      }
     ],
     "breakpoints": [
-      { "name": "painel-empilha", "value": "1100px" }
+      {
+        "name": "painel-empilha",
+        "value": "1100px"
+      }
     ]
   },
   "components": [
@@ -133,11 +299,36 @@
       "Dois temas de igual peso: Editorial claro e Editorial escuro."
     ],
     "rules": [
-      { "name": "The Um Sinal Rule", "body": "O laranja brasa marca uma coisa por região: o ativo, o próximo, o foco. Se dois elementos vizinhos pedem laranja, um deles está errado.", "section": "colors" },
-      { "name": "The Cor É Dado Rule", "body": "Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.", "section": "colors" },
-      { "name": "The Serifa Nomeia Rule", "body": "Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.", "section": "typography" },
-      { "name": "The Fio Único Rule", "body": "Nunca dois fios encostados: um elemento logo depois de outro com fio não ganha o seu.", "section": "layout" },
-      { "name": "The Só Flutua Rule", "body": "Nada que está no fluxo da página tem sombra. Se tem sombra, está por cima de algo.", "section": "elevation" }
+      {
+        "name": "The Um Sinal Rule",
+        "body": "O laranja brasa marca uma coisa por região: o ativo, o próximo, o foco. Se dois elementos vizinhos pedem laranja, um deles está errado.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cor É Dado Rule",
+        "body": "Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.",
+        "section": "colors"
+      },
+      {
+        "name": "The Letra Legível Rule",
+        "body": "Toda cor usada em letra passa de 4,5:1 no papel e na noite. Se o tom da marca não passa, ele ganha uma variante `-texto` e fica só para traços e superfícies.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serifa Nomeia Rule",
+        "body": "Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fio Único Rule",
+        "body": "Nunca dois fios encostados: um elemento logo depois de outro com fio não ganha o seu.",
+        "section": "layout"
+      },
+      {
+        "name": "The Só Flutua Rule",
+        "body": "Nada que está no fluxo da página tem sombra. Se tem sombra, está por cima de algo.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do separar seções com um rótulo em caixa alta (0.7rem, tracking 0.12em) e um fio de 1px (texto a 14%).",
@@ -146,6 +337,8 @@
       "Do escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.",
       "Do deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.",
       "Do derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.",
+      "Do usar `--destaque-texto` e `--dub-texto` sempre que a cor for de letra; `--destaque` e `--dub` só em traços, fundos e números grandes.",
+      "Do deixar a contagem da prova em brasa só com 7 dias ou menos; no dia, \"hoje\" e a frase \"Boa prova.\".",
       "Do transições curtas (160ms ease) e respeitar `prefers-reduced-motion`."
     ],
     "donts": [

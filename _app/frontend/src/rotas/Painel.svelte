@@ -64,5 +64,5 @@
     .faixa, .faixa.topo { grid-template-columns: 1fr; gap: 1.6rem; }
     .faixa.topo > :global(section[aria-label='Tópicos vistos']) { grid-column: auto; }
   }
-  .pendencias { display: inline-block; margin-bottom: 0.8rem; color: var(--destaque); }
+  .pendencias { display: inline-block; margin-bottom: 0.8rem; color: var(--destaque-texto); }
 </style>

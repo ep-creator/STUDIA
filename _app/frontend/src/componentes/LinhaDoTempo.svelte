@@ -47,8 +47,8 @@
   .linha { list-style: none; margin: 0; padding: 0; }
   li { display: flex; align-items: baseline; gap: 0.9rem; padding: 0.5rem 0; border-bottom: 1px solid var(--fio); }
   .quando { width: 8.5rem; flex: none; color: var(--suave); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-  .hoje .quando { color: var(--destaque); }
-  .prova .quando, .prova .evento { color: var(--destaque); font-weight: 600; }
+  .hoje .quando { color: var(--destaque-texto); }
+  .prova .quando, .prova .evento { color: var(--destaque-texto); font-weight: 600; }
   .passado { opacity: 0.6; }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }

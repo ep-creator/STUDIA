@@ -95,18 +95,18 @@
 
   .grupo { display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.2rem; margin-top: 0.15rem; }
   .grupo .rotulo { margin: 0; }
-  .grupo:hover .rotulo, .grupo:hover .seta { color: var(--destaque); }
+  .grupo:hover .rotulo, .grupo:hover .seta { color: var(--destaque-texto); }
   .seta { width: 0.75rem; height: 0.75rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
   .conta { margin-left: auto; font-size: 0.72rem; color: var(--suave); }
 
   .item { padding: 0.2rem 0.4rem; }
   .item.ativo { font-weight: 600; }
-  .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque); }
+  .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque-texto); }
   .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   .ia {
     display: inline-block; margin-left: 0.4rem; padding: 0 0.3rem; border-radius: 4px; vertical-align: 0.1em;
-    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque);
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque-texto);
     border: 1px solid color-mix(in srgb, var(--destaque) 55%, transparent);
   }
 </style>

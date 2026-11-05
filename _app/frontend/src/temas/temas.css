@@ -6,9 +6,11 @@
   --fonte-texto: 'Inter Variable', system-ui, sans-serif;
   --fonte-titulo: 'Fraunces Variable', Georgia, serif;
   --raio: 4px;
-  --ok: #2e7d32;
+  --ok: #276d2c;
   --err: #c62828;
   --dub: #f9a825;
+  /* o amarelo da dúvida não se lê como texto no papel: nos traços fica --dub, nas letras --dub-texto */
+  --dub-texto: #855800;
   --texto-sobre-destaque: #fff;
 }
 
@@ -21,6 +23,8 @@
   --texto: #141413;
   --suave: #5f5a52;
   --destaque: #d9572b;
+  /* a brasa em letra precisa ser mais funda que a dos traços para ler no papel (≥ 4,5:1) */
+  --destaque-texto: #ad3e18;
 }
 
 :root[data-tema='editorial-escuro'] {
@@ -31,10 +35,12 @@
   --texto: #efe6d6;
   --suave: #b3a994;
   --destaque: #f07a45;
+  --destaque-texto: #f07a45;
   --texto-sobre-destaque: #191714;
   --ok: #8fcf8f;
   --err: #f28b82;
   --dub: #f2c25b;
+  --dub-texto: #f2c25b;
 }
 
 * { box-sizing: border-box; }
@@ -81,6 +87,8 @@ html, body {
 h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* texto de exemplo dos campos na cor secundária do tema, não no cinza do navegador */
+::placeholder { color: var(--suave); opacity: 1; }
 
 
 .cartao { background: transparent; border: 0; padding: 0; }

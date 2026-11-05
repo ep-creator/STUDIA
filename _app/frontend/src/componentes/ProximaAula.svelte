@@ -31,6 +31,6 @@
 <style>
   .aula { display: grid; gap: 0.35rem; align-content: start; }
   .titulo { font-family: var(--fonte-titulo); font-size: 1.25rem; line-height: 1.25; text-decoration: none; margin-top: 0.3rem; }
-  .titulo:hover { color: var(--destaque); }
+  .titulo:hover { color: var(--destaque-texto); }
   .acao-texto { justify-self: start; font-size: 0.85rem; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--destaque) 55%, transparent); }
 </style>

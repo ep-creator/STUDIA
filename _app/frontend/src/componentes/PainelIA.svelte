@@ -20,7 +20,8 @@
   const NOMES: Record<string, string> = {
     N1: 'N1 Dica', N2: 'N2 Caminho', N3: 'N3 Esboço', N4: 'N4 Resolução', resumir: 'Resumir a seção', plano: 'Plano de revisão',
   }
-  const CURTOS: Record<string, string> = { N1: 'N1', N2: 'N2', N3: 'N3', N4: 'N4' }   // o nome inteiro fica na dica
+  // no seletor aparece o que cada nível dá; o número (N1…N4) fica no nome acessível, na dica e na bolha do pedido
+  const CURTOS: Record<string, string> = { N1: 'Dica', N2: 'Caminho', N3: 'Esboço', N4: 'Resolução' }
   type Gravado = { tipo: string; id: number; titulo: string; grupo_id: number; historico?: boolean }
   type Item = { autor: string; texto: string; gravado?: Gravado }
 
@@ -30,6 +31,7 @@
   let aviso = $state<string | null>(null)       // o que a ferramenta está fazendo
   let ultimoCusto = $state<number | null>(null)
   let confirmar = $state<{ pedido: PedidoAgente; total: number; teto: number } | null>(null)
+  let confirmarResolucao = $state(false)   // N4 entrega a questão pronta: pergunta antes de pedir
   let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number; motivo?: string } | null>(null)
   let escrita = $state('')
   let fontes: FonteResumo[] | null = null
@@ -55,6 +57,7 @@
     respondendo = false
     aviso = null
     confirmar = null
+    confirmarResolucao = false
     falha = null
     void carregar().then(() => {
       if (ia.pendente && ia.alvo === alvo) {
@@ -94,6 +97,7 @@
     if (falha) itens = itens.slice(0, falha.inicio)
     falha = null
     confirmar = null
+    confirmarResolucao = false
     const inicio = itens.length
     itens.push({ autor: 'voce', texto: p.texto ?? NOMES[p.atalho ?? ''] ?? '' })
     itens.push({ autor: 'agente', texto: '' })
@@ -133,7 +137,11 @@
   // N1–N4 formam um seletor só (o último pedido fica em destaque); os outros papéis têm um atalho solto
   const niveis = $derived(atalhos.length > 1 && atalhos.every((a) => /^N\d$/.test(a)))
   let ultimoAtalho = $state<string | null>(null)
-  const atalho = (a: string) => { ultimoAtalho = a; void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false }) }
+  const pedirAtalho = (a: string) => { ultimoAtalho = a; void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false }) }
+  const atalho = (a: string) => {
+    if (a === 'N4') confirmarResolucao = true
+    else pedirAtalho(a)
+  }
 
   function mandar(e: SubmitEvent) {
     e.preventDefault()
@@ -228,6 +236,14 @@
     <ConfigurarChave onsalvo={() => ia.versaoChave++} />
   {/if}
 
+  {#if confirmarResolucao}
+    <div class="alerta" role="alert">
+      <p>A resolução completa entrega a questão pronta e fica gravada.</p>
+      <button class="acao-suave" onclick={() => pedirAtalho('N4')}>Pedir a resolução</button>
+      <button class="acao-texto" onclick={() => (confirmarResolucao = false)}>Cancelar</button>
+    </div>
+  {/if}
+
   <div class="conversa" class:vazia={!itens.length && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
     {#each itens as item, i (i)}
       {#if item.gravado}
@@ -302,6 +318,6 @@
   :global(.gaveta) form { background: var(--lateral); }
   .envio { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .custo { font-size: 0.78rem; }
-  .enviar { color: var(--destaque); font-weight: 500; }
+  .enviar { color: var(--destaque-texto); font-weight: 500; }
   textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 0; border-radius: 8px; padding: 0.5rem 0.7rem; background: var(--leve); color: var(--texto); font: inherit; }
 </style>

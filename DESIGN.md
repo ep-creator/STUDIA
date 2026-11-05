@@ -4,6 +4,7 @@ description: Plataforma de estudos local para exatas — papel creme, tinta escu
 colors:
   brasa: "#d9572b"
   brasa-noite: "#f07a45"
+  brasa-texto: "#ad3e18"
   papel: "#f3ece0"
   papel-lateral: "#ece3d3"
   papel-elevado: "#f8f2e8"
@@ -14,9 +15,10 @@ colors:
   noite-elevado: "#221f1a"
   giz: "#efe6d6"
   giz-suave: "#b3a994"
-  acerto: "#2e7d32"
+  acerto: "#276d2c"
   erro: "#c62828"
   duvida: "#f9a825"
+  duvida-texto: "#855800"
   acerto-noite: "#8fcf8f"
   erro-noite: "#f28b82"
   duvida-noite: "#f2c25b"
@@ -128,7 +130,7 @@ O laranja brasa é o sinal único de "aqui" e "agora": o item ativo, a aba atual
 Uma paleta de papel e tinta, quente nos dois temas, com um único laranja brasa e três cores semânticas reservadas à marcação de questões.
 
 ### Primary
-- **Laranja brasa** (`brasa` no claro, `brasa-noite` no escuro): o sinal de "aqui/agora". Traço de 2px do item ativo na barra lateral e nas listas verticais, sublinhado da aba ativa (1ª 2ª 3ª, Claro/Escuro/Sistema), sublinhado de hover das ações de texto, "Enviar ↵", a seta da próxima aula, o fundo de hover da ação forte e o anel de foco (a 70%).
+- **Laranja brasa** (`brasa` no claro, `brasa-noite` no escuro). Em letra no tema claro usa-se **brasa de texto** (`brasa-texto`), mais funda, para passar de 4,5:1 no papel; traços, foco, fundos e números grandes ficam com a brasa normal. No escuro as duas são iguais. Usos: o sinal de "aqui/agora". Traço de 2px do item ativo na barra lateral e nas listas verticais, sublinhado da aba ativa (1ª 2ª 3ª, Claro/Escuro/Sistema), sublinhado de hover das ações de texto, "Enviar ↵", a seta da próxima aula, o fundo de hover da ação forte e o anel de foco (a 70%).
 
 ### Neutral
 - **Papel** (`papel`): fundo da página no tema claro.
@@ -144,10 +146,12 @@ Três tons derivados do texto, sempre por mistura e nunca como hex fixo: **fio**
 ### Semânticas (só marcação)
 - **Acerto** (`acerto` / `acerto-noite`): questão acertada, tópico visto, selo "pronto", progresso.
 - **Erro** (`erro` / `erro-noite`): questão errada, parte vermelha do fio de desempenho, hover de "apagar".
-- **Dúvida** (`duvida` / `duvida-noite`): questão em dúvida, selo "revisar".
+- **Dúvida** (`duvida` / `duvida-noite`): questão em dúvida, selo "revisar". No tema claro o amarelo não se lê como letra: traços usam `duvida`, texto usa **dúvida de texto** (`duvida-texto`).
 
 ### Named Rules
 **The Um Sinal Rule.** O laranja brasa marca uma coisa por região: o ativo, o próximo, o foco. Se dois elementos vizinhos pedem laranja, um deles está errado.
+
+**The Letra Legível Rule.** Toda cor usada em letra passa de 4,5:1 no papel e na noite. Se o tom da marca não passa, ele ganha uma variante `-texto` e fica só para traços e superfícies.
 
 **The Cor É Dado Rule.** Verde, vermelho e amarelo só aparecem quando dizem algo sobre a marcação do aluno. Nunca como decoração, categoria ou ênfase.
 
@@ -198,7 +202,7 @@ Plano por padrão. A profundidade vem de tons (fundo → lateral → elevado, um
 
 ## Shapes
 
-Formas mínimas: a maior parte da interface não tem forma nenhuma, só texto. Onde existe superfície, ela é pílula (ações suaves e fortes, busca, seletor N1–N4) ou um retângulo de cantos discretos — 8px nos campos, 10px na bolha da pergunta do aluno, 6px em menus, 4px no seletor. Indicadores de estado são traços retos: 2px à esquerda (item ativo), 2px embaixo (número de questão marcado), 1.5px embaixo (aba ativa, marcação Acertei/Errei/Dúvida).
+Formas mínimas: a maior parte da interface não tem forma nenhuma, só texto. Onde existe superfície, ela é pílula (ações suaves e fortes, busca, seletor de nível) ou um retângulo de cantos discretos — 8px nos campos, 10px na bolha da pergunta do aluno, 6px em menus, 4px no seletor. Indicadores de estado são traços retos: 2px à esquerda (item ativo), 2px embaixo (número de questão marcado), 1.5px embaixo (aba ativa, marcação Acertei/Errei/Dúvida).
 
 ## Components
 
@@ -229,7 +233,7 @@ Precisos e discretos: formas mínimas e alinhadas, sem enfeite, com o estado sem
 - **Abas de unidade (1ª 2ª 3ª):** Fraunces 1.05rem, tinta suave; ativa em tinta com traço brasa de 1.5px embaixo.
 
 ### Gaveta da IA (signature)
-Painel de 24rem que desliza da direita por cima da página (não a espreme), fundo papel da lateral, fio à esquerda e a sombra de gaveta. Dentro: seletor de nível **N1 N2 N3 N4** numa única pílula leve com o ativo em fundo mais forte, menu `···` ao lado, a pergunta do aluno numa bolha leve de 10px alinhada à direita, a resposta em texto corrido, e o campo preso ao pé com o custo do mês em 0.78rem e "Enviar ↵" em brasa.
+Painel de 24rem que desliza da direita por cima da página (não a espreme), fundo papel da lateral, fio à esquerda e a sombra de gaveta. Dentro: seletor de nível **Dica · Caminho · Esboço · Resolução** (N1–N4 no nome acessível) numa única pílula leve com o ativo em fundo mais forte; **Resolução** abre antes uma confirmação de uma linha, menu `···` ao lado, a pergunta do aluno numa bolha leve de 10px alinhada à direita, a resposta em texto corrido, e o campo preso ao pé com o custo do mês em 0.78rem e "Enviar ↵" em brasa.
 
 ### Linha com ações ocultas
 Linhas de Tópicos, Cronograma, Formulário e Histórico mostram ↑ ↓ editar e `···` só no hover, no foco por teclado ou com o menu aberto (transição de opacidade de 160ms).
@@ -243,6 +247,8 @@ Linhas de Tópicos, Cronograma, Formulário e Histórico mostram ↑ ↓ editar 
 - **Do** escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.
 - **Do** deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.
 - **Do** derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.
+- **Do** usar `--destaque-texto` e `--dub-texto` sempre que a cor for de letra; `--destaque` e `--dub` só em traços, fundos e números grandes.
+- **Do** deixar a contagem da prova em brasa só com 7 dias ou menos; no dia, "hoje" e a frase "Boa prova.".
 - **Do** transições curtas (160ms ease) e respeitar `prefers-reduced-motion`.
 
 ### Don't:

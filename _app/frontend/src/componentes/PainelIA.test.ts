@@ -39,6 +39,12 @@ const RESPOSTA = [
   { tipo: 'fim', dados: { custo_brl: 0.04, total_mes: 1.54, tokens_entrada: 10, tokens_saida: 5 } },
 ]
 
+// N4 pede confirmação antes de gastar e entregar a questão pronta
+async function pedirResolucao() {
+  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Pedir a resolução' }))
+}
+
 beforeEach(() => {
   estadoMateria.uid = 'u1'
   estadoMateria.unidade = 3
@@ -74,7 +80,7 @@ test('o que foi gravado aparece com Abrir e Desfazer', async () => {
   motor({ respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
     { tipo: 'texto', dados: { texto: 'Gravei.' } }, { tipo: 'fim', dados: { custo_brl: 0.01, total_mes: 1.51 } }]] })
   abrir()
-  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await pedirResolucao()
   expect(await screen.findByText(/Resolução L1-3 salva/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Desfazer' }))
   await waitFor(() => expect(pedidos.some((p) => p.metodo === 'POST' && p.url.includes('/historico/desfazer'))).toBe(true))
@@ -84,7 +90,7 @@ test('com outra ação depois, Desfazer vira Abrir o Histórico', async () => {
   motor({ historicoTopo: 80, respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
     { tipo: 'fim', dados: { custo_brl: 0, total_mes: 1.5 } }]] })
   abrir()
-  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await pedirResolucao()
   await userEvent.click(await screen.findByRole('button', { name: 'Desfazer' }))
   expect(await screen.findByRole('link', { name: /Abrir o Histórico/ })).toBeInTheDocument()
   expect(pedidos.some((p) => p.url.includes('/historico/desfazer'))).toBe(false)
@@ -108,11 +114,11 @@ test('sem chave: só a caixa da API key, que salva com Enter', async () => {
   expect(screen.queryByText(/Google AI Studio/)).toBeNull()
 })
 
-test('atalhos aparecem curtos (N1…N4) e não há Copiar o contexto', async () => {
+test('níveis mostram o nome do que dão (Dica…Resolução) e não há Copiar o contexto', async () => {
   motor()
   abrir()
   const n2 = await screen.findByRole('button', { name: 'N2 Caminho' })
-  expect(n2).toHaveTextContent(/^N2$/)
+  expect(n2).toHaveTextContent(/^Caminho$/)
   expect(screen.queryByRole('button', { name: /Copiar o contexto/ })).toBeNull()
 })
 
@@ -216,7 +222,28 @@ test('depois que o agente grava, o painel é recarregado (o Ver resolução apar
   motor({ respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
     { tipo: 'texto', dados: { texto: 'Gravei: resposta π/4.' } }, { tipo: 'fim', dados: { custo_brl: 0.01, total_mes: 1.51 } }]] })
   abrir()
-  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await pedirResolucao()
   await screen.findByText(/Resolução L1-3 salva/)
   await waitFor(() => expect(pedidos.some((p) => p.metodo === 'GET' && p.url.includes('/api/materias/u1/painel'))).toBe(true))
+})
+
+test('N4 pergunta antes: Cancelar não envia nada, Pedir a resolução envia', async () => {
+  motor({ respostas: [RESPOSTA] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  expect(screen.getByText(/entrega a questão pronta/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  expect(screen.queryByText(/entrega a questão pronta/)).toBeNull()
+  expect(pedidos.some((p) => p.url.includes('/agente/mensagem'))).toBe(false)
+  await pedirResolucao()
+  await waitFor(() => expect(pedidos.find((p) => p.url.includes('/agente/mensagem'))?.corpo)
+    .toEqual({ alvo: 'questao:5', papel: 'tutor', atalho: 'N4', confirmado: false }))
+})
+
+test('N1–N3 continuam enviando direto, sem pergunta', async () => {
+  motor({ respostas: [RESPOSTA] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N3 Esboço/ }))
+  await waitFor(() => expect(pedidos.some((p) => p.url.includes('/agente/mensagem'))).toBe(true))
+  expect(screen.queryByText(/entrega a questão pronta/)).toBeNull()
 })

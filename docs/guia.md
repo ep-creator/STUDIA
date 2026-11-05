@@ -69,7 +69,8 @@ do fim e aperte Enter.
 - **Teclado**: setas andam entre as questões; **1** acertei, **2** errei, **3** dúvida, **0** limpa.
 - **Ver no livro**: o enunciado original do livro e a resposta do gabarito, quando a questão é um exercício do livro.
 - **Ver resolução**: a resolução gravada, quando existe (fica escondida até você pedir, para não estragar a tentativa).
-- **N1 N2 N3 N4**: pedem ajuda ao assistente, do mais leve ao mais completo (veja abaixo).
+- **Dica · Caminho · Esboço · Resolução** (os níveis N1 a N4): pedem ajuda ao assistente, do mais leve ao mais completo
+  (veja abaixo). **Resolução** pergunta antes de pedir, porque entrega a questão pronta.
 
 <img src="imagens/listas.png" alt="Tela de Listas com a questão 14.1 #22 aberta" width="760">
 

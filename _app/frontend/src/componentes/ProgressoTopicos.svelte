@@ -37,6 +37,6 @@
   li { display: flex; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.92rem; break-inside: avoid; }
   .marca { width: 1rem; flex: none; text-align: center; font-size: 0.8rem; }
   .visto .marca { color: var(--ok); }
-  .proxima .marca { color: var(--destaque); }
+  .proxima .marca { color: var(--destaque-texto); }
   .pendente .marca { color: var(--suave); }
 </style>

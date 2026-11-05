@@ -110,7 +110,6 @@
     transition: border-color 150ms ease, box-shadow 150ms ease;
   }
   .gatilho:hover, .gatilho[aria-expanded='true'] { border-color: var(--destaque); }
-  .gatilho:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--destaque) 30%, transparent); }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vazio { color: var(--suave); }
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; opacity: 0.6; transition: transform 150ms ease; }
@@ -134,7 +133,7 @@
   li.ativo { background: color-mix(in srgb, var(--destaque) 14%, transparent); }
   li[aria-selected='true'] { font-weight: 600; }
   .detalhe { color: var(--suave); font-size: 0.85em; }
-  .marca { margin-left: auto; color: var(--destaque); }
+  .marca { margin-left: auto; color: var(--destaque-texto); }
   .opcoes { border-radius: 4px; }
   .gatilho { border-radius: 4px; }
 

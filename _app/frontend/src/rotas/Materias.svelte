@@ -1,7 +1,7 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
   import type { MateriaApagada, MateriaCriada, ResumoMateria } from '../api/tipos'
-  import { dataPorExtenso, nomeUnidade, proximaProvaGeral, saudacao, textoContagem } from '../apresentacao'
+  import { dataPorExtenso, nomeUnidade, provaPerto, proximaProvaGeral, saudacao, textoContagem } from '../apresentacao'
   import Abertura, { deveAbrir } from '../componentes/Abertura.svelte'
   import CartaoMateria from '../componentes/CartaoMateria.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
@@ -65,7 +65,7 @@
     <p class="resumo aparece" style="--i: 2">
       {#if proxima?.proxima_prova}
         Próxima prova: <b>{proxima.nome}</b>{proxima.proxima_prova.unidade ? `, ${nomeUnidade(proxima.proxima_prova.unidade)}` : ''}
-        — <span class="contagem">{quando}</span>.
+        — <span class="contagem" class:perto={provaPerto(proxima.proxima_prova, agora)}>{quando}</span>.
       {:else if materias.length > 0}
         Nenhuma prova marcada por enquanto.
       {:else}
@@ -112,8 +112,9 @@
   h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 0.9rem; letter-spacing: -0.01em; }
   .resumo { margin: 0; font-size: 1.1rem; color: var(--suave); max-width: 40rem; }
   .resumo b { color: var(--texto); font-weight: 600; }
-  .contagem { color: var(--destaque); font-weight: 600; }
-  .pendentes { display: block; margin-top: 0.3rem; color: var(--destaque); font-size: 0.95rem; }
+  .contagem { font-weight: 600; }
+  .contagem.perto { color: var(--destaque-texto); }
+  .pendentes { display: block; margin-top: 0.3rem; color: var(--destaque-texto); font-size: 0.95rem; }
 
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
   h2 { font-size: 1.35rem; margin: 0; display: flex; align-items: center; gap: 0.6rem; }

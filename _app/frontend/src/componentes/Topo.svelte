@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import type { Painel } from '../api/tipos'
-  import { ordinal, textoTopoProva } from '../apresentacao'
+  import { ordinal, provaPerto, textoTopoProva } from '../apresentacao'
   import { montarHash, type Area } from '../rotas/rota'
   import { busca } from '../estado/busca.svelte'
 
@@ -25,7 +25,7 @@
       >{ordinal(u.numero)}</a>
     {/each}
   </nav>
-  {#if unidade}<span class="suave contagem">{textoTopoProva(prova, hoje)}</span>{/if}
+  {#if unidade}<span class="suave contagem" class:perto={provaPerto(prova, hoje)}>{textoTopoProva(prova, hoje)}</span>{/if}
   <button class="buscar" onclick={() => (busca.aberta = true)} aria-label="Buscar na matéria (Ctrl K)">
     <span>Buscar na matéria…</span><kbd>Ctrl K</kbd>
   </button>
@@ -45,5 +45,6 @@
     border-radius: 999px; padding: 0.3rem 0.5rem 0.3rem 0.9rem; cursor: pointer;
   }
   .buscar:hover { color: var(--texto); }
-  kbd { font-family: var(--fonte-texto); font-size: 0.72rem; opacity: 0.7; }
+  kbd { font-family: var(--fonte-texto); font-size: 0.72rem; }
+  .contagem.perto { color: var(--destaque-texto); }
 </style>

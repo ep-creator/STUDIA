@@ -66,7 +66,7 @@
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }
   a.ativa { background: var(--cartao); font-weight: 600; }
-  ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque); }
+  ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque-texto); }
   ul a { border-left: 2px solid transparent; border-radius: 0; }
   ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }

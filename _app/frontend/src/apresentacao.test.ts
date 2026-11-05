@@ -37,6 +37,17 @@ test('texto da prova no topo', async () => {
   expect(textoTopoProva(null, hoje)).toBe('Sem data de prova')
 })
 
+test('prova perto: de hoje até 7 dias, nunca depois de passar', async () => {
+  const { provaPerto } = await import('./apresentacao')
+  const hoje = new Date(2026, 9, 22, 21, 0)
+  const em = (data: string) => provaPerto({ data, hora_inicio: null }, hoje)
+  expect(em('2026-10-22')).toBe(true)    // hoje
+  expect(em('2026-10-29')).toBe(true)    // 7 dias
+  expect(em('2026-10-30')).toBe(false)   // 8 dias
+  expect(em('2026-10-21')).toBe(false)   // já passou
+  expect(provaPerto(null, hoje)).toBe(false)
+})
+
 test('ordem natural de nomes', async () => {
   const { compararNomes } = await import('./apresentacao')
   expect(['Aula 10', 'Aula 2', 'Aula 1'].sort(compararNomes)).toEqual(['Aula 1', 'Aula 2', 'Aula 10'])

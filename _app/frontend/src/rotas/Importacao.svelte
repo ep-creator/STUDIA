@@ -158,5 +158,5 @@
   .cabeca { position: relative; z-index: 2; }
   .corpo { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
   footer { display: flex; gap: 1.1rem; align-items: center; margin-top: 1.25rem; }
-  .pendencias { color: var(--dub); font-size: 0.85rem; }
+  .pendencias { color: var(--dub-texto); font-size: 0.85rem; }
 </style>

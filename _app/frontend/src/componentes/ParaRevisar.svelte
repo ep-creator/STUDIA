@@ -41,8 +41,8 @@
   /* só os números, no estilo da grade das Listas */
   .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
   .questao { padding: 0 2px; text-decoration: none; font-variant-numeric: tabular-nums; border-bottom: 2px solid transparent; }
-  .questao:hover { color: var(--destaque); }
+  .questao:hover { color: var(--destaque-texto); }
   .questao.err { color: var(--err); border-bottom-color: var(--err); }
-  .questao.dub { color: var(--dub); border-bottom-color: var(--dub); }
+  .questao.dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
   p { margin: 0; }
 </style>

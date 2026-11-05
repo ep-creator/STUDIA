@@ -27,7 +27,14 @@ export function textoContagem(prova: { data: string; hora_inicio: string | null 
   return `${dias} dias`
 }
 
-const DIAS_SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
+/** A prova está perto (de hoje até 7 dias): a contagem passa a falar em laranja brasa. */
+export function provaPerto(prova: { data: string; hora_inicio: string | null } | null, hoje: Date): boolean {
+  if (!prova) return false
+  const dias = diasAte(prova.data, hoje)
+  return dias >= 0 && dias <= 7
+}
+
+const DIAS_SEMANA =['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 
 /** "seg 14/09" (e " · 14:30" quando há hora). */
 export function dataCurta(data: string, hora?: string | null): string {

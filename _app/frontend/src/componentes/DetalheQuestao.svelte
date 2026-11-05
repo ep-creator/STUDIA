@@ -123,6 +123,6 @@
   .marca[aria-pressed='true'] { font-weight: 500; }
   .marca[aria-pressed='true'].ok { color: var(--ok); border-bottom-color: var(--ok); }
   .marca[aria-pressed='true'].err { color: var(--err); border-bottom-color: var(--err); }
-  .marca[aria-pressed='true'].dub { color: var(--dub); border-bottom-color: var(--dub); }
+  .marca[aria-pressed='true'].dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
   a.acao-texto { justify-self: start; }
 </style>

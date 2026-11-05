@@ -47,7 +47,7 @@
   .descricao { flex: 1; }
   .acoes-linha { font-size: 0.85rem; }
   .acoes-linha.fixas { opacity: 1; }
-  .desfazer { color: var(--destaque); font-size: 0.85rem; }
+  .desfazer { color: var(--destaque-texto); font-size: 0.85rem; }
   .desfeito .descricao { text-decoration: line-through; color: var(--suave); }
   .ehDesfazer .descricao { color: var(--suave); }
 </style>
