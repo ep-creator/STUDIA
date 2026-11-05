@@ -123,10 +123,12 @@ test('sem sessão no plano: frase curta e o caminho para o plano', async () => {
   resposta = dados({ sessao: null, proximos: [] })
   render(Hoje, { painel: p3 })
   expect(await screen.findByText(/Nenhuma sessão marcada/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Abrir o plano' })).toHaveAttribute('href', '#/m/ab/u/3/cronograma')
 })
 
 test('matéria vazia leva a adicionar material', async () => {
   resposta = dados({ unidade: null, prova: null, sessao: null, proximos: [], revisar: [], topicos: [] })
   render(Hoje, { painel: painelVazio })
-  await waitFor(() => expect(screen.getByRole('link', { name: /Adicionar material/ })).toHaveAttribute('href', '#/m/ab/importar'))
+  await waitFor(() => expect(screen.getByRole('region', { name: 'Primeiros passos' })).toBeInTheDocument())
+  expect(screen.getByRole('link', { name: /Adicionar material/ })).toHaveAttribute('href', '#/m/ab/importar')
 })

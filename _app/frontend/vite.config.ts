@@ -21,5 +21,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
     setupFiles: ['src/teste-setup.ts'],
+    // com a máquina ocupada (motor e navegador abertos) o jsdom passa de 5 s em testes que esperam a rede simulada
+    testTimeout: 15_000,
   },
 })

@@ -4,6 +4,7 @@
   import { requisitar } from '../api/cliente'
   import type { Hoje, Painel, SecaoVinculada } from '../api/tipos'
   import { dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
+  import PrimeirosPassos from '../componentes/PrimeirosPassos.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash, type Area } from './rota'
@@ -82,10 +83,7 @@
   </header>
 
   {#if dados && !painel.unidade && !dados.sessao}
-    <section class="vazia" aria-label="Começar">
-      <p>Esta matéria ainda está vazia.</p>
-      <a class="acao-suave" href={montarHash({ tela: 'importar', uid })}>＋ Adicionar material</a>
-    </section>
+    <PrimeirosPassos hrefImportar={montarHash({ tela: 'importar', uid })} />
   {:else if dados}
     {#if dados.reta_final && prova}
       <section class="reta" aria-label="Reta final">
@@ -156,6 +154,7 @@
         {:else}
           <section class="sessao" aria-label="Sessão">
             <p class="sem-sessao">Nenhuma sessão marcada no plano daqui para a frente.</p>
+            <p class="suave">Crie as sessões no plano (data, foco e questões) e esta tela passa a mostrar a do dia.</p>
             <a class="acao-texto" href={href('cronograma')}>Abrir o plano</a>
           </section>
         {/if}
@@ -301,8 +300,6 @@
   .reta-linha { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1.6rem; margin: 0; }
   .dias { font-family: var(--fonte-titulo); font-size: 1.8rem; color: var(--destaque); line-height: 1; }
 
-  .vazia { gap: 1rem; justify-items: start; }
-  .vazia p { margin: 0; font-family: var(--fonte-titulo); font-size: 1.3rem; }
 
   @media (max-width: 1100px) { .colunas { grid-template-columns: 1fr; } }
 </style>
