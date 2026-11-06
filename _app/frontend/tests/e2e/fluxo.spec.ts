@@ -55,7 +55,7 @@ test('matéria nova só com cliques', async ({ page }) => {
   await page.getByRole('link', { name: 'Hoje', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Hoje' })).toBeVisible()
   await expect(page.getByText(/^Prova (da \dª unidade (em \d+ dias|amanhã)|hoje)/)).toBeVisible()
-  await expect(page.getByRole('region', { name: /^Tópicos da \dª unidade$/ })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Tópicos para cuidar' })).toBeVisible()
 })
 
 test('marcar e desfazer', async ({ page }) => {
