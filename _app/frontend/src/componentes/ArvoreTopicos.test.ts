@@ -70,10 +70,12 @@ test('apagar fica no menu ··· da linha, alcançável por teclado', async () =
   expect(init?.method).toBe('DELETE')
 })
 
-test('novo tópico: Enter adiciona, sem botão Adicionar', async () => {
+test('novo tópico: o campo só aparece ao pedir; Enter adiciona, sem botão Adicionar', async () => {
   motor()
   render(ArvoreTopicos, { ...props, topicos: [] })
   expect(screen.queryByRole('button', { name: /Adicionar/ })).toBeNull()
+  expect(screen.queryByRole('textbox', { name: 'Novo tópico' })).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: '+ tópico' }))
   await userEvent.type(screen.getByRole('textbox', { name: 'Novo tópico' }), 'Revisão{Enter}')
   await waitFor(() => expect(escritas()).toHaveLength(1))
   const [, init] = escritas()[0]

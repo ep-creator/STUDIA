@@ -10,6 +10,7 @@
   import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
+  import { desfazer } from '../estado/desfazer'
   import { podeSair } from '../estado/saida'
   import { abrirNoPainel } from '../estado/ia.svelte'
   import { nomeLegivel, semTituloRepetido } from '../apresentacao'
@@ -71,10 +72,16 @@
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
   })
 
-  // Ligação documento ↔ seção do livro: ao abrir a tela, o motor liga os documentos que faltam (só os confiantes)
+  // Ligação documento ↔ seção do livro: ao abrir a tela, o motor liga os documentos que faltam (só os confiantes).
+  // É uma escrita: quando liga algo, diz quantos e deixa desfazer ali mesmo (fica no Histórico como qualquer ação)
   $effect(() => {
     void requisitar<{ ligados: number }>('POST', `/api/materias/${uid}/documentos/ligar-secoes`)
-      .then((r) => { if (r.ligados > 0) void recarregar() }, () => {})
+      .then((r) => {
+        if (r.ligados === 0) return
+        avisar(r.ligados === 1 ? '1 texto ligado à seção do livro' : `${r.ligados} textos ligados às seções do livro`,
+          { rotulo: 'Desfazer', executar: () => void desfazer() })
+        void recarregar()
+      }, () => {})
   })
 
   // seções de todos os livros, para o seletor "Seção do livro" do cabeçalho

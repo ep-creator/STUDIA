@@ -13,7 +13,8 @@
     onselecionar: (questaoId: number) => void
   } = $props()
 
-  const TECLAS: Record<string, Marca> = { '1': 'ok', '2': 'err', '3': 'dub', '0': null, Backspace: null }
+  // só teclas de propósito: Backspace apagava a marca de quem só queria voltar
+  const TECLAS: Record<string, Marca> = { '1': 'ok', '2': 'err', '3': 'dub', '0': null }
 
   // cada assunto (lista) abre e fecha pela setinha; as setas do teclado só andam pelos abertos
   const grupos = recolhidos('studia.listas.fechadas')
@@ -35,7 +36,8 @@
   function linhas(l: ListaComQuestoes): [string | null, Questao[]][] {
     const temLinha2 = l.questoes.some((q) => q.linha === 2)
     if (!temLinha2) return [[null, l.questoes]]
-    return [['Linha 1', l.questoes.filter((q) => q.linha !== 2)], ['Linha 2', l.questoes.filter((q) => q.linha === 2)]]
+    // as duas linhas da lista da turma: as questões principais e as de reforço
+    return [['Principais', l.questoes.filter((q) => q.linha !== 2)], ['Reforço', l.questoes.filter((q) => q.linha === 2)]]
   }
 
   // quantas questões da lista já foram feitas (com qualquer marca), no estilo 2/15

@@ -3,12 +3,13 @@
   import { dataCurta, focoDaSessao, isoDe } from '../apresentacao'
   import type { ItemLinha } from '../cronograma'
 
-  let { itens, hoje = new Date(), progresso = {}, onfeito, oneditar }: {
+  let { itens, hoje = new Date(), progresso = {}, onfeito, oneditar, hrefPraticar }: {
     itens: ItemLinha[]
     hoje?: Date
     progresso?: Record<number, SessaoProgresso>   // estado derivado no motor (o mesmo da tela Hoje)
     onfeito: (s: Sessao) => void
     oneditar: (s: Sessao) => void
+    hrefPraticar?: (s: Sessao) => string          // Praticar dentro da sessão (só para sessão com questões)
   } = $props()
 
   const ROTULO: Record<string, string> = {
@@ -35,12 +36,17 @@
           <b>{s.codigo}</b>{#if foco.titulo} <span class="foco-titulo">{foco.titulo}</span>{/if}{#if foco.detalhe} <span class="suave foco-detalhe">{foco.detalhe}</span>{/if}
         </span>
         {#if p?.estado === 'feita' || (!p && s.feito)}<span class="selo-feita">feita</span>
-        {:else if p && p.trabalhadas > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>
-        {:else if p?.estado === 'passou'}<span class="selo-nao" title="a data passou sem nenhuma questão trabalhada">não feita</span>{/if}
+        {:else if p && p.trabalhadas > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
         <span class="acoes-linha">
-          <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
-            {s.feito ? 'desmarcar' : 'marcar feita'}
-          </button>
+          {#if hrefPraticar && s.questao_ids.length && p?.estado !== 'feita'}
+            <a class="acao-texto" aria-label={`Praticar a sessão ${s.codigo}`} href={hrefPraticar(s)}>praticar</a>
+          {/if}
+          <!-- feita pelas questões não se desmarca à mão: o botão só aparece quando a mão decide -->
+          {#if s.feito || p?.estado !== 'feita'}
+            <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
+              {s.feito ? 'desmarcar' : 'marcar feita'}
+            </button>
+          {/if}
           <button class="acao-texto" aria-label={`Editar sessão ${s.codigo}`} onclick={() => oneditar(s)}>editar</button>
         </span>
       {:else if item.evento}
@@ -65,10 +71,9 @@
   .marco-hoje { border-bottom: 0; padding: 0.3rem 0; }
   .marco-hoje .quando { color: var(--destaque-texto); }
   .fio-hoje { flex: 1; height: 1px; background: var(--destaque); align-self: center; }
-  .selo-nao { font-size: 0.85rem; color: var(--suave); font-style: italic; }
-  .selo-parcial, .selo-feita, .selo-nao { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .selo-parcial, .selo-feita { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
   .selo-parcial { font-size: 0.85rem; color: var(--suave); }
   .selo-feita { font-size: 0.8rem; color: var(--ok); }
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }
-  .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha, .selo-nao + .acoes-linha { margin-left: 0; }
+  .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha { margin-left: 0; }
 </style>

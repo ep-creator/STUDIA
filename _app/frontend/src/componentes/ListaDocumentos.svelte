@@ -46,7 +46,10 @@
     return [...grupos, { chave: 'pdf-outro', nome: 'Outros PDFs', itens: outros.map(daFonte) }].filter((g) => g.itens.length)
   })
 
-  const recolhiveis = recolhidos('studia.documentos.fechados')
+  // começam abertos só os de estudar (resumos, resoluções) e os livros; o resto da disciplina e as anotações fechados
+  const recolhiveis = recolhidos('studia.documentos.fechados', [
+    'plano', 'anotacao', 'contexto', 'outro-texto', ...GRUPOS_FONTE.filter(([t]) => t !== 'livro').map(([t]) => `pdf-${t}`), 'pdf-outro',
+  ])
 
   const ativo = (i: Item) => selecao?.tipo === i.tipo && selecao.id === i.id
 </script>

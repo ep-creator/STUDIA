@@ -30,10 +30,11 @@
 
   const href = (area: Area, unidade: number | null = painel.unidade) => montarHash({ tela: 'materia', uid, unidade, area })
   const rotuloQuestao = (lista: string, rotulo: string, estado: string | null, resolvida = false) =>
-    `${lista} #${rotulo}${estado ? `, ${NOME_MARCA[estado]}` : ''}${resolvida ? ', resolução gravada' : ''}`
+    `${lista} #${rotulo}${estado ? `, ${NOME_MARCA[estado]}` : ''}${resolvida ? ', resolvida' : ''}`
 
-  function abrirQuestao(id: number, unidade: number) {
-    location.hash = montarHash({ tela: 'materia', uid, unidade, area: 'listas', questao: id })
+  // uma questão da sessão abre Praticar dentro da sessão (a faixa com as questões dela, próxima e N por ela)
+  function abrirQuestao(id: number, unidade: number, sessaoId: number | null = null) {
+    location.hash = montarHash({ tela: 'materia', uid, unidade, area: 'listas', questao: id, sessao: sessaoId })
   }
   function abrirSecao(s: SecaoVinculada, unidade: number) {
     pedido.fonte = { id: s.fonte_id, pagina: s.pagina_pdf_ini }
@@ -56,22 +57,29 @@
     }
     return grupos
   })
-  const primeira = $derived(sessao?.questoes.find((q) => !q.estado && !q.resolucao_id) ?? null)
+  const primeira = $derived(sessao?.questoes.find((q) => !q.trabalhada) ?? null)
   const primeiraRevisar = $derived(dados?.revisar[0] ? { id: dados.revisar[0].questoes[0].id, unidade: dados.revisar[0].unidade } : null)
   // a ação forte segue o estado: na reta final, revisar os erros; senão, a próxima questão da sessão; feita a sessão,
   // revisar os erros (ou nada, se não houver)
   const acao = $derived.by(() => {
     const revisar = primeiraRevisar && {
-      rotulo: `Revisar ${plural(totalRevisar, 'questão marcada', 'questões marcadas')}`, ...primeiraRevisar,
+      rotulo: `Revisar ${plural(totalRevisar, 'questão marcada', 'questões marcadas')}`, ...primeiraRevisar, sessao: null,
     }
     if (dados?.reta_final && revisar) return revisar
-    if (primeira) return { rotulo: sessao && sessao.trabalhadas > 0 ? 'Continuar pelas questões' : 'Começar pelas questões', id: primeira.id, unidade: primeira.unidade }
+    if (primeira) {
+      return { rotulo: sessao && sessao.trabalhadas > 0 ? 'Continuar pelas questões' : 'Começar pelas questões', id: primeira.id,
+        unidade: primeira.unidade, sessao: sessao?.id ?? null }
+    }
     return revisar
   })
   const codigosSessao = $derived(sessao?.secoes.map((s) => s.codigo).join(', ') ?? '')
 
-  // em Hoje só os tópicos que pedem algo agora; a matéria inteira fica no mapa de Tópicos
-  const paraCuidar = $derived((dados?.topicos ?? []).filter((t) => ['hoje', 'falta praticar', 'começado'].includes(t.estado)))
+  // em Hoje só os tópicos que pedem algo agora (o de hoje e os de aula recente com pouca prática), até cinco; numa
+  // unidade que já terminou, nenhum: a prova passou. A matéria inteira fica no mapa de Tópicos
+  const paraCuidar = $derived(dados?.prova_passada ? [] : (dados?.topicos ?? [])
+    .filter((t) => t.estado === 'hoje' || t.estado === 'falta praticar')
+    .sort((a, b) => Number(b.estado === 'hoje') - Number(a.estado === 'hoje') || (b.ultima_aula ?? '').localeCompare(a.ultima_aula ?? ''))
+    .slice(0, 5))
   // o que revisar: a unidade mostrada; as outras ficam recolhidas (a prova delas pode já ter passado)
   const revisarDaUnidade = $derived((dados?.revisar ?? []).filter((g) => g.unidade === dados?.unidade))
   const revisarOutras = $derived((dados?.revisar ?? []).filter((g) => g.unidade !== dados?.unidade))
@@ -116,7 +124,7 @@
   {:else if !painel.unidade && !dados.sessao}
     <PrimeirosPassos hrefImportar={montarHash({ tela: 'importar', uid })} />
   {:else}
-    {#if painel.importacoes_pendentes > 0}
+    {#if painel.importacoes_pendentes > 0 && (dados.sessao || dados.tem_datas)}
       <p class="pendente">
         {painel.importacoes_pendentes === 1 ? '1 arquivo para conferir' : `${painel.importacoes_pendentes} arquivos para conferir`}
         <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Conferir →</a>
@@ -177,10 +185,10 @@
                     <span class="grupo">
                       <span class="suave lista">{g.lista}</span>
                       {#each g.questoes as q (q.id)}
-                        <button class="numero {q.estado ?? ''}" class:resolvida={q.resolucao_id}
-                          aria-label={rotuloQuestao(g.lista, q.rotulo, q.estado, !!q.resolucao_id)}
-                          title={q.resolucao_id ? 'resolução gravada' : undefined}
-                          onclick={() => abrirQuestao(q.id, q.unidade)}>{q.rotulo}</button>
+                        <button class="numero {q.estado ?? ''}" class:resolvida={q.trabalhada && !q.estado}
+                          aria-label={rotuloQuestao(g.lista, q.rotulo, q.estado, q.trabalhada && !q.estado)}
+                          title={q.trabalhada && !q.estado ? 'resolvida por você' : undefined}
+                          onclick={() => abrirQuestao(q.id, q.unidade, sessao.id)}>{q.rotulo}</button>
                       {/each}
                     </span>
                   {/each}
@@ -189,7 +197,7 @@
             </dl>
 
             {#if acao}
-              <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade)}>{acao.rotulo}</button>
+              <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade, acao.sessao)}>{acao.rotulo}</button>
             {/if}
           </section>
         {:else if dados.prova_passada}
@@ -197,8 +205,14 @@
             <p class="sem-sessao">A prova da {nomeUnidade(dados.unidade ?? 0)} foi na {dataCurta(dados.prova_passada, null)}.</p>
             <p class="suave">Esta unidade terminou: o que ficou para revisar está logo abaixo.</p>
             {#if dados.unidade_atual !== null && dados.unidade_atual !== dados.unidade}
-              <a class="acao-forte comecar" href={href('painel', dados.unidade_atual)}>Ir para a {nomeUnidade(dados.unidade_atual)}</a>
+              <a class="acao-suave comecar" href={href('painel', dados.unidade_atual)}>Ir para a {nomeUnidade(dados.unidade_atual)}</a>
             {/if}
+          </section>
+        {:else if !dados.tem_datas && painel.importacoes_pendentes > 0}
+          <section class="sessao" aria-label="Sessão">
+            <p class="sem-sessao">{plural(painel.importacoes_pendentes, 'arquivo espera', 'arquivos esperam')} conferência.</p>
+            <p class="suave">Com o calendário conferido, o plano ganha datas e esta tela passa a mostrar a sessão do dia.</p>
+            <a class="acao-suave comecar" href={montarHash({ tela: 'importar', uid })}>Conferir</a>
           </section>
         {:else}
           <section class="sessao" aria-label="Sessão">
@@ -264,7 +278,11 @@
         {#if dados.unidade}
           <section aria-label="Tópicos para cuidar">
             <h2 class="rotulo">Tópicos para cuidar</h2>
-            {#if paraCuidar.length === 0 && !dados.tem_datas}
+            {#if dados.prova_passada}
+              <p class="suave">A unidade terminou; o mapa dela continua em Tópicos.</p>
+            {:else if paraCuidar.length === 0 && !dados.tem_datas && painel.importacoes_pendentes > 0}
+              <p class="suave">Sem datas ainda: o estado dos tópicos vem com o calendário.</p>
+            {:else if paraCuidar.length === 0 && !dados.tem_datas}
               <p class="suave">Sem datas ainda: sem o calendário e o plano, o app não sabe o que está atrasado.</p>
               <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Adicionar o calendário →</a>
             {:else if paraCuidar.length === 0}
@@ -276,9 +294,10 @@
                   <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
                   <span class="estado-topico {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}" title={DEFINICAO_ESTADO[t.estado]}>{t.estado}</span>
                   {#if t.total}
-                    <span class="placar suave" title="questões trabalhadas (marcadas ou com resolução) / questões ligadas">{t.trabalhadas}/{t.total}</span>
+                    <span class="placar suave" title="questões trabalhadas (marcadas ou resolvidas por você) / questões ligadas">{t.trabalhadas}/{t.total}</span>
+                    <!-- o fio: trabalhadas sem problema, depois as com ✗ ou ? (que já estão entre as trabalhadas) -->
                     <span class="fio" aria-hidden="true">
-                      <span class="feito" style:width={`${(100 * t.trabalhadas) / t.total}%`}></span>
+                      <span class="feito" style:width={`${(100 * Math.max(0, t.trabalhadas - t.err - t.dub)) / t.total}%`}></span>
                       {#if t.err + t.dub}<span class="erros" style:width={`${(100 * (t.err + t.dub)) / t.total}%`}></span>{/if}
                     </span>
                   {/if}

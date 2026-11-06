@@ -111,7 +111,8 @@ class QuestaoSessao(TypedDict):
     lista_codigo: str
     unidade: int
     estado: str | None          # ok, err, dub ou None
-    resolucao_id: int | None    # resolução gravada, se houver
+    resolucao_id: int | None    # resolução gravada, se houver (sua ou da IA)
+    trabalhada: bool            # marcada ou resolvida por você (a resolução da IA não conta)
 
 
 class SessaoHoje(TypedDict):
@@ -168,8 +169,9 @@ class GrupoRevisar(TypedDict):
 class TopicoProgresso(TypedDict):
     id: int
     titulo: str
-    estado: str                 # hoje, em dia, falta praticar, aula passou, começado ou a seguir (derivado)
+    estado: str                 # hoje, a seguir, em dia ou falta praticar (derivado)
     secoes: list[str]
+    ultima_aula: str | None     # data da última sessão já passada que cobre o tópico (o mais recente primeiro)
     total: int
     trabalhadas: int
     ok: int
@@ -203,6 +205,7 @@ class QuestaoTopico(TypedDict):
     rotulo: str
     estado: str | None
     resolucao_id: int | None
+    trabalhada: bool
 
 
 class ListaTopico(TypedDict):

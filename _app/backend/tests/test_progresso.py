@@ -120,8 +120,9 @@ def test_topicos_com_estado_e_progresso_derivados(con, plano):
     assert aplic["estado"] == "hoje"
     assert (aplic["total"], aplic["trabalhadas"], aplic["dub"]) == (4, 1, 1)
     assert aplic["secoes"] == ["15.5"]
-    # ligado só pela L5 (sem seção): a sessão de hoje tem seção, então não o cobre; o ? da L5 é começo, não "visto"
-    assert (extra["estado"], extra["total"], extra["dub"]) == ("começado", 2, 1)
+    # ligado só pela L5 (sem seção): a sessão de hoje tem seção, então não o cobre; a aula dele ainda não veio
+    assert (extra["estado"], extra["total"], extra["dub"]) == ("a seguir", 2, 1)
+    assert (polares["ultima_aula"], aplic["ultima_aula"], extra["ultima_aula"]) == ("2099-03-08", None, None)
 
 
 def test_status_manual_visto_ainda_vale(con, materia, plano):
@@ -130,7 +131,7 @@ def test_status_manual_visto_ainda_vale(con, materia, plano):
         topicos.definir_status(op, solto, "visto")
         outro = topicos.criar(op, plano.u1, "Outro sem nada")
     t = {x["id"]: x for x in progresso.hoje(con, HOJE)["topicos"]}
-    assert (t[solto]["estado"], t[outro]["estado"]) == ("aula passou", "a seguir")   # visto à mão, sem questões
+    assert (t[solto]["estado"], t[outro]["estado"]) == ("em dia", "a seguir")   # visto à mão, sem questões
 
 
 def test_prova_e_reta_final(con, plano):
@@ -218,12 +219,12 @@ def test_sessao_so_fica_feita_com_todas_as_questoes_trabalhadas(con, materia, pl
     assert (s2["estado"], s2["trabalhadas"], s2["total"]) == ("feita", 3, 3)
 
 
-def test_topico_com_questao_trabalhada_mas_sem_aula_passada_e_comecado(con, materia, plano):
+def test_topico_adiantado_continua_a_seguir_com_o_placar(con, materia, plano):
     with operacao(con, "adiantado", materia.pasta) as op:
         marcacoes.definir(op, plano.q155["18"], "ok")
     t = {x["id"]: x for x in progresso.hoje(con, date(2099, 3, 1))["topicos"]}
-    assert t[plano.aplicacoes]["estado"] == "começado"     # a S2 (15.5) ainda não chegou
-    assert t[plano.polares]["estado"] == "começado"        # nem a S1 (15.4), mas já tem marcações
+    assert (t[plano.aplicacoes]["estado"], t[plano.aplicacoes]["trabalhadas"]) == ("a seguir", 2)   # a S2 ainda não chegou
+    assert t[plano.polares]["estado"] == "a seguir"        # nem a S1 (15.4), mas já tem marcações (o placar mostra)
 
 
 def test_sessoes_da_unidade_para_o_plano(con, plano):
@@ -277,4 +278,16 @@ def test_hoje_de_unidade_que_ja_terminou(con, plano):
     h = progresso.hoje(con, depois, 1)
     assert h["prova"] is None and h["prova_passada"] is not None
     assert progresso.hoje(con, HOJE, 1)["prova_passada"] is None and progresso.hoje(con, HOJE, 1)["unidade_atual"] == 1
+
+
+def test_resolucao_da_ia_nao_conta_como_pratica(con, materia, plano):
+    with operacao(con, "ia", materia.pasta) as op:
+        documentos.salvar(op, "resolucao", "15.4-2-ia.md", "Resolução 15.4-2", "r", unidade_id=plano.u1,
+                          questao_id=plano.q154["2"], origem="agente")
+        doc = documentos.salvar(op, "resolucao", "L5-9-ia.md", "Resolução L5-9", "r", unidade_id=plano.u1,
+                                questao_id=plano.q5["9"], origem="agente")
+    feitas = progresso.trabalhadas(con)
+    assert plano.q5["9"] not in feitas and plano.q154["3"] in feitas      # a da IA não; a gravada à mão sim
+    q = next(x for x in progresso.hoje(con, HOJE)["sessao"]["questoes"] if x["id"] == plano.q5["9"])
+    assert q["resolucao_id"] == doc                                         # continua à mão para ler
 

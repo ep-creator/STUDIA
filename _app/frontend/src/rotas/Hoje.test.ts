@@ -10,7 +10,7 @@ const secao = { secao_id: 5, codigo: '15.5', titulo: 'Aplicações', fonte_id: 2
 
 function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
   return {
-    data: '2026-11-05', unidade: 3, reta_final: false,
+    data: '2026-11-05', unidade: 3, reta_final: false, tem_datas: true, prova_passada: null, unidade_atual: 3,
     prova: { data: '2026-11-30', hora_inicio: null, unidade: 3, dias: 25 },
     sessao: {
       id: 1, codigo: 'S3', data: '2026-11-05', unidade: 3, titulo: '15.5 Aplicações', detalhe: 'massa, centro de massa',
@@ -18,9 +18,9 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
       resumos: [{ id: 40, titulo: '15.5 Aplicações de Integrais Duplas' }],
       formulas: [{ id: 7, titulo: 'Massa de uma lâmina (15.5)' }, { id: 8, titulo: 'Momentos (15.5)' }],
       questoes: [
-        { id: 159, rotulo: '11', lista_id: 12, lista_codigo: '15.5', unidade: 3, estado: null, resolucao_id: 52 },
-        { id: 160, rotulo: '18', lista_id: 12, lista_codigo: '15.5', unidade: 3, estado: null, resolucao_id: null },
-        { id: 201, rotulo: '8', lista_id: 19, lista_codigo: 'L5', unidade: 3, estado: 'err', resolucao_id: null },
+        { id: 159, rotulo: '11', lista_id: 12, lista_codigo: '15.5', unidade: 3, estado: null, resolucao_id: 52, trabalhada: true },
+        { id: 160, rotulo: '18', lista_id: 12, lista_codigo: '15.5', unidade: 3, estado: null, resolucao_id: null, trabalhada: false },
+        { id: 201, rotulo: '8', lista_id: 19, lista_codigo: 'L5', unidade: 3, estado: 'err', resolucao_id: null, trabalhada: true },
       ],
     },
     proximos: [
@@ -32,9 +32,9 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
       { lista_id: 1, lista_codigo: '14.1', lista_titulo: 'Funções', unidade: 1, questoes: [{ id: 4, rotulo: '46', estado: 'err' }] },
     ],
     topicos: [
-      { id: 13, titulo: 'Integrais em polares', estado: 'falta praticar', secoes: ['15.4'], total: 13, trabalhadas: 4, ok: 0, err: 1, dub: 0 },
-      { id: 14, titulo: 'Aplicações', estado: 'hoje', secoes: ['15.5'], total: 4, trabalhadas: 0, ok: 0, err: 0, dub: 0 },
-      { id: 19, titulo: 'Aula extra', estado: 'a seguir', secoes: [], total: 0, trabalhadas: 0, ok: 0, err: 0, dub: 0 },
+      { id: 13, titulo: 'Integrais em polares', estado: 'falta praticar', secoes: ['15.4'], total: 13, trabalhadas: 4, ok: 0, err: 1, dub: 0, ultima_aula: '2026-11-01' },
+      { id: 14, titulo: 'Aplicações', estado: 'hoje', secoes: ['15.5'], total: 4, trabalhadas: 0, ok: 0, err: 0, dub: 0, ultima_aula: null },
+      { id: 19, titulo: 'Aula extra', estado: 'a seguir', secoes: [], total: 0, trabalhadas: 0, ok: 0, err: 0, dub: 0, ultima_aula: null },
     ],
     ...extra,
   }
@@ -66,14 +66,14 @@ test('a sessão de hoje é o foco, com o material a um clique', async () => {
   expect(within(sessao).getByRole('link', { name: /2 fórmulas/ })).toHaveAttribute('href', '#/m/ab/u/3/formulario')
 })
 
-test('questões da sessão por lista; clicar abre em Praticar', async () => {
+test('questões da sessão por lista; clicar abre Praticar dentro da sessão', async () => {
   render(Hoje, { painel: p3 })
   const sessao = await screen.findByRole('region', { name: /Sessão de hoje/ })
   const q18 = within(sessao).getByRole('button', { name: '15.5 #18' })
   await userEvent.click(q18)
-  expect(location.hash).toBe('#/m/ab/u/3/listas/160')
+  expect(location.hash).toBe('#/m/ab/u/3/listas/160?sessao=1')
   expect(within(sessao).getByRole('button', { name: /L5 #8, errei/ })).toBeInTheDocument()
-  expect(within(sessao).getByRole('button', { name: /15\.5 #11, resolução gravada/ })).toBeInTheDocument()
+  expect(within(sessao).getByRole('button', { name: /15\.5 #11, resolvida/ })).toBeInTheDocument()
 })
 
 test('a sessão começada mostra quantas faltam; a ação continua pela primeira não trabalhada', async () => {
@@ -82,13 +82,13 @@ test('a sessão começada mostra quantas faltam; a ação continua pela primeira
   expect(sessao).toHaveTextContent('2 de 3')
   expect(screen.getByRole('region', { name: 'Próximos 7 dias' })).toHaveTextContent('2/3')
   await userEvent.click(screen.getByRole('button', { name: 'Continuar pelas questões' }))
-  expect(location.hash).toBe('#/m/ab/u/3/listas/160')
+  expect(location.hash).toBe('#/m/ab/u/3/listas/160?sessao=1')
 })
 
 test('sessão feita: a ação forte passa a ser revisar o que ficou marcado', async () => {
   const base = dados()
   resposta = dados({
-    sessao: { ...base.sessao!, estado: 'feita', trabalhadas: 3, total: 3, questoes: base.sessao!.questoes.map((q) => ({ ...q, estado: 'ok' })) },
+    sessao: { ...base.sessao!, estado: 'feita', trabalhadas: 3, total: 3, questoes: base.sessao!.questoes.map((q) => ({ ...q, estado: 'ok', trabalhada: true })) },
   })
   render(Hoje, { painel: p3 })
   await userEvent.click(await screen.findByRole('button', { name: 'Revisar 1 questão marcada' }))

@@ -15,7 +15,7 @@
 
   // As quatro áreas do estudo; abaixo, o que se usa de vez em quando (plano inteiro, folha, material, histórico)
   const AREAS: [Area, string][] = [['painel', 'Hoje'], ['topicos', 'Tópicos'], ['listas', 'Praticar'], ['documentos', 'Biblioteca']]
-  const APOIO: [Area, string][] = [['cronograma', 'Plano completo'], ['formulario', 'Folha de fórmulas']]
+  const APOIO: [Area, string][] = [['cronograma', 'Plano'], ['formulario', 'Folha de fórmulas']]
   const ativa = $derived(rota.tela === 'materia' ? rota.area : null)
   const hrefArea = (area: Area) =>
     montarHash({ tela: 'materia', uid: rota.uid, unidade: area === 'painel' && unidade === null ? null : unidade, area })
@@ -55,7 +55,7 @@
     {/each}
     <li>
       <a class:ativa={rota.tela === 'importar'} aria-current={rota.tela === 'importar' ? 'page' : undefined} href={montarHash({ tela: 'importar', uid: rota.uid })}>
-        ＋ Material{#if pendencias > 0}<span class="selo" aria-label={`, ${pendencias} para conferir`}>{pendencias}</span>{/if}
+        ＋ Adicionar material{#if pendencias > 0}<span class="selo" aria-label={`, ${pendencias} para conferir`}>{pendencias}</span>{/if}
       </a>
     </li>
     <li><a class:ativa={rota.tela === 'historico'} aria-current={rota.tela === 'historico' ? 'page' : undefined} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>

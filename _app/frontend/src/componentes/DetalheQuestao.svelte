@@ -1,11 +1,12 @@
 <script lang="ts">
   // A questão aberta em Praticar: o enunciado primeiro, depois a marcação e o passo para a próxima; embaixo, uma só
-  // área de ajuda em abas (IA, resposta do livro, resolução, fórmulas). O enunciado original do livro vem junto. A resolução continua escondida até a aba ser aberta.
+  // área de ajuda em abas (IA, resposta do livro, resolução, fórmulas). O enunciado do livro aparece como a própria
+  // página do PDF: o texto extraído de um livro de cálculo sai quebrado (∭ vira "xxx", √ vira "s", colunas se misturam)
+  // e não dá para confiar nele. A resolução continua escondida até a aba ser aberta.
   import { requisitar, urlArquivo } from '../api/cliente'
   import type { Documento, DocumentoComCorpo, ExercicioLivro, Formula, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
-  import { trechoDoExercicio } from '../apresentacao'
   import { renderizarFormula } from '../markdown'
   import PainelIA from './PainelIA.svelte'
   import Markdown from './Markdown.svelte'
@@ -60,10 +61,16 @@
     }
   }
 
+  // "[Sessão S4] Calcule…": o prefixo veio do material da turma e só atrapalha a leitura
+  const enunciado = $derived((questao.enunciado_md ?? '').replace(/^\s*\[Sessão[^\]]*\]\s*/, ''))
+  const paginaLivro = $derived(doLivro?.exercicio.pagina && secao ? doLivro.exercicio.pagina : null)
+  const paginaResposta = $derived(doLivro?.resposta?.pagina ?? null)
+  const pdf = (pagina: number) => `${urlArquivo(uid, secao!.caminho, pagina)}&view=FitH`
+
   const abas = $derived.by(() => {
     const lista: [Aba, string][] = [['ajuda', 'Ajuda da IA']]
     if (doLivro?.resposta) lista.push(['resposta', 'Resposta do livro'])
-    if (resolucao) lista.push(['resolucao', 'Resolução gravada'])
+    if (resolucao) lista.push(['resolucao', resolucao.origem === 'agente' ? 'Resolução da IA' : 'Sua resolução'])
     if (formulas.length) lista.push(['formulas', `Fórmulas (${formulas.length})`])
     return lista
   })
@@ -72,7 +79,7 @@
 <aside class="detalhe" aria-label="Questão selecionada">
   <header class="cabeca">
     <h2>{lista.codigo} #{questao.rotulo}</h2>
-    <span class="suave">{lista.titulo}{questao.linha === 2 ? ' · linha 2' : ''}</span>
+    <span class="suave">{lista.titulo}{questao.linha === 2 ? ' · reforço' : ''}</span>
     {#if onanterior || onproxima}
       <span class="passos">
         {#if onanterior}<button class="acao-texto" onclick={onanterior}>‹ Anterior</button>{/if}
@@ -82,23 +89,21 @@
   </header>
 
   <div class="enunciado">
-    {#if questao.enunciado_md}
-      <Markdown texto={questao.enunciado_md} />
+    {#if enunciado}
+      <Markdown texto={enunciado} />
     {:else if !doLivro && !procurandoLivro}
       <p class="suave">Exercício do livro{secao ? `: seção ${secao.codigo}` : ''}.</p>
     {/if}
-    {#if doLivro}
+    {#if paginaLivro}
       <div class="do-livro">
-        <span class="rotulo">No livro{doLivro.exercicio.pagina ? ` · p. ${doLivro.exercicio.pagina}` : ''}</span>
-        <p>{trechoDoExercicio(doLivro.exercicio.trecho, questao.rotulo)}</p>
-        {#if doLivro.exercicio.pagina && secao}
-          <a class="acao-texto" href={urlArquivo(uid, secao.caminho, doLivro.exercicio.pagina)} target="_blank" rel="noopener">
-            Abrir no livro na p. {doLivro.exercicio.pagina}
-          </a>
-        {/if}
+        <span class="rotulo">Exercício {questao.rotulo} no livro · p. {paginaLivro}</span>
+        <a class="acao-texto" href={urlArquivo(uid, secao!.caminho, paginaLivro)} target="_blank" rel="noopener">Abrir em outra aba ↗</a>
+        {#key paginaLivro}
+          <iframe class="pagina" title={`Página ${paginaLivro} do livro, com o exercício ${questao.rotulo}`} src={pdf(paginaLivro)}></iframe>
+        {/key}
       </div>
     {:else if procurandoLivro}
-      <p class="suave procurando">Procurando o enunciado no livro…</p>
+      <p class="suave procurando">Procurando o exercício no livro…</p>
     {/if}
   </div>
 
@@ -108,7 +113,7 @@
         {SIMBOLO[m]} {NOMES[m]}
       </button>
     {/each}
-    <span class="teclas suave" aria-hidden="true"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> marcam · <kbd>0</kbd> limpa · <kbd>N</kbd> próxima</span>
+    <span class="teclas suave" aria-hidden="true"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> marcam · <kbd>0</kbd> limpa · <kbd>N</kbd> próxima a fazer</span>
   </div>
 
   <div class="abas" role="tablist" aria-label="Ajuda para a questão">
@@ -124,7 +129,12 @@
   </div>
   {#if aba === 'resposta' && doLivro?.resposta}
     <div role="tabpanel" id="painel-resposta" aria-labelledby="aba-resposta" class="texto livro">
-      <p>{doLivro.resposta.trecho}</p>
+      {#if paginaResposta && secao}
+        <span class="suave">Respostas do livro · p. {paginaResposta} (procure o {questao.rotulo})</span>
+        <iframe class="pagina" title={`Página ${paginaResposta} das respostas do livro`} src={pdf(paginaResposta)}></iframe>
+      {:else}
+        <p>{doLivro.resposta.trecho}</p>
+      {/if}
     </div>
   {:else if aba === 'resolucao' && resolucao}
     <div role="tabpanel" id="painel-resolucao" aria-labelledby="aba-resolucao" class="texto">
@@ -174,9 +184,10 @@
   .texto :global(h2), .texto :global(h3) { font-size: 1rem; margin: 0.9rem 0 0.35rem; }
   .livro { display: grid; gap: 0.6rem; white-space: pre-line; }
   /* o enunciado original do livro, logo abaixo do resumo da questão */
-  .do-livro { display: grid; gap: 0.3rem; margin-top: 0.8rem; padding-left: 0.9rem; border-left: 1px solid var(--fio); font-size: 1rem; white-space: pre-line; }
-  .do-livro p { margin: 0; }
-  .do-livro .acao-texto { justify-self: start; font-size: 0.88rem; }
+  .do-livro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem 1rem; align-items: baseline; margin-top: 0.8rem; font-size: 1rem; }
+  .do-livro .acao-texto { font-size: 0.88rem; }
+  /* a página do livro, no lugar do texto extraído: é onde o exercício está escrito direito */
+  .pagina { grid-column: 1 / -1; width: 100%; height: min(24rem, 40vh); border: 1px solid var(--fio); border-radius: var(--raio); background: #fff; }
   .procurando { margin: 0.8rem 0 0; font-size: 0.9rem; }
   .livro p { margin: 0; }
   .formula { padding: 0.5rem 0; border-top: 1px solid var(--fio); }

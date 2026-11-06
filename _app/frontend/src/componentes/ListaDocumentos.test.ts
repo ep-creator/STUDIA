@@ -25,7 +25,8 @@ test('separa os materiais de estudo dos arquivos da disciplina', () => {
   expect(estudo.textContent).toContain('14.1 Funções')
   expect(estudo.textContent).not.toContain('Stewart')
   expect(disciplina.textContent).toContain('Stewart')
-  expect(disciplina.textContent).toContain('Programa da disciplina')
+  expect(disciplina.textContent).toContain('Programa')            // o grupo, fechado de início: os livros ficam à vista
+  expect(disciplina.textContent).not.toContain('Programa da disciplina')
 })
 
 test('cada grupo abre e fecha pela setinha, e lembra a escolha', async () => {
@@ -35,10 +36,13 @@ test('cada grupo abre e fecha pela setinha, e lembra a escolha', async () => {
   await userEvent.click(resumos)
   expect(resumos).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByText('14.1 Funções')).toBeNull()
+  expect(screen.queryByText('Calendário')).toBeNull()           // anotações começam fechadas
+  await userEvent.click(screen.getByRole('button', { name: /Anotações/ }))
   expect(screen.getByText('Calendário')).toBeInTheDocument()
   unmount()
   render(ListaDocumentos, props())
   expect(screen.getByRole('button', { name: /Resumos/ })).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.getByRole('button', { name: /Anotações/ })).toHaveAttribute('aria-expanded', 'true')
 })
 
 test('documento criado pela IA ganha o selo IA', () => {

@@ -10,7 +10,7 @@ const AREAS: [Area | 'importar' | 'historico', string, string[]][] = [
   ['topicos', 'Tópicos', ['topicos', 'topico', 'mapa']],
   ['listas', 'Praticar', ['praticar', 'listas', 'questoes', 'exercicios']],
   ['documentos', 'Biblioteca', ['biblioteca', 'documentos', 'resumos', 'pdfs']],
-  ['cronograma', 'Plano completo', ['plano', 'cronograma', 'sessoes', 'calendario']],
+  ['cronograma', 'Plano', ['plano', 'cronograma', 'sessoes', 'calendario']],
   ['formulario', 'Folha de fórmulas', ['formulas', 'folha', 'formulario']],
   ['importar', 'Adicionar material', ['material', 'importar', 'adicionar']],
   ['historico', 'Histórico', ['historico', 'desfazer']],

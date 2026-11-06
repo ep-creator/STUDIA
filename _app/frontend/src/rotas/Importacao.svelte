@@ -170,7 +170,7 @@
           {#if imp.pendencias > 0}<span class="pendencias">{imp.pendencias} {imp.pendencias === 1 ? 'item para conferir (marcado com “conferir”)' : 'itens para conferir (marcados com “conferir”)'}</span>{/if}
         </footer>
       {/if}
-    {:else}
+    {:else if painel.importacoes_pendentes > 0}
       <p class="suave">Escolha um arquivo da fila.</p>
     {/if}
   </section>

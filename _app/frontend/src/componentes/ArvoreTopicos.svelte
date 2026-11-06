@@ -31,6 +31,7 @@
   let editando = $state<number | null>(null)
   let tituloEditado = $state('')
   let novo = $state('')
+  let criando = $state(false)   // o campo de novo tópico só aparece quando se pede (a tela é para ler o mapa)
 
   const filhos = (pai: number | null) => topicos.filter((t) => t.pai_id === pai).sort((a, b) => a.ordem - b.ordem)
 
@@ -107,9 +108,15 @@
 
 <ul class="arvore">{#each filhos(null) as t (t.id)}{@render item(t)}{/each}</ul>
 
-<form class="novo" onsubmit={criar}>
-  <input aria-label="Novo tópico" placeholder="Novo tópico… (Enter adiciona)" bind:value={novo} />
-</form>
+{#if criando}
+  <form class="novo" onsubmit={criar}>
+    <!-- svelte-ignore a11y_autofocus -->
+    <input aria-label="Novo tópico" placeholder="Título do tópico (Enter adiciona, Esc cancela)" bind:value={novo} autofocus
+      onkeydown={(e) => { if (e.key === 'Escape') { novo = ''; criando = false } }} onblur={() => { if (!novo.trim()) criando = false }} />
+  </form>
+{:else}
+  <button class="acao-texto novo" onclick={() => (criando = true)}>+ tópico</button>
+{/if}
 
 <style>
   ul { list-style: none; margin: 0; padding: 0; }

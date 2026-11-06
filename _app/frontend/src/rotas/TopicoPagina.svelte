@@ -25,6 +25,10 @@
     }, erro)
   })
   $effect(() => {
+    // a aba diz qual tópico: troca o "Tópicos" do título que o App montou (· matéria — STUDIA continua)
+    if (dados) document.title = document.title.replace(/^[^·]*·/, `${dados.topico.titulo} ·`)
+  })
+  $effect(() => {
     const id = aberto
     corpo = null
     if (id === null) return
@@ -100,8 +104,8 @@
                 {#if l.unidade !== dados.unidade}<span class="suave">{nomeUnidade(l.unidade)}</span>{/if}
                 <span class="numeros">
                   {#each [...l.questoes].sort((a, b) => compararNomes(a.rotulo, b.rotulo)) as q (q.id)}
-                    <button class="numero {q.estado ?? ''}" class:resolvida={q.resolucao_id}
-                      aria-label={`${l.codigo} #${q.rotulo}${q.estado ? `, ${NOME_MARCA[q.estado]}` : ''}${q.resolucao_id ? ', resolução gravada' : ''}`}
+                    <button class="numero {q.estado ?? ''}" class:resolvida={q.trabalhada && !q.estado}
+                      aria-label={`${l.codigo} #${q.rotulo}${q.estado ? `, ${NOME_MARCA[q.estado]}` : ''}${q.trabalhada && !q.estado ? ', resolvida' : ''}`}
                       onclick={() => abrirQuestao(q.id, l.unidade)}>{q.rotulo}</button>
                   {/each}
                 </span>

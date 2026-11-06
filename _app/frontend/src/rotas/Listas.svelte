@@ -2,15 +2,16 @@
   import type { Painel } from '../api/tipos'
   import DetalheQuestao from '../componentes/DetalheQuestao.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
+  import FaixaSessao from '../componentes/FaixaSessao.svelte'
   import GradeQuestoes from '../componentes/GradeQuestoes.svelte'
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import { consumirQuestao, pedido } from '../estado/pedido.svelte'
-  import { citaSecao } from '../apresentacao'
+  import { citaSecao, focoDaSessao } from '../apresentacao'
   import { digitando } from '../estado/ajuda.svelte'
   import { montarHash } from './rota'
 
-  let { painel, questao = null }: { painel: Painel; questao?: number | null } = $props()
+  let { painel, questao = null, sessao = null }: { painel: Painel; questao?: number | null; sessao?: number | null } = $props()
 
   // Hoje (ou a busca) pode ter pedido uma questão específica; se for de outra unidade, ela chega quando o painel dela
   // carregar, então o pedido só é consumido quando a questão aparece aqui
@@ -42,15 +43,42 @@
   // e a questão aberta vai para o endereço (sem empilhar no histórico a cada seta), só quando já está nesta unidade
   $effect(() => {
     if (!achada || painel.unidade === null) return
-    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', questao: achada.questao.id })
+    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', questao: achada.questao.id, sessao: daSessao ? sessao : null })
     if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
   })
 
-  // questões com resolução gravada: trabalhadas para a grade, para N e para o motor (a mesma regra em tudo)
-  const resolvidas = $derived(new Set(painel.documentos.filter((d) => d.tipo === 'resolucao' && d.questao_id !== null).map((d) => d.questao_id as number)))
+  // questões resolvidas por você: trabalhadas para a grade, para N e para o motor (a mesma regra em tudo); a resolução
+  // escrita pela IA fica à mão para ler, mas ler não é praticar
+  const resolvidas = $derived(new Set(painel.documentos
+    .filter((d) => d.tipo === 'resolucao' && d.questao_id !== null && d.origem !== 'agente').map((d) => d.questao_id as number)))
+  const trabalhada = (id: number) => !!painel.marcacoes[String(id)] || resolvidas.has(id)
 
-  // a ordem da grade: anterior e próxima andam por ela
-  const ordem = $derived(painel.listas.flatMap((l) => l.questoes.map((q) => q.id)))
+  // a sessão do plano que trouxe até aqui (#/…/listas/<id>?sessao=<id>): as questões dela ficam numa faixa
+  const daSessao = $derived(sessao === null ? null : painel.sessoes.find((s) => s.id === sessao) ?? null)
+  const porId = $derived(new Map(painel.listas.flatMap((l) => l.questoes.map((q) => [q.id, { l, q }] as const))))
+  const questoesSessao = $derived((daSessao?.questao_ids ?? []).filter((id) => porId.has(id)).map((id) => {
+    const { l, q } = porId.get(id)!
+    return { id, rotulo: q.rotulo, lista_codigo: l.codigo, estado: painel.marcacoes[String(id)] ?? null, trabalhada: trabalhada(id) }
+  }))
+  const idsSessao = $derived(questoesSessao.map((q) => q.id))
+  const proximaSessao = $derived.by(() => {
+    if (!daSessao) return null
+    const depois = painel.sessoes.filter((s) => s.id !== daSessao.id && s.data && (!daSessao.data || s.data > daSessao.data))
+      .sort((a, b) => (a.data ?? '').localeCompare(b.data ?? ''))[0]
+    return depois ? { codigo: depois.codigo, data: depois.data, titulo: focoDaSessao(depois.foco_md).titulo } : null
+  })
+  // chegou pela sessão sem questão escolhida: abre a primeira ainda não trabalhada dela
+  $effect(() => {
+    if (daSessao && selecionada === null && idsSessao.length) selecionada = idsSessao.find((id) => !trabalhada(id)) ?? idsSessao[0]
+  })
+
+  // a ordem: dentro da sessão, anterior e próxima andam pelas questões dela; fora, pela grade
+  const ordemGrade = $derived(painel.listas.flatMap((l) => l.questoes.map((q) => q.id)))
+  const ordem = $derived(selecionada !== null && idsSessao.includes(selecionada) ? idsSessao : ordemGrade)
+  const proximaNaoTrabalhada = (lista: number[]) => {
+    const i = lista.indexOf(selecionada ?? -1)
+    return [...lista.slice(i + 1), ...lista.slice(0, i + 1)].find((id) => id !== selecionada && !trabalhada(id))
+  }
   const passo = (delta: number) => {
     const i = ordem.indexOf(selecionada ?? -1)
     const alvo = ordem[i + delta]
@@ -70,8 +98,8 @@
       e.preventDefault()
       aoMarcar(achada.questao.id, MARCA_TECLA[e.key])
     } else if (e.key.toLowerCase() === 'n') {
-      const i = ordem.indexOf(selecionada ?? -1)
-      const seguinte = [...ordem.slice(i + 1), ...ordem.slice(0, i + 1)].find((id) => !painel.marcacoes[String(id)] && !resolvidas.has(id))
+      // primeiro o que falta da sessão; feita a sessão, a próxima da grade
+      const seguinte = proximaNaoTrabalhada(idsSessao) ?? proximaNaoTrabalhada(ordemGrade)
       if (seguinte !== undefined) {
         e.preventDefault()
         selecionada = seguinte
@@ -96,6 +124,13 @@
   <EstadoVazio texto="Nenhuma lista nesta unidade ainda." acao={{ rotulo: 'Importar listas', href: montarHash({ tela: 'importar', uid }) }} />
 {:else}
   <h1 class="titulo-tela">Praticar <span class="suave">· {painel.unidade}ª unidade</span></h1>
+  {#if daSessao && questoesSessao.length}
+    <FaixaSessao codigo={daSessao.codigo} titulo={focoDaSessao(daSessao.foco_md).titulo} questoes={questoesSessao} {selecionada}
+      proxima={proximaSessao}
+      hrefSair={montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', questao: selecionada })}
+      hrefHoje={montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'painel' })}
+      onabrir={(id) => (selecionada = id)} />
+  {/if}
   <div class="listas">
     <div class="coluna questoes">
     <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} {resolvidas} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
@@ -116,7 +151,6 @@
       />
     {:else}
       <p class="dica">Escolha uma questão.</p>
-      <p class="suave atalhos">No teclado: setas andam · 1 acertei · 2 errei · 3 dúvida · 0 limpa.</p>
     {/if}
     </div>
   </div>
@@ -132,6 +166,5 @@
   .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .titulo-tela span { font-family: var(--fonte-texto); font-size: 1rem; }
   .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
-  .atalhos { margin: 0; font-size: 0.9rem; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }
 </style>

@@ -1611,6 +1611,8 @@ export interface components {
             estado: string | null;
             /** Resolucao Id */
             resolucao_id: number | null;
+            /** Trabalhada */
+            trabalhada: boolean;
         };
         /** QuestaoTopico */
         QuestaoTopico: {
@@ -1622,6 +1624,8 @@ export interface components {
             estado: string | null;
             /** Resolucao Id */
             resolucao_id: number | null;
+            /** Trabalhada */
+            trabalhada: boolean;
         };
         /** ResolucaoTopico */
         ResolucaoTopico: {
@@ -1977,6 +1981,8 @@ export interface components {
             estado: string;
             /** Secoes */
             secoes: string[];
+            /** Ultima Aula */
+            ultima_aula: string | null;
             /** Total */
             total: number;
             /** Trabalhadas */

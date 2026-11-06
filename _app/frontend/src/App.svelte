@@ -15,7 +15,7 @@
   import { busca } from './estado/busca.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
-  import { atalhoDesfazer, desfazer } from './estado/desfazer'
+  import { alvoDoDesfazer, atalhoDesfazer, desfazer } from './estado/desfazer'
   import { carregarPainel, estadoMateria, painelACarregar } from './estado/materia.svelte'
   import { haAlteracoes, podeSair } from './estado/saida'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
@@ -125,9 +125,18 @@
 
   const painel = $derived(rota.tela !== 'materias' && estadoMateria.uid === rota.uid ? estadoMateria.painel : null)
 
+  // o botão Desfazer diz o que vai desfazer (lido ao passar o mouse ou focar: muda a cada ação)
+  let tituloDesfazer = $state('Desfazer a última ação (Ctrl+Z)')
+  async function nomearDesfazer() {
+    try {
+      const alvo = await alvoDoDesfazer()
+      tituloDesfazer = alvo ? `Desfazer: ${alvo.descricao} (Ctrl+Z)` : 'Nada para desfazer'
+    } catch { /* fica o título genérico */ }
+  }
+
   // título da aba diz onde se está (leitor de tela e histórico do navegador)
   const NOME_TELA: Record<string, string> = {
-    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano completo', documentos: 'Biblioteca', formulario: 'Folha de fórmulas',
+    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano', documentos: 'Biblioteca', formulario: 'Folha de fórmulas',
     importar: 'Adicionar material', historico: 'Histórico',
   }
   $effect(() => {
@@ -154,7 +163,8 @@
         <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} {painel} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
         <Topo {painel} area={rota.tela === 'materia' ? rota.area : 'painel'} comUnidades={rota.tela === 'materia'}>
           {#snippet acoes()}
-            <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
+            <button class="acao-texto" onclick={() => void desfazer()} onmouseenter={nomearDesfazer} onfocus={nomearDesfazer}
+              title={tituloDesfazer}>↶ Desfazer</button>
             <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta} title="IA da matéria (Alt+I)">IA ›</button>
           {/snippet}
         </Topo>
@@ -163,7 +173,7 @@
             {#if rota.area === 'painel' || !painel.unidade}
               <Hoje {painel} />
             {:else if rota.area === 'listas'}
-              <Listas {painel} questao={rota.questao ?? null} />
+              <Listas {painel} questao={rota.questao ?? null} sessao={rota.sessao ?? null} />
             {:else if rota.area === 'topicos'}
               <Topicos {painel} topico={rota.topico ?? null} />
             {:else if rota.area === 'cronograma'}

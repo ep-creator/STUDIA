@@ -30,7 +30,7 @@ test('a resolução fica escondida até abrir a aba Resolução', async () => {
   const chamadas = motor()
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
   expect(screen.queryByText(/isole a variável/)).toBeNull()
-  await userEvent.click(screen.getByRole('tab', { name: 'Resolução gravada' }))
+  await userEvent.click(screen.getByRole('tab', { name: 'Sua resolução' }))
   expect(await screen.findByText(/isole a variável/)).toBeInTheDocument()
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/documentos/16'))).toBe(true)
 })
@@ -40,7 +40,7 @@ test('abrir a resolução não fecha a gaveta da IA', async () => {
   const { ia } = await import('../estado/ia.svelte')
   ia.aberta = true
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
-  await userEvent.click(screen.getByRole('tab', { name: 'Resolução gravada' }))
+  await userEvent.click(screen.getByRole('tab', { name: 'Sua resolução' }))
   expect(ia.aberta).toBe(true)
 })
 
@@ -58,7 +58,7 @@ test('sem Limpar: clicar na marca ativa desmarca, clicar em outra troca', async 
 test('sem resolução, não há a aba', () => {
   motor()
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao: null, onmarcar: vi.fn() })
-  expect(screen.queryByRole('tab', { name: 'Resolução gravada' })).toBeNull()
+  expect(screen.queryByRole('tab', { name: 'Sua resolução' })).toBeNull()
 })
 
 const SECAO = { secao_id: 31, codigo: '14.1', titulo: 'Funções de várias variáveis', fonte_id: 4, caminho: 'fontes/livros/stewart.pdf', pagina_pdf_ini: 303 }
@@ -78,15 +78,32 @@ function motorDoLivro(status: number, corpo: unknown = null) {
   return chamadas
 }
 
-test('questão que é exercício do livro mostra o enunciado original junto, e a resposta numa aba', async () => {
-  const chamadas = motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide' } })
+test('exercício do livro: a própria página do livro no lugar do texto extraído; a resposta numa aba', async () => {
+  const chamadas = motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide', pagina: 980 } })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  expect(await screen.findByText(/x² \+ y²/)).toBeInTheDocument()
+  const pagina = await screen.findByTitle('Página 312 do livro, com o exercício 30')
+  expect(pagina.getAttribute('src')).toMatch(/stewart\.pdf#page=312/)
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/secoes/31/exercicios/30'))).toBe(true)
-  expect(screen.queryByText(/o paraboloide/)).toBeNull()
+  expect(screen.queryByText(/x² \+ y²/)).toBeNull()          // o texto extraído (quebrado em livros de cálculo) não aparece
+  expect(screen.getByRole('link', { name: /Abrir em outra aba/ })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('tab', { name: 'Resposta do livro' }))
+  expect(screen.getByTitle('Página 980 das respostas do livro').getAttribute('src')).toMatch(/#page=980/)
+})
+
+test('resposta do livro sem página: o trecho em texto', async () => {
+  motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide', pagina: null } })
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  await userEvent.click(await screen.findByRole('tab', { name: 'Resposta do livro' }))
   expect(screen.getByText(/o paraboloide/)).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: /Abrir no livro na p\. 312/ })).toBeInTheDocument()
+})
+
+test('resolução da IA tem nome próprio; o prefixo "[Sessão …]" sai do enunciado', async () => {
+  motor()
+  const comPrefixo = { ...questao(2, '1'), enunciado_md: '[Sessão S4] Calcule a integral.' }
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: comPrefixo, marca: null, secao: null, onmarcar: vi.fn(),
+    resolucao: { ...resolucao, origem: 'agente' } })
+  expect(screen.getByText('Calcule a integral.')).toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Resolução da IA' })).toBeInTheDocument()
 })
 
 test('sem o exercício no índice, não há link solto para a página da seção', async () => {
@@ -99,7 +116,7 @@ test('sem exercício no índice, não aparece enunciado do livro nem a aba da re
   const chamadas = motorDoLivro(404)
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
   await vi.waitFor(() => expect(chamadas.filter((u) => u.includes('/exercicios/')).length).toBe(1))
-  await vi.waitFor(() => expect(screen.queryByText(/Procurando o enunciado/)).toBeNull())
+  await vi.waitFor(() => expect(screen.queryByText(/Procurando/)).toBeNull())
   expect(screen.queryByRole('tab', { name: 'Resposta do livro' })).toBeNull()
 })
 
@@ -131,9 +148,9 @@ test('enquanto procura no livro, uma linha já ocupa o lugar, para a tela não p
   let responder!: (r: Response) => void
   vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((r) => { responder = r })))
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  expect(screen.getByText('Procurando o enunciado no livro…')).toBeInTheDocument()
+  expect(screen.getByText('Procurando o exercício no livro…')).toBeInTheDocument()
   responder(new Response(JSON.stringify({ exercicio: exercicio(), resposta: null }), { status: 200, headers: { 'content-type': 'application/json' } }))
-  expect(await screen.findByText(/x² \+ y²/)).toBeInTheDocument()
+  expect(await screen.findByTitle(/Página 312 do livro/)).toBeInTheDocument()
   expect(screen.queryByText(/Procurando/)).toBeNull()
 })
 

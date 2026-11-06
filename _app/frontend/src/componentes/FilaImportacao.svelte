@@ -38,6 +38,7 @@
       pendentes = lista
       carregada = true
       if (selecionada !== null && !lista.some((i) => i.id === selecionada)) onselecionar(lista[0]?.id ?? null)
+      else if (selecionada === null && lista.length === 1) onselecionar(lista[0].id)   // um só: já aberto para conferir
     } catch (e) {
       erro(e)
     }

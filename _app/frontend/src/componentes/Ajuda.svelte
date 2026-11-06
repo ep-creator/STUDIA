@@ -23,21 +23,18 @@
     ['?', 'esta ajuda'],
   ]
   const ESTADOS: [string, string][] = [
-    ['feita', 'todas as questões da sessão foram marcadas ou resolvidas'],
+    ['feita', 'todas as questões da sessão foram marcadas ou resolvidas por você'],
     ['2 de 3', 'sessão começada: questões trabalhadas de quantas tem'],
-    ['não feita', 'no plano: a data passou sem nenhuma questão trabalhada'],
     ['hoje', 'o tópico é o da sessão do dia'],
-    ['em dia', 'a aula já passou e você trabalhou metade ou mais das questões do tópico'],
+    ['a seguir', 'a aula do tópico ainda não chegou'],
+    ['em dia', 'a aula já passou e você trabalhou metade ou mais das questões'],
     ['falta praticar', 'a aula já passou e você trabalhou menos da metade das questões'],
-    ['aula passou', 'a aula já passou e o tópico não tem questões ligadas'],
-    ['começado', 'você já trabalhou questões do tópico antes da aula'],
-    ['a seguir', 'o tópico ainda não chegou'],
   ]
   const CODIGOS: [string, string][] = [
     ['S3, P1', 'sessão do plano de estudo (S de sessão, P de preparação)'],
     ['14.1, 15.4', 'seção do livro; a lista com o mesmo código é a dos exercícios dela'],
     ['L5', 'lista da turma (Lista 5)'],
-    ['Linha 1 · Linha 2', 'as questões principais e as de reforço de cada lista'],
+    ['principais · reforço', 'as duas linhas de questões de cada lista'],
     ['✓ ✗ ?', 'acertei, errei, dúvida; nos números, traço cheio, duplo e tracejado'],
   ]
 </script>

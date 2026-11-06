@@ -7,6 +7,7 @@
   import { montarLinhaDoTempo } from '../cronograma'
   import { erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
+  import { montarHash } from './rota'
 
   let { painel }: { painel: Painel } = $props()
 
@@ -34,14 +35,18 @@
     }
   }
 
-  function salvar(dados: { codigo: string; data: string | null; foco_md: string }) {
+  function salvar({ questao_ids, ...dados }: { codigo: string; data: string | null; foco_md: string; questao_ids: number[] }) {
     const atual = editando
     void executar(async () => {
-      if (atual?.id) await requisitar('PATCH', `${base}/${atual.id}`, dados)
-      else await requisitar('POST', base, { unidade_id: unidade.id, ...dados })
+      let id = atual?.id
+      if (id) await requisitar('PATCH', `${base}/${id}`, dados)
+      else id = (await requisitar<{ id: number }>('POST', base, { unidade_id: unidade.id, ...dados })).id
+      const antes = [...(atual?.questao_ids ?? [])].sort((a, b) => a - b).join()
+      if ([...questao_ids].sort((a, b) => a - b).join() !== antes) await requisitar('PUT', `${base}/${id}/questoes`, questao_ids)
       editando = null
     })
   }
+  const hrefPraticar = (s: Sessao) => montarHash({ tela: 'materia', uid: painel.materia.uid, unidade: unidade.numero, area: 'listas', sessao: s.id })
 </script>
 
 <header class="cabecalho">
@@ -51,7 +56,7 @@
 
 {#if editando}
   {#key editando}
-    <EditorSessao sessao={editando} onsalvar={salvar} oncancelar={() => (editando = null)} />
+    <EditorSessao sessao={editando} listas={painel.listas} onsalvar={salvar} oncancelar={() => (editando = null)} />
   {/key}
 {/if}
 
@@ -63,6 +68,7 @@
     {progresso}
     onfeito={(s) => void executar(() => requisitar('PATCH', `${base}/${s.id}`, { feito: !s.feito }))}
     oneditar={(s) => (editando = s)}
+    {hrefPraticar}
   />
 {/if}
 

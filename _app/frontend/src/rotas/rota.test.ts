@@ -60,3 +60,12 @@ test('página de um tópico tem endereço próprio', () => {
   expect(analisarRota('#/m/ab/u/3/topicos/x')).toEqual({ tela: 'materias' })
   expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', topico: 14 })).toBe('#/m/ab/u/3/listas')
 })
+
+test('Praticar aberto por uma sessão leva a sessão no endereço', () => {
+  const rota = analisarRota('#/m/ab/u/3/listas/160?sessao=21')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', questao: 160, sessao: 21 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/listas/160?sessao=21')
+  expect(analisarRota('#/m/ab/u/3/listas?sessao=21')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', sessao: 21 })
+  expect(analisarRota('#/m/ab/u/3/listas/160?sessao=x')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', questao: 160 })
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', sessao: 21 })).toBe('#/m/ab/u/3/topicos')
+})

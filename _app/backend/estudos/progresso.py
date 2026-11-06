@@ -3,13 +3,13 @@
 Nada aqui pede registro manual: o estado das sessões e dos tópicos sai do plano (datas), das marcações e das resoluções
 gravadas. As regras ficam explícitas para dar para conferir (spec 2026-11-05-redesenho-hoje-design, §5):
 
-- questão trabalhada: tem marcação ou resolução gravada;
+- questão trabalhada: tem marcação ou uma resolução gravada pelo estudante (a escrita pela IA não conta: ler a
+  resolução da IA não é praticar);
 - sessão: feita (à mão, ou com todas as suas questões trabalhadas), hoje, passou ou futura; com o placar x/y;
-- tópico: o estado diz quanto se praticou, não só o calendário. hoje (coberto pela sessão de hoje); depois da aula
-  (sessão que cobre o tópico já passou, ou "visto" à mão): em dia (metade ou mais das questões trabalhadas), falta
-  praticar (menos da metade) ou aula passou (tópico sem questões); antes da aula: começado (já tem questão trabalhada)
-  ou a seguir. Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos
-  ligados às listas das suas questões.
+- tópico: quatro estados. hoje (coberto pela sessão de hoje); a seguir (a aula ainda não chegou); depois da aula
+  (sessão que cobre o tópico já passou, ou "visto" à mão): em dia (metade ou mais das questões trabalhadas, ou sem
+  questões) ou falta praticar (menos da metade). Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem
+  seção cobre os tópicos ligados às listas das suas questões.
 """
 
 import re
@@ -37,6 +37,11 @@ def _resolucoes(con: sqlite3.Connection) -> dict[int, int]:
         l[0]: l[1]
         for l in con.execute("SELECT questao_id, id FROM documento WHERE questao_id IS NOT NULL ORDER BY id")
     }
+
+
+def _resolucoes_proprias(con: sqlite3.Connection) -> set[int]:
+    """Questões com resolução gravada pelo estudante (ou trazida do material dele), não pela IA."""
+    return {l[0] for l in con.execute("SELECT questao_id FROM documento WHERE questao_id IS NOT NULL AND origem != 'agente'")}
 
 
 def _questoes(con: sqlite3.Connection) -> dict[int, dict]:
@@ -79,7 +84,7 @@ def _secao(con: sqlite3.Connection, secao_id: int) -> dict:
 
 
 def trabalhadas(con: sqlite3.Connection) -> set[int]:
-    return set(_marcacoes(con)) | set(_resolucoes(con))
+    return set(_marcacoes(con)) | _resolucoes_proprias(con)
 
 
 # ---------- sessões ----------
@@ -150,6 +155,7 @@ def _foco(lista: list[dict], hoje: date) -> dict | None:
 def _material(con: sqlite3.Connection, sessao: dict) -> dict:
     marcas = _marcacoes(con)
     resolucoes = _resolucoes(con)
+    feitas = trabalhadas(con)
     questoes = _questoes(con)
     secao_ids = sessao["secao_ids"]
     codigos = {_secao(con, s)["codigo"] for s in secao_ids}
@@ -174,7 +180,7 @@ def _material(con: sqlite3.Connection, sessao: dict) -> dict:
             {
                 "id": q, "rotulo": questoes[q]["rotulo"], "lista_id": questoes[q]["lista_id"],
                 "lista_codigo": questoes[q]["lista_codigo"], "unidade": questoes[q]["unidade"],
-                "estado": marcas.get(q), "resolucao_id": resolucoes.get(q),
+                "estado": marcas.get(q), "resolucao_id": resolucoes.get(q), "trabalhada": q in feitas,
             }
             for q in sessao["questao_ids"] if q in questoes
         ],
@@ -211,13 +217,12 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
                 return bool(secoes & set(s["secao_ids"]))
             return bool(listas_ids & set(s["listas"]))
 
+        aulas = [s["data"] for s in todas if s["data"] and s["data"] < iso and cobre(s)]
         if foco and foco["data"] == iso and cobre(foco):
             estado = "hoje"
-        elif t["status"] == "visto" or any(s["data"] and s["data"] < iso and cobre(s) for s in todas):
+        elif t["status"] == "visto" or aulas:
             feitas_topico = sum(1 for q in ids if q in feitas)
-            estado = "aula passou" if not ids else "em dia" if 2 * feitas_topico >= len(ids) else "falta praticar"
-        elif any(q in feitas for q in ids):
-            estado = "começado"
+            estado = "em dia" if 2 * feitas_topico >= len(ids) else "falta praticar"
         else:
             estado = "a seguir"
         codigos = [
@@ -228,6 +233,7 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
         ]
         resultado.append({
             "id": t["id"], "titulo": t["titulo"], "estado": estado, "secoes": codigos,
+            "ultima_aula": max(aulas) if aulas else None,
             "total": len(ids), "trabalhadas": sum(1 for q in ids if q in feitas),
             "ok": sum(1 for q in ids if marcas.get(q) == "ok"),
             "err": sum(1 for q in ids if marcas.get(q) == "err"),
@@ -265,6 +271,7 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
     codigos = {_secao(con, s)["codigo"] for s in secao_ids}
     marcas = _marcacoes(con)
     resolucoes = _resolucoes(con)
+    feitas = trabalhadas(con)
     questoes = _questoes(con)
     marca = ",".join("?" * len(secao_ids))
     resumos = [
@@ -288,7 +295,8 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
         listas.append({
             "id": l["id"], "codigo": l["codigo"], "titulo": l["titulo"], "unidade": l["numero"],
             "questoes": [
-                {"id": q, "rotulo": d["rotulo"], "estado": marcas.get(q), "resolucao_id": resolucoes.get(q)}
+                {"id": q, "rotulo": d["rotulo"], "estado": marcas.get(q), "resolucao_id": resolucoes.get(q),
+                 "trabalhada": q in feitas}
                 for q, d in questoes.items() if d["lista_id"] == l["id"]
             ],
         })

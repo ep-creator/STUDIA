@@ -9,7 +9,7 @@ const p = painel({
 })
 
 test('caixa vazia: as áreas, como um menu', () => {
-  expect(destinos('', p).map((d) => d.rotulo)).toEqual(['Hoje', 'Tópicos', 'Praticar', 'Biblioteca', 'Plano completo', 'Folha de fórmulas', 'Adicionar material', 'Histórico'])
+  expect(destinos('', p).map((d) => d.rotulo)).toEqual(['Hoje', 'Tópicos', 'Praticar', 'Biblioteca', 'Plano', 'Folha de fórmulas', 'Adicionar material', 'Histórico'])
 })
 
 test('questão pelo código da lista e o número', () => {

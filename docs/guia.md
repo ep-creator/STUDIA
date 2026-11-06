@@ -44,9 +44,10 @@ A barra lateral tem as quatro áreas do estudo — **Hoje**, **Tópicos**, **Pra
 apoio: **Plano completo**, **Folha de fórmulas**, **＋ Material** e **Histórico**. No topo, **1ª 2ª 3ª** trocam de unidade.
 
 O progresso se calcula sozinho: uma sessão conta como **feita** quando todas as questões dela foram marcadas ou
-resolvidas (antes disso mostra quantas, ex.: "2 de 3"). Um tópico cuja aula já passou fica **em dia** (metade ou mais
-das questões trabalhadas), **falta praticar** (menos da metade) ou **aula passou** (sem questões ligadas); antes da aula é
-**começado** (já tem questão trabalhada) ou **a seguir**; e **hoje** quando é o da sessão do dia. Não precisa
+resolvidas (antes disso mostra quantas, ex.: "2 de 3"). Um tópico tem quatro estados: **hoje** (é o da sessão do dia),
+**a seguir** (a aula ainda não chegou), e, depois da aula, **em dia** (metade ou mais das questões trabalhadas) ou
+**falta praticar** (menos da metade). Uma questão conta como trabalhada quando tem marcação ou uma resolução sua; a
+resolução escrita pela IA fica para ler, mas não conta como prática. Não precisa
 marcar nada à mão para a tela fazer sentido.
 
 ### Hoje
@@ -57,8 +58,11 @@ A casa da matéria:
   resumo, as fórmulas e as questões da sessão. **Começar pelas questões** abre a primeira ainda não feita.
 - **Para revisar**: as questões que você marcou como errei ou dúvida, **de todas as unidades**. Clicar abre a questão.
 - **Próximos 7 dias**: as sessões, aulas e provas. **Plano completo →** abre a linha do tempo inteira.
-- **Tópicos para cuidar**: só os que pedem algo agora (hoje, falta praticar, começado), com quantas questões já foram
-  trabalhadas; o mapa inteiro fica em Tópicos.
+- **Tópicos para cuidar**: só os que pedem algo agora (o de hoje e os de aula recente com pouca prática), com quantas
+  questões já foram trabalhadas; o mapa inteiro fica em Tópicos.
+- As questões da sessão abrem **Praticar dentro da sessão**: uma faixa no alto mostra as questões dela, **Próxima** e
+  **N** andam por elas, e, feitas todas, a faixa diz qual é a próxima sessão e leva de volta para Hoje. No **Plano**,
+  editar uma sessão escolhe as questões dela, e **praticar** abre a sessão direto.
 - **Reta final**: com 7 dias ou menos até a prova, uma faixa no topo junta os dias, o que revisar, os tópicos com mais
   erros e a folha de fórmulas.
 
