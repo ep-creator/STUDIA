@@ -45,3 +45,15 @@ test('cada assunto abre e fecha pela setinha, com as linhas 1 e 2 dentro dele', 
   expect(screen.queryByText('Linha 2')).toBeNull()
   expect(screen.getByText('0/3')).toBeInTheDocument() // o placar continua à vista
 })
+
+test('a questão aberta de fora (endereço, Hoje) é a que o Tab alcança: 2 marca ela, não a primeira', async () => {
+  const onmarcar = vi.fn()
+  const user = userEvent.setup()
+  render(GradeQuestoes, { listas: [lista154], marcacoes: {}, selecionada: 13, onmarcar, onselecionar: vi.fn() })
+  expect(screen.getByRole('button', { name: /Questão 15\.4 #9/ })).toHaveAttribute('tabindex', '0')
+  expect(screen.getByRole('button', { name: /Questão 15\.4 #7/ })).toHaveAttribute('tabindex', '-1')
+  await user.tab()
+  await user.tab()
+  await user.keyboard('2')
+  expect(onmarcar).toHaveBeenCalledWith(13, 'err')
+})

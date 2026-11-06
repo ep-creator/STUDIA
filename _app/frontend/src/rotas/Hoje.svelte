@@ -304,7 +304,7 @@
   .nome-topico:hover { text-decoration: underline; text-decoration-color: var(--destaque); text-underline-offset: 3px; }
   .estado-topico { font-size: 0.8rem; color: var(--suave); }
   .estado-topico.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado-topico.visto { color: var(--ok); }
+  .estado-topico.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
   .estado-topico.comecado { color: var(--texto); }
   .placar { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .fio { grid-column: 1 / -1; position: relative; display: flex; height: 2px; background: var(--fio); }

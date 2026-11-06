@@ -149,7 +149,7 @@
   .meta .acao-texto { color: var(--texto); }
   .estado { color: var(--suave); }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado.visto { color: var(--ok); }
+  .estado.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
   .estado.comecado { color: var(--texto); }
   .erros { color: var(--err); }
 

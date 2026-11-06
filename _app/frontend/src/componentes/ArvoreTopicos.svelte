@@ -120,7 +120,7 @@
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; align-items: baseline; font-size: 0.85rem; }
   .estado { font-size: 0.85rem; color: var(--suave); min-width: 4.5rem; text-align: right; }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado.visto { color: var(--ok); }
+  .estado.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
   .estado.comecado { color: var(--texto); }
   .placar { font-size: 0.85rem; min-width: 3.2rem; text-align: right; font-variant-numeric: tabular-nums; }
   form { display: flex; gap: 0.5rem; }

@@ -57,7 +57,7 @@
 {/if}
 {#each grupos as [topico, formulas] (topico)}
   <section class="grupo">
-    <h3>{topico}</h3>
+    <h2>{topico}</h2>
     {#each formulas as f (f.id)}
       <CartaoFormula formula={f} oneditar={() => (editando = f)} onapagar={() => apagar(f)} />
     {/each}
@@ -68,6 +68,7 @@
   .cabecalho { display: flex; align-items: baseline; gap: 1.2rem; }
   .cabecalho div { display: flex; gap: 1.1rem; }
   h1 { font-size: 2.2rem; margin: 0 0 0.6rem; }
+  h2 { font-size: 1.15rem; margin: 1.2rem 0 0.4rem; }
   .grupo { margin-top: 1.25rem; }
   @media print {
     .grupo { columns: 2; column-gap: 2rem; }

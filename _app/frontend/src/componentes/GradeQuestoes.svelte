@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte'
+  import { tick, untrack } from 'svelte'
   import type { ListaComQuestoes, Questao } from '../api/tipos'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import { recolhidos } from '../estado/recolhidos.svelte'
@@ -18,6 +18,15 @@
   const grupos = recolhidos('studia.listas.fechadas')
   const todas = $derived(listas.filter((l) => grupos.aberto(String(l.id))).flatMap((l) => l.questoes))
   let focada = $state<number | null>(null)
+  // a questão aberta (pelo endereço, por Hoje ou pela busca) passa a ser a da vez no teclado: Tab entra nela, e
+  // 1/2/3/0 e as setas partem dela, nunca de outra que estava focada antes
+  $effect(() => {
+    if (selecionada === null) return
+    focada = selecionada
+    // e se a lista dela estava recolhida, ela abre (senão a questão aberta ficaria escondida e fora do teclado)
+    const dela = listas.find((l) => l.questoes.some((q) => q.id === selecionada))
+    if (dela && !untrack(() => grupos.aberto(String(dela.id)))) grupos.alternar(String(dela.id))
+  })
   let botoes: Record<number, HTMLButtonElement> = {}
 
   const marca = (q: Questao) => (marcacoes[String(q.id)] as Marca) ?? null
@@ -69,10 +78,10 @@
     {@const aberto = grupos.aberto(String(l.id))}
     <section class="lista">
       <header>
-        <button class="assunto" aria-expanded={aberto} onclick={() => grupos.alternar(String(l.id))}>
+        <h2><button class="assunto" aria-expanded={aberto} onclick={() => grupos.alternar(String(l.id))}>
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
-          <h2>{l.titulo}</h2>
-        </button>
+          <span class="nome-lista">{l.titulo}</span>
+        </button></h2>
         <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões feitas`}>{feitas(l)}/{l.questoes.length}</span>
       </header>
       {#if aberto}
@@ -85,7 +94,7 @@
               bind:this={botoes[q.id]}
               class="questao {m ?? ''}"
               class:selecionada={selecionada === q.id}
-              tabindex={(focada ?? todas[0]?.id) === q.id ? 0 : -1}
+              tabindex={(focada ?? selecionada ?? todas[0]?.id) === q.id ? 0 : -1}
               aria-label={`Questão ${l.codigo} #${q.rotulo}${m ? ` (${SIMBOLO[m]})` : ''}`}
               aria-pressed={selecionada === q.id}
               onclick={() => clicar(q)}
@@ -104,7 +113,9 @@
   .grade { display: grid; gap: 1rem; }
   header { display: flex; align-items: center; gap: 0.4rem 1rem; flex-wrap: wrap; }
   .assunto { display: flex; align-items: center; gap: 0.45rem; background: none; border: 0; padding: 0.15rem 0; cursor: pointer; text-align: left; }
-  .assunto:hover h2, .assunto:hover .seta { color: var(--destaque-texto); }
+  .assunto:hover .nome-lista, .assunto:hover .seta { color: var(--destaque-texto); }
+  .assunto { font: inherit; color: inherit; }
+  .nome-lista { transition: color var(--transicao); }
   .seta { width: 0.8rem; height: 0.8rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
   h2 { transition: color var(--transicao); }

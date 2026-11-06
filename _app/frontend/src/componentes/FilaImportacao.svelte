@@ -15,6 +15,7 @@
   } = $props()
 
   let pendentes = $state<ImportacaoSaida[]>([])
+  let carregada = $state(false)   // antes da primeira leitura, a fila não diz "nenhum arquivo"
   let nomes = $state<Record<number, string>>({})
   let enviando = $state(false)
   let progresso = $state('')
@@ -35,6 +36,7 @@
       ])
       nomes = Object.fromEntries(fontes.map((f) => [f.id, f.caminho.split('/').pop() ?? f.titulo]))
       pendentes = lista
+      carregada = true
       if (selecionada !== null && !lista.some((i) => i.id === selecionada)) onselecionar(lista[0]?.id ?? null)
     } catch (e) {
       erro(e)
@@ -105,14 +107,15 @@
     <button class="acao-suave confirmar" disabled={prontas.length === 0} onclick={confirmarProntas}>
       ✔ Confirmar todos sem pendências ({prontas.length})
     </button>
-  {:else if !enviando}
+  {:else if !enviando && carregada}
     <p class="suave">Nenhum arquivo esperando revisão.</p>
   {/if}
 </div>
 
 <style>
   .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-content: start; min-width: 0; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; max-height: 55vh; overflow-y: auto; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); max-height: 55vh; overflow-y: auto; overflow-x: hidden; }
+  li { min-width: 0; }
   li button { width: 100%; display: flex; gap: 0.6rem; align-items: baseline; text-align: left; background: none; border: 0; border-left: 2px solid transparent; padding: 0.45rem 0.6rem; cursor: pointer; font: inherit; color: var(--texto); }
   li button.ativa { border-left-color: var(--destaque); font-weight: 600; }
   li button:hover:not(.ativa) { border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }

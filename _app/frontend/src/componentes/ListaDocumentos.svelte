@@ -54,7 +54,7 @@
 {#snippet secao(titulo: string, grupos: Grupo[])}
   {#if grupos.length}
     <section class="secao" aria-label={titulo}>
-      <h3>{titulo}</h3>
+      <h2>{titulo}</h2>
       {#each grupos as g (g.chave)}
         {@const aberto = recolhiveis.aberto(g.chave)}
         <button class="grupo" aria-expanded={aberto} onclick={() => recolhiveis.alternar(g.chave)}>
@@ -86,7 +86,7 @@
 <style>
   .lista { display: grid; gap: 1.1rem; align-content: start; }
   .secao { display: grid; gap: 0.1rem; }
-  h3 {
+  h2 {
     font-size: 0.95rem; margin: 0 0 0.25rem; padding-bottom: 0.3rem;
     border-bottom: 1px solid color-mix(in srgb, var(--borda) 60%, transparent);
   }
