@@ -12,8 +12,10 @@
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
   import { abrirNoPainel } from '../estado/ia.svelte'
+  import { nomeLegivel } from '../apresentacao'
+  import { montarHash } from './rota'
 
-  let { painel }: { painel: Painel } = $props()
+  let { painel, documento: documentoDaRota = null }: { painel: Painel; documento?: number | null } = $props()
 
   const uid = $derived(painel.materia.uid)
 
@@ -44,6 +46,19 @@
       selecionar({ tipo: 'fonte', id: f.id })
     }
   })
+  // o texto do endereço (#/…/documentos/<id>): voltar, recarregar e favoritos reabrem o mesmo
+  $effect(() => {
+    const id = documentoDaRota
+    if (id !== null && !(selecao?.tipo === 'documento' && selecao.id === id)) selecionar({ tipo: 'documento', id })
+  })
+  // e o texto aberto vai para o endereço (sem empilhar no histórico); PDF e nada aberto ficam no endereço da área
+  $effect(() => {
+    if (painel.unidade === null) return
+    const id = selecao?.tipo === 'documento' ? selecao.id : null
+    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'documentos', documento: id })
+    if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
+  })
+
   // com o texto na tela, rola até o bloco pedido
   $effect(() => {
     if (!documento || !ancora) return
@@ -67,7 +82,7 @@
   $effect(() => {
     const livros = fontes.filter((f) => f.tipo === 'livro')
     void Promise.all(livros.map((l) => requisitar<SecaoLivro[]>('GET', `/api/materias/${uid}/fontes/${l.id}/secoes`)
-      .then((ss) => ss.map((secao) => ({ secao, livro: l.titulo || l.caminho.split('/').pop() || '' })), () => [])))
+      .then((ss) => ss.map((secao) => ({ secao, livro: nomeLegivel(l) })), () => [])))
       .then((porLivro) => (secoes = porLivro.flat()))
   })
   const opcoesSecao = $derived([
@@ -166,7 +181,7 @@
         <div class="leitura-medida"><Markdown texto={documento.corpo} contas={documento.tipo === 'resolucao'} /></div>
       {/if}
     {:else if fonte}
-      <h2>{fonte.titulo || fonte.caminho.split('/').pop()}</h2>
+      <h2>{nomeLegivel(fonte)}</h2>
       {#key `${fonte.id}:${paginaInicial}`}<VisualizadorPdf {uid} {fonte} {paginaInicial} />{/key}
     {:else}
       <p class="suave">Escolha um resumo, anotação, livro ou PDF à esquerda.</p>

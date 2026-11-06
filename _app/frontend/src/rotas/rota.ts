@@ -5,7 +5,7 @@ export type Area = (typeof AREAS)[number]
 
 export type Rota =
   | { tela: 'materias' }
-  | { tela: 'materia'; uid: string; unidade: number | null; area: Area; topico?: number | null; questao?: number | null }
+  | { tela: 'materia'; uid: string; unidade: number | null; area: Area; topico?: number | null; questao?: number | null; documento?: number | null }
   | { tela: 'importar' | 'historico'; uid: string }
 
 const INICIO: Rota = { tela: 'materias' }
@@ -30,14 +30,15 @@ export function analisarRota(hash: string): Rota {
     const area = partes[4] as Area
     if (Number.isInteger(unidade) && unidade >= 1 && AREAS.includes(area)) return { tela: 'materia', uid, unidade, area }
   }
-  // página de um tópico (#/m/<uid>/u/<n>/topicos/<id>) ou questão aberta em Praticar (#/m/<uid>/u/<n>/listas/<id>)
-  if (partes.length === 6 && partes[2] === 'u' && (partes[4] === 'topicos' || partes[4] === 'listas')) {
+  // um item aberto tem endereço próprio: tópico (…/topicos/<id>), questão em Praticar (…/listas/<id>) e texto na
+  // Biblioteca (…/documentos/<id>)
+  if (partes.length === 6 && partes[2] === 'u' && ['topicos', 'listas', 'documentos'].includes(partes[4])) {
     const unidade = Number(partes[3])
     const id = Number(partes[5])
     if (Number.isInteger(unidade) && unidade >= 1 && Number.isInteger(id) && id >= 1) {
-      return partes[4] === 'topicos'
-        ? { tela: 'materia', uid, unidade, area: 'topicos', topico: id }
-        : { tela: 'materia', uid, unidade, area: 'listas', questao: id }
+      if (partes[4] === 'topicos') return { tela: 'materia', uid, unidade, area: 'topicos', topico: id }
+      if (partes[4] === 'listas') return { tela: 'materia', uid, unidade, area: 'listas', questao: id }
+      return { tela: 'materia', uid, unidade, area: 'documentos', documento: id }
     }
   }
   return INICIO
@@ -48,7 +49,8 @@ export function montarHash(rota: Rota): string {
   const base = `#/m/${encodeURIComponent(rota.uid)}`
   if (rota.tela !== 'materia') return `${base}/${rota.tela}`
   if (rota.unidade === null) return base
-  const item = rota.area === 'topicos' && rota.topico ? `/${rota.topico}` : rota.area === 'listas' && rota.questao ? `/${rota.questao}` : ''
+  const id = rota.area === 'topicos' ? rota.topico : rota.area === 'listas' ? rota.questao : rota.area === 'documentos' ? rota.documento : null
+  const item = id ? `/${id}` : ''
   return `${base}/u/${rota.unidade}/${rota.area}${item}`
 }
 

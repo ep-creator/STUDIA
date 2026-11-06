@@ -145,7 +145,7 @@
             {:else if rota.area === 'cronograma'}
               <Cronograma {painel} />
             {:else if rota.area === 'documentos'}
-              <Documentos {painel} />
+              <Documentos {painel} documento={rota.documento ?? null} />
             {:else if rota.area === 'formulario'}
               <Formulario {painel} />
             {:else}

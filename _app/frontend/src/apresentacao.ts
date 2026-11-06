@@ -34,6 +34,15 @@ export function provaPerto(prova: { data: string; hora_inicio: string | null } |
   return dias >= 0 && dias <= 7
 }
 
+/**
+ * Nome para mostrar de um PDF: o título, se houver; senão o nome do arquivo sem a extensão e sem "_" e "-" de
+ * separador ("Lista1_2026-1.pdf" → "Lista1 2026-1", "Stewart_1_ptbr" → "Stewart 1 ptbr").
+ */
+export function nomeLegivel(fonte: { titulo: string; caminho: string }): string {
+  const bruto = fonte.titulo || (fonte.caminho.split('/').pop() ?? '')
+  return bruto.replace(/\.pdf$/i, '').replace(/_+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 /** O título cita a seção pelo código ("Massa (15.5)" cita 15.5, mas não 15.50 nem 115.5) — a mesma regra do motor. */
 export function citaSecao(titulo: string, codigo: string): boolean {
   const escapado = codigo.replace(/\./g, '\\.')

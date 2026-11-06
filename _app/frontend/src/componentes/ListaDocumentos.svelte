@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Documento, FonteResumo } from '../api/tipos'
-  import { compararNomes } from '../apresentacao'
+  import { compararNomes, nomeLegivel } from '../apresentacao'
   import { recolhidos } from '../estado/recolhidos.svelte'
 
   export type Selecao = { tipo: 'documento' | 'fonte'; id: number } | null
@@ -24,7 +24,7 @@
     ['programa', 'Programa'], ['calendario', 'Calendário'], ['prova', 'Provas'], ['lista', 'Listas'], ['slides', 'Slides'], ['livro', 'Livros'],
   ]
 
-  const nomeFonte = (f: FonteResumo) => f.titulo || (f.caminho.split('/').pop() ?? '')
+  const nomeFonte = (f: FonteResumo) => nomeLegivel(f)
   const doDoc = (d: Documento): Item => ({ tipo: 'documento', id: d.id, titulo: d.titulo, ia: d.origem === 'agente' })
   const daFonte = (f: FonteResumo): Item => ({ tipo: 'fonte', id: f.id, titulo: nomeFonte(f), ia: false })
 

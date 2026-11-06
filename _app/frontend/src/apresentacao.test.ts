@@ -48,6 +48,13 @@ test('prova perto: de hoje até 7 dias, nunca depois de passar', async () => {
   expect(provaPerto(null, hoje)).toBe(false)
 })
 
+test('nome legível de um PDF', async () => {
+  const { nomeLegivel } = await import('./apresentacao')
+  expect(nomeLegivel({ titulo: '', caminho: 'fontes/listas/Lista1_2026-1.pdf' })).toBe('Lista1 2026-1')
+  expect(nomeLegivel({ titulo: 'Stewart_1_ptbr', caminho: 'x.pdf' })).toBe('Stewart 1 ptbr')
+  expect(nomeLegivel({ titulo: 'Programa da disciplina', caminho: 'x.pdf' })).toBe('Programa da disciplina')
+})
+
 test('título que cita a seção pelo código', async () => {
   const { citaSecao } = await import('./apresentacao')
   expect(citaSecao('Massa de uma lâmina (15.5)', '15.5')).toBe(true)
