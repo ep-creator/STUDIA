@@ -6,6 +6,7 @@
   import { dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
   import PrimeirosPassos from '../componentes/PrimeirosPassos.svelte'
   import { erro } from '../estado/avisos.svelte'
+  import { abrirNoPainel } from '../estado/ia.svelte'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash, type Area } from './rota'
 
@@ -106,6 +107,7 @@
           <span>{plural(totalRevisar, 'questão para revisar', 'questões para revisar')}</span>
           {#if fracos.length}<span class="suave">mais erros em {fracos.map((t) => t.titulo).join(', ')}</span>{/if}
           <a class="acao-texto" href={href('formulario')}>Folha de fórmulas</a>
+          <button class="acao-texto" onclick={() => abrirNoPainel('geral', 'estrategista')}>Plano de revisão com a IA</button>
         </p>
       </section>
     {/if}

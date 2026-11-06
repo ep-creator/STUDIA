@@ -135,6 +135,9 @@ test('reta final: dias, o que revisar e a folha de fórmulas', async () => {
   expect(reta).toHaveTextContent('3 dias')
   expect(reta).toHaveTextContent('1 questão para revisar')
   expect(within(reta).getByRole('link', { name: /Folha de fórmulas/ })).toBeInTheDocument()
+  const { ia } = await import('../estado/ia.svelte')
+  await userEvent.click(within(reta).getByRole('button', { name: 'Plano de revisão com a IA' }))
+  expect([ia.aberta, ia.papel, ia.pendente]).toEqual([true, 'estrategista', null])   // abre a gaveta, não gasta
 })
 
 test('sem sessão no plano: frase curta e o caminho para o plano', async () => {

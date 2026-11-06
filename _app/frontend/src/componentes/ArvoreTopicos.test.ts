@@ -21,11 +21,12 @@ afterEach(() => vi.unstubAllGlobals())
 const props = { uid: 'ab', unidade: 3, unidadeId: 1, onmudou: vi.fn() }
 
 test('o título abre a página do tópico; estado e placar vêm derivados', async () => {
-  motor([progresso(1, 'hoje', { secoes: ['15.4', '15.5'], total: 13, trabalhadas: 4 })])
+  motor([progresso(1, 'hoje', { secoes: ['15.4', '15.5'], total: 13, trabalhadas: 4, err: 2, dub: 1 })])
   render(ArvoreTopicos, { ...props, topicos: [topico(1, 'pendente', { titulo: 'Polares' })] })
   expect(screen.getByRole('link', { name: 'Polares' })).toHaveAttribute('href', '#/m/ab/u/3/topicos/1')
   expect(await screen.findByText('hoje')).toBeInTheDocument()
   expect(screen.getByText('4/13')).toBeInTheDocument()
+  expect(screen.getByText('3 para revisar')).toBeInTheDocument()
   expect(screen.getByText('15.4 · 15.5')).toBeInTheDocument()
   expect(vi.mocked(fetch).mock.calls[0][0]).toMatch(/\/api\/materias\/ab\/progresso\?unidade=3$/)
 })

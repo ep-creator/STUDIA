@@ -94,7 +94,8 @@
       </span>
       {#if p}
         <span class="estado {p.estado === 'a seguir' ? 'seguir' : p.estado === 'começado' ? 'comecado' : p.estado}">{p.estado}</span>
-        <span class="placar suave">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
+        {#if p.err + p.dub}<span class="revisar">{p.err + p.dub} para revisar</span>{/if}
+        <span class="placar suave" title="questões trabalhadas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
       {/if}
     </div>
     {#if filhos(t.id).length}
@@ -122,6 +123,7 @@
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
   .estado.comecado { color: var(--texto); }
+  .revisar { font-size: 0.85rem; color: var(--err); white-space: nowrap; }
   .placar { font-size: 0.85rem; min-width: 3.2rem; text-align: right; font-variant-numeric: tabular-nums; }
   form { display: flex; gap: 0.5rem; }
   input { border: 0; border-bottom: 1px solid var(--fio); padding: 0.25rem 0; background: transparent; color: var(--texto); font: inherit; }
