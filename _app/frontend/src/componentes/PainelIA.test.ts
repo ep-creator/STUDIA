@@ -109,7 +109,7 @@ test('teto do mês pede confirmação e reenvia confirmado', async () => {
 test('sem chave: só a caixa da API key, que salva com Enter', async () => {
   motor({ chave: false })
   abrir()
-  await userEvent.type(await screen.findByPlaceholderText('API key'), 'AIza-teste{Enter}')
+  await userEvent.type(await screen.findByPlaceholderText('Chave do Gemini (API key)'), 'AIza-teste{Enter}')
   await waitFor(() => expect(pedidos.find((p) => p.metodo === 'PUT')?.corpo).toEqual({ chave: 'AIza-teste' }))
   expect(screen.queryByText(/Google AI Studio/)).toBeNull()
 })

@@ -54,6 +54,14 @@
 
   const t = $derived(dados?.topico ?? null)
   const erros = $derived((t?.err ?? 0) + (t?.dub ?? 0))
+  // por onde começar a praticar o tópico: a primeira questão ainda não trabalhada, na ordem das listas
+  const comecar = $derived.by(() => {
+    for (const l of dados?.listas ?? []) {
+      const q = l.questoes.find((x) => !x.trabalhada)
+      if (q) return { lista: l, questao: q }
+    }
+    return null
+  })
 </script>
 
 {#if dados && t}
@@ -71,6 +79,11 @@
           </button>
         {/each}
       </p>
+      {#if comecar}
+        <button class="acao-forte comecar" onclick={() => abrirQuestao(comecar.questao.id, comecar.lista.unidade)}>
+          Praticar: começar pela {comecar.lista.codigo} #{comecar.questao.rotulo}
+        </button>
+      {/if}
     </header>
 
     <div class="colunas">
@@ -151,6 +164,7 @@
   h1 { font-size: 2.2rem; line-height: 1.15; margin: 0; }
   .meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 1.4rem; margin: 0; font-size: 0.95rem; }
   .meta .acao-texto { color: var(--texto); }
+  .comecar { justify-self: start; margin-top: 0.5rem; padding: 0.4rem 1.2rem; }
   .estado { color: var(--suave); }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado.emdia { color: var(--ok); }

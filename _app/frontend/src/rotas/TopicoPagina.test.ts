@@ -9,13 +9,14 @@ const secao = { secao_id: 4, codigo: '15.4', titulo: 'Polares', fonte_id: 2, cam
 
 function dados(extra: Partial<Dados> = {}): Dados {
   return {
-    topico: { id: 13, titulo: 'Integrais em polares', estado: 'visto', secoes: ['15.4'], total: 3, trabalhadas: 2, ok: 1, err: 1, dub: 0 },
+    topico: { id: 13, titulo: 'Integrais em polares', estado: 'em dia', secoes: ['15.4'], total: 3, trabalhadas: 2, ok: 1, err: 1, dub: 0, ultima_aula: '2026-10-31' },
     unidade: 3, secoes: [secao],
     resumos: [{ id: 40, titulo: '15.4 Integrais em polares' }],
     formulas: [{ id: 7, unidade_id: 3, secao_id: 4, titulo: 'Área polar', corpo_tex: 'A = \\int r', notas_md: 'ARMADILHA: r dr', ordem: 1, origem: 'manual' }],
     listas: [{ id: 11, codigo: '15.4', titulo: 'Integrais em polares', unidade: 3, questoes: [
-      { id: 1, rotulo: '7', estado: 'err', resolucao_id: null },
-      { id: 2, rotulo: '8', estado: null, resolucao_id: 52 },
+      { id: 1, rotulo: '7', estado: 'err', resolucao_id: null, trabalhada: true },
+      { id: 2, rotulo: '8', estado: null, resolucao_id: 52, trabalhada: true },
+      { id: 3, rotulo: '9', estado: null, resolucao_id: null, trabalhada: false },
     ] }],
     resolucoes: [{ id: 52, questao_id: 2, rotulo: '15.4 #8' }],
     ...extra,
@@ -70,4 +71,10 @@ test('mais de um resumo vira abas', async () => {
   render(TopicoPagina, { uid: 'ab', topico: 13, versao: 1 })
   const abas = await screen.findByRole('tablist', { name: 'Resumos do tópico' })
   expect(within(abas).getByRole('tab', { name: '15.4 Polares' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('praticar o tópico começa pela primeira questão ainda não trabalhada', async () => {
+  render(TopicoPagina, { uid: 'ab', topico: 13, versao: 1 })
+  await userEvent.click(await screen.findByRole('button', { name: 'Praticar: começar pela 15.4 #9' }))
+  expect(location.hash).toBe('#/m/ab/u/3/listas/3')
 })

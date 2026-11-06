@@ -30,7 +30,7 @@
 
 <section class="chave" aria-label="Chave do Gemini" bind:this={caixa}>
   <div class="linha">
-    <span class="rotulo">API key</span>
+    <span class="rotulo">Chave do Gemini</span>
     {#if configurada !== null}
       <span>{configurada ? 'configurada' : 'não configurada'}</span>
     {/if}

@@ -21,7 +21,7 @@
 </script>
 
 <form onsubmit={salvar}>
-  <input type="password" autocomplete="off" aria-label="API key do Gemini" placeholder="API key" bind:value={chave} />
+  <input type="password" autocomplete="off" aria-label="Chave do Gemini (API key)" placeholder="Chave do Gemini (API key)" bind:value={chave} />
 </form>
 
 <style>
