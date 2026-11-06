@@ -102,9 +102,12 @@ test('na reta final a ação forte é revisar, mesmo com a sessão por fazer', a
   expect(screen.queryByRole('button', { name: /pelas questões/ })).toBeNull()
 })
 
-test('para revisar junta todas as unidades e abre na unidade certa', async () => {
+test('para revisar: a unidade da aba; as outras recolhidas, e abrem na unidade certa', async () => {
   render(Hoje, { painel: p3 })
   const revisar = await screen.findByRole('region', { name: 'Para revisar' })
+  expect(revisar).toHaveTextContent('Nada para revisar nesta unidade.')
+  expect(within(revisar).queryByRole('button', { name: '14.1 #46, errei' })).toBeNull()
+  await userEvent.click(within(revisar).getByRole('button', { name: 'De outras unidades (1)' }))
   expect(revisar).toHaveTextContent('1ª unidade')
   await userEvent.click(within(revisar).getByRole('button', { name: '14.1 #46, errei' }))
   expect(location.hash).toBe('#/m/ab/u/1/listas/4')

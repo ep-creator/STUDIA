@@ -31,7 +31,7 @@ test('matéria nova só com cliques', async ({ page }) => {
   inicioMateria = page.url().replace(/\/importar$/, '')
 
   await page.setInputFiles('input[type=file]', [PROGRAMA, CALENDARIO, LISTA1, LISTA3])
-  const fila = page.getByRole('list', { name: 'Arquivos esperando revisão' })
+  const fila = page.getByRole('list', { name: 'Arquivos para conferir' })
   await expect(fila.getByRole('listitem')).toHaveCount(4, { timeout: 60_000 })
 
   // Revisão: a L1 vai para a 1ª unidade (escolha do usuário)
@@ -50,7 +50,7 @@ test('matéria nova só com cliques', async ({ page }) => {
     await page.getByRole('button', { name: 'Confirmar', exact: true }).click()
     await expect(fila.getByRole('listitem')).toHaveCount(restantes - 1)   // espera a fila andar
   }
-  await expect(page.getByText('Nenhum arquivo esperando revisão.')).toBeVisible()
+  await expect(page.getByText('Nenhum arquivo para conferir.')).toBeVisible()
 
   await page.getByRole('link', { name: 'Hoje', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Hoje' })).toBeVisible()

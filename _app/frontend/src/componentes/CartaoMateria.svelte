@@ -18,7 +18,7 @@
     </p>
   {/if}
   {#if materia.importacoes_pendentes > 0}
-    <p class="pendente">{materia.importacoes_pendentes} {materia.importacoes_pendentes === 1 ? 'arquivo esperando' : 'arquivos esperando'} revisão</p>
+    <p class="pendente">{materia.importacoes_pendentes} {materia.importacoes_pendentes === 1 ? 'arquivo' : 'arquivos'} para conferir</p>
   {/if}
   <span class="abrir" aria-hidden="true">Abrir →</span>
 </a>
@@ -28,7 +28,7 @@
   .materia { position: relative; display: block; text-decoration: none; min-height: 9rem; padding: 1rem 1.2rem 2.6rem; margin: -1rem -1.2rem 0; border-radius: 2px; }
   p { margin: 0.25rem 0; }
   h2 { transition: color var(--transicao); }
-  .pendente { color: var(--destaque-texto); }
+  .pendente { color: var(--texto); }
   .abrir {
     position: absolute; right: 1.2rem; bottom: 1rem; font-size: 0.85rem; color: var(--destaque-texto);
     opacity: 0; transform: translateX(-6px); transition: opacity var(--transicao), transform var(--transicao);

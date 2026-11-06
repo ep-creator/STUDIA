@@ -56,16 +56,14 @@
       <h3 class="rotulo">Teclas</h3>
       <dl>{#each TECLAS as [tecla, oque] (tecla)}<dt><kbd>{tecla}</kbd></dt><dd>{oque}</dd>{/each}</dl>
     </section>
-    <div>
-      <section aria-label="Estados">
+    <section aria-label="Estados">
         <h3 class="rotulo">Estados</h3>
         <dl>{#each ESTADOS as [nome, oque] (nome)}<dt>{nome}</dt><dd>{oque}</dd>{/each}</dl>
       </section>
-      <section aria-label="Códigos">
-        <h3 class="rotulo">Códigos</h3>
-        <dl>{#each CODIGOS as [nome, oque] (nome)}<dt>{nome}</dt><dd>{oque}</dd>{/each}</dl>
-      </section>
-    </div>
+    <section aria-label="Códigos">
+      <h3 class="rotulo">Códigos</h3>
+      <dl>{#each CODIGOS as [nome, oque] (nome)}<dt>{nome}</dt><dd>{oque}</dd>{/each}</dl>
+    </section>
   </div>
   <p class="suave rodape">As áreas: <b>Hoje</b> (a sessão do dia), <b>Tópicos</b> (uma página por tópico), <b>Praticar</b> (as listas) e <b>Biblioteca</b> (resumos e PDFs). <a href="https://github.com/ep-creator/plataforma-estudos/blob/main/docs/guia.md" target="_blank" rel="noopener">Guia completo de uso ↗</a></p>
 </div>
@@ -73,17 +71,17 @@
 <style>
   .fundo { position: fixed; inset: 0; z-index: 60; background: rgb(0 0 0 / 35%); }
   .ajuda {
-    position: fixed; z-index: 61; top: 8vh; left: 50%; transform: translateX(-50%); width: min(56rem, calc(100vw - 2rem));
+    position: fixed; z-index: 61; top: 6vh; left: 50%; transform: translateX(-50%); width: min(74rem, calc(100vw - 2rem));
     max-height: 84vh; overflow-y: auto; padding: 1.4rem 1.6rem; background: var(--lateral); color: var(--texto);
     border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
   }
   .ajuda:focus { outline: none; }
   header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.8rem; }
   h2 { margin: 0; font-size: 1.5rem; }
-  .colunas { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 2rem; }
+  .colunas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
   section { margin-bottom: 1.2rem; }
   h3.rotulo { margin: 0 0 0.5rem; font-family: var(--fonte-texto); font-weight: 400; }
-  dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.4rem 1rem; margin: 0; }
+  dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.35rem 0.8rem; margin: 0; font-size: 0.92rem; }
   dt { font-weight: 500; white-space: nowrap; }
   dd { margin: 0; color: var(--suave); }
   kbd { font-family: var(--fonte-texto); font-size: 0.88rem; padding: 0.05rem 0.4rem; border-radius: 4px; background: var(--leve); }

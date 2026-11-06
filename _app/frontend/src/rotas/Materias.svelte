@@ -71,7 +71,7 @@
       {:else}
         Comece criando a primeira matéria.
       {/if}
-      {#if pendentes > 0}<span class="pendentes">{pendentes} {pendentes === 1 ? 'arquivo esperando' : 'arquivos esperando'} revisão.</span>{/if}
+      {#if pendentes > 0}<span class="pendentes">{pendentes} {pendentes === 1 ? 'arquivo' : 'arquivos'} para conferir.</span>{/if}
     </p>
   </section>
 

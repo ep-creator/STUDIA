@@ -68,7 +68,7 @@ export interface paths {
         };
         /**
          * Hoje
-         * @description `data` só serve para testar e conferir outro dia; sem ela, vale hoje.
+         * @description Hoje da unidade pedida (a aba aberta); sem ela, a unidade atual. `data` só serve para testar outro dia.
          */
         get: operations["hoje_api_materias__materia_uid__hoje_get"];
         put?: never;
@@ -1206,6 +1206,12 @@ export interface components {
             prova: components["schemas"]["ProvaHoje"] | null;
             /** Reta Final */
             reta_final: boolean;
+            /** Tem Datas */
+            tem_datas: boolean;
+            /** Prova Passada */
+            prova_passada: string | null;
+            /** Unidade Atual */
+            unidade_atual: number | null;
             sessao: components["schemas"]["SessaoHoje"] | null;
             /** Proximos */
             proximos: components["schemas"]["ItemProximo"][];
@@ -2173,6 +2179,7 @@ export interface operations {
     hoje_api_materias__materia_uid__hoje_get: {
         parameters: {
             query?: {
+                unidade?: number | null;
                 data?: string | null;
             };
             header?: never;

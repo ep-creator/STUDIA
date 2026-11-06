@@ -3,7 +3,7 @@
   // os próximos 7 dias e os tópicos com o progresso derivado no motor (spec 2026-11-05-redesenho-hoje-design).
   import { requisitar } from '../api/cliente'
   import type { Hoje, Painel, SecaoVinculada } from '../api/tipos'
-  import { CLASSE_ESTADO_TOPICO, dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
+  import { CLASSE_ESTADO_TOPICO, DEFINICAO_ESTADO, dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
   import PrimeirosPassos from '../componentes/PrimeirosPassos.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { abrirNoPainel } from '../estado/ia.svelte'
@@ -18,7 +18,8 @@
   // o painel é relido depois de toda escrita (marcar, gravar…): a tela Hoje acompanha
   $effect(() => {
     void painel
-    requisitar<Hoje>('GET', `/api/materias/${encodeURIComponent(uid)}/hoje`).then((d) => (dados = d), erro)
+    const unidade = painel.unidade === null ? '' : `?unidade=${painel.unidade}`
+    requisitar<Hoje>('GET', `/api/materias/${encodeURIComponent(uid)}/hoje${unidade}`).then((d) => (dados = d), erro)
   })
 
   const NOME_MARCA: Record<string, string> = { ok: 'acertei', err: 'errei', dub: 'dúvida' }
@@ -71,8 +72,11 @@
 
   // em Hoje só os tópicos que pedem algo agora; a matéria inteira fica no mapa de Tópicos
   const paraCuidar = $derived((dados?.topicos ?? []).filter((t) => ['hoje', 'falta praticar', 'começado'].includes(t.estado)))
-  // o que revisar: primeiro a unidade atual, depois as outras
-  const revisarOrdenado = $derived([...(dados?.revisar ?? [])].sort((a, b) => Number(b.unidade === dados?.unidade) - Number(a.unidade === dados?.unidade)))
+  // o que revisar: a unidade mostrada; as outras ficam recolhidas (a prova delas pode já ter passado)
+  const revisarDaUnidade = $derived((dados?.revisar ?? []).filter((g) => g.unidade === dados?.unidade))
+  const revisarOutras = $derived((dados?.revisar ?? []).filter((g) => g.unidade !== dados?.unidade))
+  let verOutras = $state(false)
+  const totalOutras = $derived(revisarOutras.reduce((t, g) => t + g.questoes.length, 0))
   // dica do ? uma vez só
   let dicaVista = $state(lerDica())
   function lerDica(): boolean {
@@ -114,7 +118,7 @@
   {:else}
     {#if painel.importacoes_pendentes > 0}
       <p class="pendente">
-        {painel.importacoes_pendentes === 1 ? '1 arquivo esperando conferência' : `${painel.importacoes_pendentes} arquivos esperando conferência`}
+        {painel.importacoes_pendentes === 1 ? '1 arquivo para conferir' : `${painel.importacoes_pendentes} arquivos para conferir`}
         <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Conferir →</a>
       </p>
     {/if}
@@ -188,6 +192,14 @@
               <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade)}>{acao.rotulo}</button>
             {/if}
           </section>
+        {:else if dados.prova_passada}
+          <section class="sessao" aria-label="Sessão">
+            <p class="sem-sessao">A prova da {nomeUnidade(dados.unidade ?? 0)} foi na {dataCurta(dados.prova_passada, null)}.</p>
+            <p class="suave">Esta unidade terminou: o que ficou para revisar está logo abaixo.</p>
+            {#if dados.unidade_atual !== null && dados.unidade_atual !== dados.unidade}
+              <a class="acao-forte comecar" href={href('painel', dados.unidade_atual)}>Ir para a {nomeUnidade(dados.unidade_atual)}</a>
+            {/if}
+          </section>
         {:else}
           <section class="sessao" aria-label="Sessão">
             <p class="sem-sessao">Nenhuma sessão marcada no plano daqui para a frente.</p>
@@ -199,9 +211,10 @@
         <section class="revisar" aria-label="Para revisar">
           <h2 class="rotulo">Para revisar</h2>
           {#if dados.revisar.length}
-            {#each revisarOrdenado as g (g.lista_id)}
+            {#if revisarDaUnidade.length === 0}<p class="suave">Nada para revisar nesta unidade.</p>{/if}
+            {#each [...revisarDaUnidade, ...(verOutras ? revisarOutras : [])] as g (g.lista_id)}
               <div class="linha-revisar">
-                <span class="nome">{g.lista_titulo}</span>
+                <span class="nome"><span class="codigo-lista">{g.lista_codigo}</span> {g.lista_titulo}</span>
                 {#if g.unidade !== dados.unidade}<span class="suave unidade">{nomeUnidade(g.unidade)}</span>{/if}
                 <span class="numeros">
                   {#each g.questoes as q (q.id)}
@@ -211,6 +224,11 @@
                 </span>
               </div>
             {/each}
+            {#if totalOutras > 0}
+              <button class="acao-texto outras" aria-expanded={verOutras} onclick={() => (verOutras = !verOutras)}>
+                {verOutras ? 'Esconder as de outras unidades' : `De outras unidades (${totalOutras})`}
+              </button>
+            {/if}
           {:else}
             <p class="suave">Nada para revisar.</p>
           {/if}
@@ -246,12 +264,17 @@
         {#if dados.unidade}
           <section aria-label="Tópicos para cuidar">
             <h2 class="rotulo">Tópicos para cuidar</h2>
-            {#if paraCuidar.length === 0}<p class="suave">Tudo em dia nesta unidade.</p>{/if}
+            {#if paraCuidar.length === 0 && !dados.tem_datas}
+              <p class="suave">Sem datas ainda: sem o calendário e o plano, o app não sabe o que está atrasado.</p>
+              <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Adicionar o calendário →</a>
+            {:else if paraCuidar.length === 0}
+              <p class="suave">Tudo em dia nesta unidade.</p>
+            {/if}
             <ul class="topicos">
               {#each paraCuidar as t (t.id)}
                 <li>
                   <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
-                  <span class="estado-topico {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}">{t.estado}</span>
+                  <span class="estado-topico {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}" title={DEFINICAO_ESTADO[t.estado]}>{t.estado}</span>
                   {#if t.total}
                     <span class="placar suave" title="questões trabalhadas (marcadas ou com resolução) / questões ligadas">{t.trabalhadas}/{t.total}</span>
                     <span class="fio" aria-hidden="true">
@@ -302,6 +325,8 @@
   .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; }
   .grupo { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; }
   .lista { font-size: 0.85rem; }
+  .codigo-lista { font-family: var(--fonte-texto); font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; margin-right: 0.3rem; }
+  .outras { justify-self: start; font-size: 0.9rem; margin-top: 0.3rem; }
   .pendente { margin: 0; display: flex; gap: 1rem; align-items: baseline; color: var(--destaque-texto); }
   .pendente .acao-texto { color: var(--texto); }
   .dica-ajuda { margin: 0; font-size: 0.9rem; display: flex; gap: 0.8rem; align-items: baseline; }

@@ -144,7 +144,8 @@
 
   // o trecho do FTS marca as palavras com [ ]; o resto é escapado antes de virar <mark>
   function destacar(texto: string): string {
-    const seguro = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const limpo = texto.replace(/\*\*|__|`|^#+\s*|\s\|\s?/gm, ' ').replace(/\s+/g, ' ')
+    const seguro = limpo.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     return seguro.replace(/\[([^\]]*)\]/g, '<mark>$1</mark>')
   }
 </script>

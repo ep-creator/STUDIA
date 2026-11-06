@@ -85,7 +85,8 @@ html, body {
   line-height: 1.5;
 }
 
-h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; text-wrap: balance; }
+h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; }
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
 p, li, dd { text-wrap: pretty; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }

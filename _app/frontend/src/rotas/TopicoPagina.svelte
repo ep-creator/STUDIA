@@ -3,7 +3,7 @@
   // resoluções gravadas. Tudo ligado por regras no motor (seção do tópico, listas do tópico, código no título).
   import { requisitar } from '../api/cliente'
   import type { DocumentoComCorpo, SecaoVinculada, TopicoPagina } from '../api/tipos'
-  import { CLASSE_ESTADO_TOPICO, nomeUnidade, semTituloRepetido } from '../apresentacao'
+  import { CLASSE_ESTADO_TOPICO, DEFINICAO_ESTADO, compararNomes, nomeUnidade } from '../apresentacao'
   import Markdown from '../componentes/Markdown.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { pedido } from '../estado/pedido.svelte'
@@ -58,7 +58,7 @@
       <a class="acao-texto voltar" href={href('topicos', dados.unidade)}>← Tópicos da {nomeUnidade(dados.unidade)}</a>
       <h1>{t.titulo}</h1>
       <p class="meta">
-        <span class="estado {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}">{t.estado}</span>
+        <span class="estado {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}" title={DEFINICAO_ESTADO[t.estado]}>{t.estado}</span>
         {#if t.total}<span class="suave">{t.trabalhadas} de {t.total} questões trabalhadas</span>{/if}
         {#if erros}<span class="erros">{erros} para revisar</span>{/if}
         {#each dados.secoes as s (s.secao_id)}
@@ -99,7 +99,7 @@
                 <span class="nome-lista">{l.titulo}</span>
                 {#if l.unidade !== dados.unidade}<span class="suave">{nomeUnidade(l.unidade)}</span>{/if}
                 <span class="numeros">
-                  {#each l.questoes as q (q.id)}
+                  {#each [...l.questoes].sort((a, b) => compararNomes(a.rotulo, b.rotulo)) as q (q.id)}
                     <button class="numero {q.estado ?? ''}" class:resolvida={q.resolucao_id}
                       aria-label={`${l.codigo} #${q.rotulo}${q.estado ? `, ${NOME_MARCA[q.estado]}` : ''}${q.resolucao_id ? ', resolução gravada' : ''}`}
                       onclick={() => abrirQuestao(q.id, l.unidade)}>{q.rotulo}</button>

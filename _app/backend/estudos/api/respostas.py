@@ -189,6 +189,9 @@ class Hoje(TypedDict):
     unidade: int | None
     prova: ProvaHoje | None
     reta_final: bool
+    tem_datas: bool             # a unidade tem alguma data (sessão ou evento); sem datas, "tudo em dia" seria mentira
+    prova_passada: str | None   # data da prova da unidade mostrada, se já passou (a unidade terminou)
+    unidade_atual: int | None   # a unidade da próxima prova (para onde apontar quando a mostrada terminou)
     sessao: SessaoHoje | None
     proximos: list[ItemProximo]
     revisar: list[GrupoRevisar]

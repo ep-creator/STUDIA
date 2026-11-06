@@ -84,6 +84,16 @@ export const CLASSE_ESTADO_TOPICO: Record<string, string> = {
   hoje: 'hoje', 'em dia': 'emdia', 'falta praticar': 'falta', 'aula passou': 'passou', 'começado': 'comecado', 'a seguir': 'seguir',
 }
 
+/** O que cada estado do tópico quer dizer (a mesma frase da folha de ajuda), para a dica ao passar o mouse. */
+export const DEFINICAO_ESTADO: Record<string, string> = {
+  hoje: 'é o tópico da sessão do dia',
+  'em dia': 'a aula já passou e você trabalhou metade ou mais das questões',
+  'falta praticar': 'a aula já passou e você trabalhou menos da metade das questões',
+  'aula passou': 'a aula já passou; o tópico não tem questões ligadas',
+  'começado': 'você já trabalhou questões dele antes da aula',
+  'a seguir': 'a aula ainda não chegou',
+}
+
 /** Remove a primeira linha "# título" do texto quando repete o título já mostrado no cabeçalho. */
 export function semTituloRepetido(corpo: string, titulo: string): string {
   const normal = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()

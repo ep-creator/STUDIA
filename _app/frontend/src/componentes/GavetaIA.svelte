@@ -66,5 +66,8 @@
   .titulo b { font-family: var(--fonte-titulo); font-weight: 500; font-size: 1.1rem; }
   .sobre { font-size: 0.85rem; }
   header .acao-texto { font-size: 0.85rem; }
-  .chave { margin-top: auto; }   /* a caixa da chave já traz o próprio fio */
+  .chave { flex: none; }   /* a caixa da chave já traz o próprio fio */
+  /* a conversa ocupa o meio e o campo fica no pé, logo acima da chave */
+  .gaveta :global(.painel-ia) { flex: 1; }
+  .gaveta :global(.painel-ia form) { margin-top: auto; }
 </style>

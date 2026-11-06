@@ -12,9 +12,9 @@ router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["hoje"])
 
 
 @router.get("/hoje")
-def hoje(data: date | None = None, ctx: Contexto = Depends(contexto_dep)) -> Hoje:
-    """`data` só serve para testar e conferir outro dia; sem ela, vale hoje."""
-    return progresso.hoje(ctx.con, data or date.today())
+def hoje(unidade: int | None = None, data: date | None = None, ctx: Contexto = Depends(contexto_dep)) -> Hoje:
+    """Hoje da unidade pedida (a aba aberta); sem ela, a unidade atual. `data` só serve para testar outro dia."""
+    return progresso.hoje(ctx.con, data or date.today(), unidade)
 
 
 @router.get("/progresso")

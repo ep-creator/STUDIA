@@ -90,13 +90,13 @@
   <AreaSoltar onarquivos={enviar} ocupado={enviando} {progresso} />
 
   {#if pendentes.length}
-    <ul aria-label="Arquivos esperando revisão">
+    <ul aria-label="Arquivos para conferir">
       {#each ordenados as imp (imp.id)}
         <li>
           <button class:ativa={imp.id === selecionada} aria-current={imp.id === selecionada ? 'true' : undefined} onclick={() => onselecionar(imp.id)}>
             <span class="nome">{nomes[imp.fonte_id] ?? `Arquivo ${imp.fonte_id}`}</span>
             {#if imp.pendencias > 0}
-              <span class="estado revisar" title={`${NOME_TIPO[imp.tipo] ?? imp.tipo}: itens que pedem revisão`}>revisar {imp.pendencias}</span>
+              <span class="estado revisar" title={`${NOME_TIPO[imp.tipo] ?? imp.tipo}: itens para conferir`}>conferir {imp.pendencias}</span>
             {:else}
               <span class="estado pronto" title={NOME_TIPO[imp.tipo] ?? imp.tipo}>pronto</span>
             {/if}
@@ -110,7 +110,7 @@
       </button>
     {/if}
   {:else if !enviando && carregada}
-    <p class="suave">Nenhum arquivo esperando revisão.</p>
+    <p class="suave">Nenhum arquivo para conferir.</p>
   {/if}
 </div>
 

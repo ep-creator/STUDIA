@@ -46,6 +46,9 @@
     if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
   })
 
+  // questões com resolução gravada: trabalhadas para a grade, para N e para o motor (a mesma regra em tudo)
+  const resolvidas = $derived(new Set(painel.documentos.filter((d) => d.tipo === 'resolucao' && d.questao_id !== null).map((d) => d.questao_id as number)))
+
   // a ordem da grade: anterior e próxima andam por ela
   const ordem = $derived(painel.listas.flatMap((l) => l.questoes.map((q) => q.id)))
   const passo = (delta: number) => {
@@ -68,7 +71,6 @@
       aoMarcar(achada.questao.id, MARCA_TECLA[e.key])
     } else if (e.key.toLowerCase() === 'n') {
       const i = ordem.indexOf(selecionada ?? -1)
-      const resolvidas = new Set(painel.documentos.filter((d) => d.tipo === 'resolucao' && d.questao_id !== null).map((d) => d.questao_id))
       const seguinte = [...ordem.slice(i + 1), ...ordem.slice(0, i + 1)].find((id) => !painel.marcacoes[String(id)] && !resolvidas.has(id))
       if (seguinte !== undefined) {
         e.preventDefault()
@@ -96,7 +98,7 @@
   <h1 class="titulo-tela">Praticar <span class="suave">· {painel.unidade}ª unidade</span></h1>
   <div class="listas">
     <div class="coluna questoes">
-    <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
+    <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} {resolvidas} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
     </div>
     <div class="coluna menu" bind:this={menu}>
     {#if achada}

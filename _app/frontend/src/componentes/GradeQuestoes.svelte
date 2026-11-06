@@ -4,10 +4,11 @@
   import type { Marca } from '../estado/marcacoes.svelte'
   import { recolhidos } from '../estado/recolhidos.svelte'
 
-  let { listas, marcacoes, selecionada, onmarcar, onselecionar }: {
+  let { listas, marcacoes, selecionada, resolvidas = new Set<number>(), onmarcar, onselecionar }: {
     listas: ListaComQuestoes[]
     marcacoes: Record<string, string>
     selecionada: number | null
+    resolvidas?: Set<number>   // questões com resolução gravada: contam como trabalhadas (a mesma regra do motor)
     onmarcar: (questaoId: number, marca: Marca) => void
     onselecionar: (questaoId: number) => void
   } = $props()
@@ -39,7 +40,7 @@
 
   // quantas questões da lista já foram feitas (com qualquer marca), no estilo 2/15
   function feitas(l: ListaComQuestoes): number {
-    return l.questoes.filter((q) => marcacoes[String(q.id)]).length
+    return l.questoes.filter((q) => marcacoes[String(q.id)] || resolvidas.has(q.id)).length
   }
 
   // Clicar só abre a questão no menu ao lado (marcar é lá, ou pelas teclas 1/2/3/0).
@@ -82,9 +83,9 @@
       <header>
         <h2><button class="assunto" aria-expanded={aberto} onclick={() => grupos.alternar(String(l.id))}>
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
-          <span class="nome-lista">{l.titulo}</span>
+          <span class="codigo-lista">{l.codigo}</span> <span class="nome-lista">{l.titulo}</span>
         </button></h2>
-        <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões feitas`}>{feitas(l)}/{l.questoes.length}</span>
+        <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões trabalhadas (marcadas ou com resolução gravada)`}>{feitas(l)}/{l.questoes.length}</span>
       </header>
       {#if aberto}
       {#each linhas(l) as [titulo, questoes] (titulo)}
@@ -96,8 +97,10 @@
               bind:this={botoes[q.id]}
               class="questao {m ?? ''}"
               class:selecionada={selecionada === q.id}
+              class:resolvida={resolvidas.has(q.id)}
+              title={resolvidas.has(q.id) ? 'resolução gravada' : undefined}
               tabindex={(focada ?? selecionada ?? todas[0]?.id) === q.id ? 0 : -1}
-              aria-label={`Questão ${l.codigo} #${q.rotulo}${m ? `, ${NOME_MARCA[m]}` : ''}`}
+              aria-label={`Questão ${l.codigo} #${q.rotulo}${m ? `, ${NOME_MARCA[m]}` : ''}${resolvidas.has(q.id) ? ', resolução gravada' : ''}`}
               aria-pressed={selecionada === q.id}
               onclick={() => clicar(q)}
               onkeydown={(e) => teclar(e, q)}
@@ -131,7 +134,10 @@
   .questao.ok { color: var(--ok); border-bottom-color: var(--ok); }
   .questao.err { color: var(--err); border-bottom: 3px double var(--err); }
   .questao.dub { color: var(--dub-texto); border-bottom: 2px dashed var(--dub); }
-  .questao.selecionada { color: var(--texto); font-weight: 600; }
+  .questao.selecionada { font-weight: 600; }
+  .questao.selecionada:not(.ok):not(.err):not(.dub) { color: var(--texto); }
+  .questao.resolvida:not(.ok):not(.err):not(.dub) { color: var(--texto); border-bottom: 2px dotted var(--suave); }
+  .codigo-lista { font-family: var(--fonte-texto); font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
   .questao { outline: 2px solid transparent; outline-offset: 2px; }
   /* o contorno transparente acima serve à animação do clique; com foco do teclado ele precisa aparecer, porque 1/2/3/0 gravam na questão focada */
   .questao:focus-visible { outline-color: color-mix(in srgb, var(--destaque) 70%, transparent); }

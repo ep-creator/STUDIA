@@ -3,7 +3,7 @@
   // Reordenar, renomear e o "visto" à mão (raro: o estado já se deriva sozinho) ficam nas ações da linha.
   import { requisitar } from '../api/cliente'
   import type { Topico, TopicoProgresso } from '../api/tipos'
-  import { CLASSE_ESTADO_TOPICO } from '../apresentacao'
+  import { CLASSE_ESTADO_TOPICO, DEFINICAO_ESTADO } from '../apresentacao'
   import { erro } from '../estado/avisos.svelte'
   import { montarHash } from '../rotas/rota'
   import MenuMais from './MenuMais.svelte'
@@ -94,7 +94,7 @@
         ]} />
       </span>
       {#if p}
-        <span class="estado {CLASSE_ESTADO_TOPICO[p.estado] ?? ''}">{p.estado}</span>
+        <span class="estado {CLASSE_ESTADO_TOPICO[p.estado] ?? ''}" title={DEFINICAO_ESTADO[p.estado]}>{p.estado}</span>
         {#if p.err + p.dub}<span class="revisar">{p.err + p.dub} para revisar</span>{/if}
         <span class="placar suave" title="questões trabalhadas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
       {/if}

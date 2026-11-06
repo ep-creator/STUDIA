@@ -321,7 +321,9 @@ def revisar(con: sqlite3.Connection) -> list[dict]:
 
 
 def _curto(texto: str, limite: int = 160) -> str:
-    linha = " ".join(texto.split())
+    """Uma linha de texto simples (sem a marcação do Markdown), para prévias e dicas."""
+    sem_marca = re.sub(r"[*_`#>|]+", "", texto)
+    linha = " ".join(sem_marca.split())
     return linha if len(linha) <= limite else linha[: limite - 1].rstrip() + "…"
 
 
@@ -358,11 +360,21 @@ def proximos(con: sqlite3.Connection, hoje: date, todas: list[dict]) -> list[dic
 
 # ---------- a tela ----------
 
-def hoje(con: sqlite3.Connection, dia: date) -> dict:
-    atual = unidades.unidade_atual(con, dia)
+def hoje(con: sqlite3.Connection, dia: date, numero: int | None = None) -> dict:
+    """A tela Hoje da unidade pedida (a aba aberta); sem número, a unidade atual (a da próxima prova)."""
+    atual = next((u for u in unidades.listar(con) if u.numero == numero), None) if numero is not None else None
+    atual = atual or unidades.unidade_atual(con, dia)
     todas = sessoes(con, dia)
-    foco = _foco(todas, dia)
+    # a sessão em foco é da unidade mostrada; os próximos dias continuam sendo o calendário da matéria toda
+    foco = _foco([s for s in todas if atual is None or s["unidade"] == atual.numero], dia)
+    tem_datas = bool(atual) and (
+        any(s["data"] for s in todas if s["unidade"] == atual.numero)
+        or con.execute("SELECT 1 FROM evento WHERE unidade_id = ? LIMIT 1", (atual.id,)).fetchone() is not None
+    )
     prova = None
+    # a unidade mostrada já teve a prova: a tela diz isso (e aponta a atual) em vez de pedir sessões novas
+    prova_passada = atual.data_prova if atual and atual.data_prova and atual.data_prova < dia.isoformat() else None
+    corrente = unidades.unidade_atual(con, dia)
     if atual and atual.data_prova and atual.data_prova >= dia.isoformat():
         evento = con.execute(
             "SELECT data, hora_inicio FROM evento WHERE unidade_id = ? AND tipo = 'prova' AND data >= ? ORDER BY data LIMIT 1",
@@ -375,6 +387,9 @@ def hoje(con: sqlite3.Connection, dia: date) -> dict:
         "unidade": atual.numero if atual else None,
         "prova": prova,
         "reta_final": bool(prova and prova["dias"] <= DIAS_RETA_FINAL),
+        "tem_datas": tem_datas,
+        "prova_passada": prova_passada,
+        "unidade_atual": corrente.numero if corrente else None,
         "sessao": _material(con, foco) if foco else None,
         "proximos": proximos(con, dia, todas),
         "revisar": revisar(con),

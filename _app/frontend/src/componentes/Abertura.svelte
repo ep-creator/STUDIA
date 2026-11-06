@@ -73,6 +73,8 @@
   })
 </script>
 
+<svelte:window onkeydown={terminar} />
+
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="abertura" bind:this={raiz} onclick={terminar} aria-hidden="true">
   <div class="fundo" bind:this={fundo}></div>

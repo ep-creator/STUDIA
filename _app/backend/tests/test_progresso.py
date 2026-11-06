@@ -144,7 +144,7 @@ def test_prova_e_reta_final(con, plano):
 def test_materia_vazia(con):
     h = progresso.hoje(con, HOJE)
     assert h == {
-        "data": "2099-03-10", "unidade": None, "prova": None, "reta_final": False,
+        "data": "2099-03-10", "unidade": None, "prova": None, "reta_final": False, "tem_datas": False, "prova_passada": None, "unidade_atual": None,
         "sessao": None, "proximos": [], "revisar": [], "topicos": [],
     }
 
@@ -257,4 +257,24 @@ def test_indice_de_todas_as_unidades(con, plano):
     i = progresso.indice(con)
     assert ("14.6", "4", 2) in [(q["lista_codigo"], q["rotulo"], q["unidade"]) for q in i["questoes"]]
     assert [t["titulo"] for t in i["topicos"]][:2] == ["Integrais em polares", "Aplicações"]
+
+
+def test_hoje_da_unidade_pedida(con, plano):
+    h = progresso.hoje(con, HOJE, 2)
+    assert h["unidade"] == 2 and h["sessao"] is None             # a 2ª não tem sessão no plano
+    assert h["prova"]["unidade"] == 2 and h["tem_datas"] is True   # tem a prova marcada
+    assert h["topicos"] == []
+    assert progresso.hoje(con, HOJE, 9)["unidade"] == 1           # unidade que não existe: a atual
+    assert progresso.hoje(con, HOJE)["tem_datas"] is True
+
+
+def test_previa_sem_marcacao_do_markdown():
+    assert progresso._curto("Faça o **mapa de contorno** | `f` ## fim") == "Faça o mapa de contorno f fim"
+
+
+def test_hoje_de_unidade_que_ja_terminou(con, plano):
+    depois = HOJE.replace(year=HOJE.year + 1)                      # a prova de todas as unidades já passou
+    h = progresso.hoje(con, depois, 1)
+    assert h["prova"] is None and h["prova_passada"] is not None
+    assert progresso.hoje(con, HOJE, 1)["prova_passada"] is None and progresso.hoje(con, HOJE, 1)["unidade_atual"] == 1
 
