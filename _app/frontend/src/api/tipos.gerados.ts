@@ -99,6 +99,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/indice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Indice
+         * @description Questões e tópicos de todas as unidades (a busca leva a qualquer um, em qualquer unidade).
+         */
+        get: operations["indice_api_materias__materia_uid__indice_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/sessoes/progresso": {
         parameters: {
             query?: never;
@@ -1215,6 +1235,13 @@ export interface components {
             /** Pendencias */
             pendencias: number;
         };
+        /** Indice */
+        Indice: {
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoIndice"][];
+            /** Topicos */
+            topicos: components["schemas"]["TopicoIndice"][];
+        };
         /** ItemMaterial */
         ItemMaterial: {
             /** Id */
@@ -1538,6 +1565,19 @@ export interface components {
             /** Figura */
             figura?: string | null;
         };
+        /** QuestaoIndice */
+        QuestaoIndice: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Lista Titulo */
+            lista_titulo: string;
+            /** Unidade */
+            unidade: number;
+        };
         /** QuestaoRevisar */
         QuestaoRevisar: {
             /** Id */
@@ -1546,6 +1586,8 @@ export interface components {
             rotulo: string;
             /** Estado */
             estado: string;
+            /** Enunciado */
+            enunciado: string;
         };
         /** QuestaoSessao */
         QuestaoSessao: {
@@ -1894,6 +1936,15 @@ export interface components {
             /** Pai Id */
             pai_id?: number | null;
         };
+        /** TopicoIndice */
+        TopicoIndice: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+            /** Unidade */
+            unidade: number;
+        };
         /** TopicoPagina */
         TopicoPagina: {
             topico: components["schemas"]["TopicoProgresso"];
@@ -2173,6 +2224,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TopicoProgresso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    indice_api_materias__materia_uid__indice_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Indice"];
                 };
             };
             /** @description Validation Error */

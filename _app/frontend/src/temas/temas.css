@@ -7,8 +7,8 @@
   --fonte-titulo: 'Fraunces Variable', Georgia, serif;
   --raio: 4px;
   --ok: #276d2c;
-  --err: #c62828;
-  --dub: #f9a825;
+  --err: #b71c1c;   /* 5,2:1 também no fundo da lateral */
+  --dub: #a87400;   /* traço da dúvida: 3,2:1 no papel (o amarelo vivo ficava em 1,7:1) */
   /* o amarelo da dúvida não se lê como texto no papel: nos traços fica --dub, nas letras --dub-texto */
   --dub-texto: #855800;
   --texto-sobre-destaque: #fff;
@@ -68,7 +68,8 @@
 }
 a, button { transition: color var(--transicao), background-color var(--transicao), border-color var(--transicao), transform var(--transicao), box-shadow var(--transicao); }
 a:hover { text-decoration-color: var(--destaque); }
-:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque) 70%, transparent); outline-offset: 2px; }
+/* anel de foco na brasa de texto: passa de 3:1 no papel e na noite (a 70% ficava em 2,3:1 no claro) */
+:focus-visible { outline: 2px solid var(--destaque-texto); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* Fórmulas: as em texto Unicode mantêm a diagramação; as do KaTeX rolam só se não couberem */

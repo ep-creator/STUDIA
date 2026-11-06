@@ -129,8 +129,8 @@
   .questao { min-width: 1.6rem; padding: 0 2px; background: none; border: 0; border-bottom: 2px solid transparent; font: inherit; font-size: 1rem; font-variant-numeric: tabular-nums; color: var(--suave); cursor: pointer; }
   .questao:hover { color: var(--destaque-texto); }
   .questao.ok { color: var(--ok); border-bottom-color: var(--ok); }
-  .questao.err { color: var(--err); border-bottom-color: var(--err); }
-  .questao.dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
+  .questao.err { color: var(--err); border-bottom: 3px double var(--err); }
+  .questao.dub { color: var(--dub-texto); border-bottom: 2px dashed var(--dub); }
   .questao.selecionada { color: var(--texto); font-weight: 600; }
   .questao { outline: 2px solid transparent; outline-offset: 2px; }
   /* o contorno transparente acima serve à animação do clique; com foco do teclado ele precisa aparecer, porque 1/2/3/0 gravam na questão focada */

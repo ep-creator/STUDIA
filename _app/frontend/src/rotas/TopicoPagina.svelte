@@ -3,7 +3,7 @@
   // resoluções gravadas. Tudo ligado por regras no motor (seção do tópico, listas do tópico, código no título).
   import { requisitar } from '../api/cliente'
   import type { DocumentoComCorpo, SecaoVinculada, TopicoPagina } from '../api/tipos'
-  import { nomeUnidade } from '../apresentacao'
+  import { CLASSE_ESTADO_TOPICO, nomeUnidade, semTituloRepetido } from '../apresentacao'
   import Markdown from '../componentes/Markdown.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { pedido } from '../estado/pedido.svelte'
@@ -58,7 +58,7 @@
       <a class="acao-texto voltar" href={href('topicos', dados.unidade)}>← Tópicos da {nomeUnidade(dados.unidade)}</a>
       <h1>{t.titulo}</h1>
       <p class="meta">
-        <span class="estado {t.estado === 'a seguir' ? 'seguir' : t.estado === 'começado' ? 'comecado' : t.estado}">{t.estado}</span>
+        <span class="estado {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}">{t.estado}</span>
         {#if t.total}<span class="suave">{t.trabalhadas} de {t.total} questões trabalhadas</span>{/if}
         {#if erros}<span class="erros">{erros} para revisar</span>{/if}
         {#each dados.secoes as s (s.secao_id)}
@@ -79,7 +79,7 @@
           </div>
         {/if}
         {#if corpo}
-          <Markdown texto={corpo.corpo} />
+          <Markdown texto={corpo.corpo} rebaixar={1} />
           <button class="acao-texto editar" onclick={() => abrirDocumento(corpo!.id)}>Abrir na Biblioteca</button>
         {:else if aberto === null}
           <p class="sem-resumo">Este tópico ainda não tem resumo.</p>
@@ -149,7 +149,8 @@
   .meta .acao-texto { color: var(--texto); }
   .estado { color: var(--suave); }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
+  .estado.emdia { color: var(--ok); }
+  .estado.falta { color: var(--texto); font-weight: 500; }
   .estado.comecado { color: var(--texto); }
   .erros { color: var(--err); }
 
@@ -174,8 +175,8 @@
   .numero { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 2px; min-width: 1.4rem; font: inherit; font-variant-numeric: tabular-nums; color: var(--suave); cursor: pointer; }
   .numero:hover { color: var(--destaque-texto); }
   .numero.ok { color: var(--ok); border-bottom-color: var(--ok); }
-  .numero.err { color: var(--err); border-bottom-color: var(--err); }
-  .numero.dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
+  .numero.err { color: var(--err); border-bottom: 3px double var(--err); }
+  .numero.dub { color: var(--dub-texto); border-bottom: 2px dashed var(--dub); }
   .numero.resolvida:not(.ok):not(.err):not(.dub) { color: var(--texto); border-bottom: 2px dotted var(--suave); }
 
   .formula { padding: 0.5rem 0; border-top: 1px solid var(--fio); }

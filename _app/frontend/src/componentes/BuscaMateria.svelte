@@ -4,7 +4,7 @@
   // Teclado: setas andam, Enter abre, Esc fecha e devolve o foco a quem abriu.
   import { onDestroy, tick, untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
-  import type { ExercicioLivro, Painel, ResultadoBusca } from '../api/tipos'
+  import type { ExercicioLivro, Indice, Painel, ResultadoBusca } from '../api/tipos'
   import { destinos } from '../irPara'
   import { slugTitulo } from '../markdown'
   import { pedido } from '../estado/pedido.svelte'
@@ -50,7 +50,13 @@
   )
   const respostaDe = $derived(new Map(exercicios.map((e) => [e.exercicio.trecho_id, e.resposta])))
   const ordem = $derived(agrupados.flatMap((g) => g.itens))
-  const irPara = $derived(destinos(consulta, painel))
+  // o índice da matéria inteira (questões e tópicos de todas as unidades), lido ao abrir a busca
+  let indice = $state<Indice | null>(null)
+  $effect(() => {
+    if (!aberta) return
+    requisitar<Indice>('GET', `/api/materias/${encodeURIComponent(uid)}/indice`).then((i) => (indice = i), () => (indice = null))
+  })
+  const irPara = $derived(destinos(consulta, painel, indice))
   const total = $derived(irPara.length + ordem.length)
 
   async function buscar() {
@@ -200,7 +206,7 @@
             onkeydown={teclar}
           >
             <div class="titulo">
-              {r.titulo}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}
+              {r.titulo.replace(/\.pdf$/i, '').replace(/_+/g, ' ')}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}
               {#if r.por === 'sentido'}<span class="sentido" title="Achado pelo sentido, sem palavras em comum com a busca">pelo sentido</span>{/if}
             </div>
             <div class="trecho">{@html destacar(r.trecho)}</div>

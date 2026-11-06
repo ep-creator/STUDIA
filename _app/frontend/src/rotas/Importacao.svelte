@@ -137,7 +137,9 @@
 
       <!-- só o corpo rola: o cabeçalho (com o seletor de tipo) e o rodapé (Confirmar) ficam sempre à vista -->
       <div class="corpo">
-      {#if imp.tipo === 'lista'}
+      {#if vazia}
+        <!-- leitura vazia: as linhas "não encontrado" não ajudam; o rodapé diz o que faltou e o que fazer -->
+      {:else if imp.tipo === 'lista'}
         <PropostaListaView proposta={imp.proposta as PropostaLista} {unidades} alterar={alterar<PropostaLista>} />
       {:else if imp.tipo === 'programa'}
         <PropostaProgramaView proposta={imp.proposta as PropostaPrograma} alterar={alterar<PropostaPrograma>} />

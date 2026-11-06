@@ -64,6 +64,36 @@ export function trechoDoExercicio(trecho: string, rotulo: string): string {
   return [...(cabeca ? [cabeca] : []), ...linhas.slice(inicio, fim).map((l) => l.trim())].join('\n')
 }
 
+/**
+ * Primeira linha do foco de uma sessão do plano em título e detalhe, como no motor (progresso.py):
+ * "**15.5 Aplicações** — massa, centro de massa" → { titulo: '15.5 Aplicações', detalhe: 'massa, centro de massa' }.
+ */
+export function focoDaSessao(foco: string): { titulo: string; detalhe: string } {
+  const primeira = foco.split('\n').map((l) => l.trim()).find(Boolean) ?? ''
+  const negrito = primeira.match(/\*\*(.+?)\*\*/)
+  if (!negrito || negrito.index === undefined) return { titulo: primeira, detalhe: '' }
+  const resto = (primeira.slice(0, negrito.index) + primeira.slice(negrito.index + negrito[0].length)).trim()
+  return { titulo: negrito[1].trim(), detalhe: resto.replace(/^[—–\-·\s]+/, '').trim() }
+}
+
+/**
+ * Classe visual de cada estado derivado do tópico: em dia (verde), falta praticar (tinta, peso), hoje (brasa); o resto
+ * em tinta suave. Os nomes vêm do motor (progresso.py).
+ */
+export const CLASSE_ESTADO_TOPICO: Record<string, string> = {
+  hoje: 'hoje', 'em dia': 'emdia', 'falta praticar': 'falta', 'aula passou': 'passou', 'começado': 'comecado', 'a seguir': 'seguir',
+}
+
+/** Remove a primeira linha "# título" do texto quando repete o título já mostrado no cabeçalho. */
+export function semTituloRepetido(corpo: string, titulo: string): string {
+  const normal = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const linhas = corpo.split('\n')
+  const i = linhas.findIndex((l) => l.trim())
+  if (i < 0) return corpo
+  const m = linhas[i].match(/^#\s+(.+)$/)
+  return m && normal(m[1]) === normal(titulo) ? linhas.slice(i + 1).join('\n') : corpo
+}
+
 /** O título cita a seção pelo código ("Massa (15.5)" cita 15.5, mas não 15.50 nem 115.5) — a mesma regra do motor. */
 export function citaSecao(titulo: string, codigo: string): boolean {
   const escapado = codigo.replace(/\./g, '\\.')

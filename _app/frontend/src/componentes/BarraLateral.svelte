@@ -33,13 +33,25 @@
 
   <ul class="principais">
     {#each AREAS as [area, nome] (area)}
-      <li><a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a></li>
+      <li>
+        {#if unidade === null && area !== 'painel'}
+          <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
+        {:else}
+          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a>
+        {/if}
+      </li>
     {/each}
   </ul>
   <hr />
   <ul class="apoio">
     {#each APOIO as [area, nome] (area)}
-      <li><a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a></li>
+      <li>
+        {#if unidade === null}
+          <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
+        {:else}
+          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a>
+        {/if}
+      </li>
     {/each}
     <li>
       <a class:ativa={rota.tela === 'importar'} aria-current={rota.tela === 'importar' ? 'page' : undefined} href={montarHash({ tela: 'importar', uid: rota.uid })}>
@@ -71,6 +83,7 @@
   .apoio a:hover, .apoio a.ativa { color: var(--texto); }
   /* número de pendências: texto na brasa, sem pílula (o amarelo é da dúvida) */
   .selo { color: var(--destaque-texto); font-weight: 600; font-size: 0.85rem; margin-left: 0.45rem; font-variant-numeric: tabular-nums; }
+  .vazia { display: block; padding: 0.25rem 0.5rem; border-left: 2px solid transparent; color: var(--suave); opacity: 0.6; cursor: default; }
   .rodape { margin-top: auto; display: grid; gap: 0.8rem; }
   .ajuda { justify-self: start; font-size: 0.9rem; padding: 0 0.5rem; }
   .ajuda kbd { font-family: var(--fonte-texto); font-size: 0.8rem; margin-left: 0.3rem; padding: 0 0.35rem; border-radius: 4px; background: var(--leve); }

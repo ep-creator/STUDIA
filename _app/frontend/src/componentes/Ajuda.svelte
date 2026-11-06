@@ -18,15 +18,18 @@
     ['Alt I', 'abrir ou fechar a IA da matéria'],
     ['1 · 2 · 3 · 0', 'em Praticar: acertei · errei · dúvida · limpar, na questão aberta'],
     ['N', 'em Praticar: a próxima questão ainda não trabalhada'],
-    ['← →', 'na grade de Praticar: andar entre as questões'],
+    ['setas', 'na grade de Praticar: andar entre as questões'],
     ['Ctrl Z', 'desfazer a última alteração'],
     ['?', 'esta ajuda'],
   ]
   const ESTADOS: [string, string][] = [
     ['feita', 'todas as questões da sessão foram marcadas ou resolvidas'],
     ['2 de 3', 'sessão começada: questões trabalhadas de quantas tem'],
+    ['não feita', 'no plano: a data passou sem nenhuma questão trabalhada'],
     ['hoje', 'o tópico é o da sessão do dia'],
-    ['visto', 'a aula do tópico já passou no plano (é o calendário; o número ao lado diz quanto você praticou)'],
+    ['em dia', 'a aula já passou e você trabalhou metade ou mais das questões do tópico'],
+    ['falta praticar', 'a aula já passou e você trabalhou menos da metade das questões'],
+    ['aula passou', 'a aula já passou e o tópico não tem questões ligadas'],
     ['começado', 'você já trabalhou questões do tópico antes da aula'],
     ['a seguir', 'o tópico ainda não chegou'],
   ]
@@ -35,7 +38,7 @@
     ['14.1, 15.4', 'seção do livro; a lista com o mesmo código é a dos exercícios dela'],
     ['L5', 'lista da turma (Lista 5)'],
     ['Linha 1 · Linha 2', 'as questões principais e as de reforço de cada lista'],
-    ['✓ ✗ ?', 'acertei, errei, dúvida'],
+    ['✓ ✗ ?', 'acertei, errei, dúvida; nos números, traço cheio, duplo e tracejado'],
   ]
 </script>
 
@@ -64,7 +67,7 @@
       </section>
     </div>
   </div>
-  <p class="suave rodape">As áreas: <b>Hoje</b> (a sessão do dia), <b>Tópicos</b> (uma página por tópico), <b>Praticar</b> (as listas) e <b>Biblioteca</b> (resumos e PDFs). O guia completo está em <code>docs/guia.md</code>.</p>
+  <p class="suave rodape">As áreas: <b>Hoje</b> (a sessão do dia), <b>Tópicos</b> (uma página por tópico), <b>Praticar</b> (as listas) e <b>Biblioteca</b> (resumos e PDFs). <a href="https://github.com/ep-creator/plataforma-estudos/blob/main/docs/guia.md" target="_blank" rel="noopener">Guia completo de uso ↗</a></p>
 </div>
 
 <style>

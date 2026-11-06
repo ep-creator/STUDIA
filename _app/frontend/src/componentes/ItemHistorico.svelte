@@ -27,7 +27,7 @@
 <li class:desfeito={grupo.desfeito_em} class:ehDesfazer>
   <div class="linha linha-acoes">
     <span class="quando"><b>{hora}</b> <span class="suave">{dia}</span></span>
-    <span class="descricao">{ehDesfazer ? `↩ ${grupo.descricao}` : grupo.descricao}{#if grupo.desfeito_em}<span class="suave"> · desfeito</span>{/if}</span>
+    <span class="descricao">{ehDesfazer ? `↩ ${grupo.descricao.replace(/^Agente:/, 'IA:')}` : grupo.descricao.replace(/^Agente:/, 'IA:')}{#if grupo.desfeito_em}<span class="suave"> · desfeito</span>{/if}</span>
     <span class="acoes-linha" class:fixas={aberto}><button class="acao-texto" onclick={verDiferenca} aria-expanded={aberto}>{aberto ? 'fechar' : 'detalhes'}</button></span>
     {#if ultimo}<button class="acao-texto desfazer" onclick={ondesfazer}>↶ desfazer</button>{/if}
   </div>

@@ -25,6 +25,20 @@
     return quandoDesfizer(() => void carregar())
   })
 
+  // um título por dia (hoje, ontem, a data), na ordem em que vieram
+  const porDia = $derived.by(() => {
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const hoje = iso(new Date())
+    const ontem = iso(new Date(Date.now() - 86_400_000))
+    const mapa = new Map<string, GrupoHistorico[]>()
+    for (const g of grupos) {
+      const d = g.momento.slice(0, 10)
+      const nome = d === hoje ? 'Hoje' : d === ontem ? 'Ontem' : `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`
+      mapa.set(nome, [...(mapa.get(nome) ?? []), g])
+    }
+    return [...mapa.entries()]
+  })
+
   // O que o "desfazer" do motor atinge: a ação mais recente que ainda não foi desfeita nem é um desfazer
   const alvo = $derived(grupos.find((g) => !g.desfeito_em && g.desfaz_grupo === null)?.id ?? null)
 </script>
@@ -35,12 +49,16 @@
 {:else if grupos.length === 0}
   <p class="suave">Nada por aqui ainda.</p>
 {:else}
-  <ul>
-    {#each grupos as g (g.id)}<ItemHistorico {uid} grupo={g} ultimo={g.id === alvo} ondesfazer={() => void desfazer()} />{/each}
-  </ul>
+  {#each porDia as [dia, doDia] (dia)}
+    <h2 class="rotulo dia">{dia}</h2>
+    <ul>
+      {#each doDia as g (g.id)}<ItemHistorico {uid} grupo={g} ultimo={g.id === alvo} ondesfazer={() => void desfazer()} />{/each}
+    </ul>
+  {/each}
 {/if}
 
 <style>
+  .dia { margin: 1.2rem 0 0.3rem; font-family: var(--fonte-texto); font-weight: 400; }
   .cab { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
   h1 { font-size: 2.2rem; margin: 0 0 0.6rem; }
   .dica { font-size: 0.8rem; }

@@ -32,7 +32,7 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
       { lista_id: 1, lista_codigo: '14.1', lista_titulo: 'Funções', unidade: 1, questoes: [{ id: 4, rotulo: '46', estado: 'err' }] },
     ],
     topicos: [
-      { id: 13, titulo: 'Integrais em polares', estado: 'visto', secoes: ['15.4'], total: 13, trabalhadas: 4, ok: 0, err: 1, dub: 0 },
+      { id: 13, titulo: 'Integrais em polares', estado: 'falta praticar', secoes: ['15.4'], total: 13, trabalhadas: 4, ok: 0, err: 1, dub: 0 },
       { id: 14, titulo: 'Aplicações', estado: 'hoje', secoes: ['15.5'], total: 4, trabalhadas: 0, ok: 0, err: 0, dub: 0 },
       { id: 19, titulo: 'Aula extra', estado: 'a seguir', secoes: [], total: 0, trabalhadas: 0, ok: 0, err: 0, dub: 0 },
     ],
@@ -116,10 +116,14 @@ test('próximos 7 dias e tópicos com estado derivado', async () => {
   expect(proximos).toHaveTextContent('S4')
   expect(proximos).toHaveTextContent('Prova')
   expect(within(proximos).getByRole('link', { name: /Plano completo/ })).toHaveAttribute('href', '#/m/ab/u/3/cronograma')
-  const topicos = screen.getByRole('region', { name: /Tópicos da 3ª unidade/ })
+  // só os tópicos que pedem algo agora (falta praticar, hoje, começado); o mapa inteiro fica em Tópicos
+  const topicos = screen.getByRole('region', { name: 'Tópicos para cuidar' })
   expect(topicos).toHaveTextContent('Integrais em polares')
+  expect(topicos).toHaveTextContent('falta praticar')
   expect(topicos).toHaveTextContent('4/13')
   expect(within(topicos).getByText('hoje')).toBeInTheDocument()
+  expect(topicos).not.toHaveTextContent('Aula extra')
+  expect(within(topicos).getByRole('link', { name: /Todos os tópicos/ })).toHaveAttribute('href', '#/m/ab/u/3/topicos')
 })
 
 test('prova da unidade no cabeçalho; reta final só com 7 dias ou menos', async () => {

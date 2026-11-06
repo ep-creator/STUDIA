@@ -104,9 +104,11 @@
         </li>
       {/each}
     </ul>
-    <button class="acao-suave confirmar" disabled={prontas.length === 0} onclick={confirmarProntas}>
-      ✔ Confirmar todos sem pendências ({prontas.length})
-    </button>
+    {#if prontas.length > 0}
+      <button class="acao-suave confirmar" onclick={confirmarProntas}>
+        ✔ Confirmar todos sem pendências ({prontas.length})
+      </button>
+    {/if}
   {:else if !enviando && carregada}
     <p class="suave">Nenhum arquivo esperando revisão.</p>
   {/if}

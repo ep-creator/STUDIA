@@ -3,6 +3,7 @@
   // Reordenar, renomear e o "visto" à mão (raro: o estado já se deriva sozinho) ficam nas ações da linha.
   import { requisitar } from '../api/cliente'
   import type { Topico, TopicoProgresso } from '../api/tipos'
+  import { CLASSE_ESTADO_TOPICO } from '../apresentacao'
   import { erro } from '../estado/avisos.svelte'
   import { montarHash } from '../rotas/rota'
   import MenuMais from './MenuMais.svelte'
@@ -93,7 +94,7 @@
         ]} />
       </span>
       {#if p}
-        <span class="estado {p.estado === 'a seguir' ? 'seguir' : p.estado === 'começado' ? 'comecado' : p.estado}">{p.estado}</span>
+        <span class="estado {CLASSE_ESTADO_TOPICO[p.estado] ?? ''}">{p.estado}</span>
         {#if p.err + p.dub}<span class="revisar">{p.err + p.dub} para revisar</span>{/if}
         <span class="placar suave" title="questões trabalhadas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
       {/if}
@@ -121,7 +122,8 @@
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; align-items: baseline; font-size: 0.85rem; }
   .estado { font-size: 0.85rem; color: var(--suave); min-width: 4.5rem; text-align: right; }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
+  .estado.emdia { color: var(--ok); }
+  .estado.falta { color: var(--texto); font-weight: 500; }
   .estado.comecado { color: var(--texto); }
   .revisar { font-size: 0.85rem; color: var(--err); white-space: nowrap; }
   .placar { font-size: 0.85rem; min-width: 3.2rem; text-align: right; font-variant-numeric: tabular-nums; }

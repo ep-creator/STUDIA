@@ -12,7 +12,7 @@
   import { recarregar } from '../estado/materia.svelte'
   import { podeSair } from '../estado/saida'
   import { abrirNoPainel } from '../estado/ia.svelte'
-  import { nomeLegivel } from '../apresentacao'
+  import { nomeLegivel, semTituloRepetido } from '../apresentacao'
   import { montarHash } from './rota'
 
   let { painel, documento: documentoDaRota = null }: { painel: Painel; documento?: number | null } = $props()
@@ -178,7 +178,7 @@
           <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => { if (podeSair()) editando = false }} />
         {/key}
       {:else}
-        <div class="leitura-medida"><Markdown texto={documento.corpo} contas={documento.tipo === 'resolucao'} /></div>
+        <div class="leitura-medida"><Markdown texto={semTituloRepetido(documento.corpo, documento.titulo)} contas={documento.tipo === 'resolucao'} rebaixar={1} /></div>
       {/if}
     {:else if fonte}
       <h2>{nomeLegivel(fonte)}</h2>
@@ -193,9 +193,7 @@
   /* As duas colunas rolam por dentro: a lista não é cortada e o texto não arrasta a página junto */
   .documentos { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; }
   aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
-  .titulo-tela { font-size: 1.6rem; margin: 0 0 0.6rem; }
-  /* o documento já tem o título no cabeçalho: o "# título" do próprio texto, se repetir, não aparece de novo */
-  .leitor :global(.leitura-medida > .markdown > h1:first-child) { display: none; }
+  .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
   @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }

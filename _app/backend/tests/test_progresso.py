@@ -114,7 +114,7 @@ def test_topicos_com_estado_e_progresso_derivados(con, plano):
     t = {x["id"]: x for x in progresso.hoje(con, HOJE)["topicos"]}
     polares, aplic, extra = t[plano.polares], t[plano.aplicacoes], t[plano.extra]
     # 15.4: coberto pela S1 (já passou); 1 erro, 1 certa e 1 resolução gravada
-    assert polares["estado"] == "visto"
+    assert polares["estado"] == "em dia"                   # aula passou e 3 de 3 trabalhadas
     assert (polares["total"], polares["trabalhadas"], polares["ok"], polares["err"], polares["dub"]) == (3, 3, 1, 1, 0)
     # 15.5 + L5 (ligada ao tópico): é o tópico da sessão de hoje
     assert aplic["estado"] == "hoje"
@@ -130,7 +130,7 @@ def test_status_manual_visto_ainda_vale(con, materia, plano):
         topicos.definir_status(op, solto, "visto")
         outro = topicos.criar(op, plano.u1, "Outro sem nada")
     t = {x["id"]: x for x in progresso.hoje(con, HOJE)["topicos"]}
-    assert (t[solto]["estado"], t[outro]["estado"]) == ("visto", "a seguir")
+    assert (t[solto]["estado"], t[outro]["estado"]) == ("aula passou", "a seguir")   # visto à mão, sem questões
 
 
 def test_prova_e_reta_final(con, plano):
@@ -165,7 +165,7 @@ def test_rota_hoje(tmp_path):
 
 def test_pagina_do_topico_junta_secao_resumo_formulas_questoes_e_resolucoes(con, plano):
     p = progresso.pagina_topico(con, plano.polares, HOJE)
-    assert (p["topico"]["titulo"], p["topico"]["estado"], p["unidade"]) == ("Integrais em polares", "visto", 1)
+    assert (p["topico"]["titulo"], p["topico"]["estado"], p["unidade"]) == ("Integrais em polares", "em dia", 1)
     assert [s["codigo"] for s in p["secoes"]] == ["15.4"]
     assert p["resumos"] == []                                   # só a 15.5 tem resumo
     assert [f["titulo"] for f in p["formulas"]] == ["Área polar"]
@@ -230,3 +230,31 @@ def test_sessoes_da_unidade_para_o_plano(con, plano):
     lista = progresso.sessoes_da_unidade(con, 1, date(2099, 3, 12))
     assert [(s["codigo"], s["estado"], s["trabalhadas"], s["total"]) for s in lista] == [
         ("S1", "feita", 2, 2), ("S2", "passou", 0, 3), ("S3", "hoje", 0, 0), ("S4", "futura", 0, 0)]
+
+
+def test_aula_passada_com_pouca_pratica_e_falta_praticar(con, materia, plano):
+    with operacao(con, "desfaz", materia.pasta) as op:
+        marcacoes.definir(op, plano.q154["2"], None)
+    t = {x["id"]: x for x in progresso.hoje(con, HOJE)["topicos"]}
+    # 15.4: 3 questões, 1 erro e 1 resolução = 2 de 3 trabalhadas (metade ou mais) → em dia
+    assert (t[plano.polares]["estado"], t[plano.polares]["trabalhadas"]) == ("em dia", 2)
+    with operacao(con, "desfaz2", materia.pasta) as op:
+        marcacoes.definir(op, plano.q154["1"], None)
+    t = {x["id"]: x for x in progresso.hoje(con, HOJE)["topicos"]}
+    assert (t[plano.polares]["estado"], t[plano.polares]["trabalhadas"]) == ("falta praticar", 1)
+
+
+def test_revisar_traz_o_enunciado_curto(con, materia, plano):
+    from estudos.modelos import QuestaoEntrada as Q
+    with operacao(con, "enunciado", materia.pasta) as op:
+        lista = con.execute("SELECT lista_id FROM questao WHERE id = ?", (plano.q154["1"],)).fetchone()[0]
+        listas.sincronizar_questoes(op, lista, [Q("1", enunciado_md="Calcule  a integral\n em polares."), Q("2"), Q("3")])
+    [g] = [g for g in progresso.hoje(con, HOJE)["revisar"] if g["lista_codigo"] == "15.4"]
+    assert g["questoes"][0]["enunciado"] == "Calcule a integral em polares."
+
+
+def test_indice_de_todas_as_unidades(con, plano):
+    i = progresso.indice(con)
+    assert ("14.6", "4", 2) in [(q["lista_codigo"], q["rotulo"], q["unidade"]) for q in i["questoes"]]
+    assert [t["titulo"] for t in i["topicos"]][:2] == ["Integrais em polares", "Aplicações"]
+

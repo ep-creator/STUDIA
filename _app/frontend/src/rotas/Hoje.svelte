@@ -3,7 +3,7 @@
   // os próximos 7 dias e os tópicos com o progresso derivado no motor (spec 2026-11-05-redesenho-hoje-design).
   import { requisitar } from '../api/cliente'
   import type { Hoje, Painel, SecaoVinculada } from '../api/tipos'
-  import { dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
+  import { CLASSE_ESTADO_TOPICO, dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
   import PrimeirosPassos from '../componentes/PrimeirosPassos.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { abrirNoPainel } from '../estado/ia.svelte'
@@ -22,7 +22,6 @@
   })
 
   const NOME_MARCA: Record<string, string> = { ok: 'acertei', err: 'errei', dub: 'dúvida' }
-  const CLASSE_ESTADO: Record<string, string> = { hoje: 'hoje', visto: 'visto', 'começado': 'comecado', 'a seguir': 'seguir' }
   const ESTADO_SESSAO: Record<string, string> = { feita: 'feita', passou: 'passou', hoje: 'hoje', futura: '' }
   const TIPO_EVENTO: Record<string, string> = {
     prova: 'Prova', aula: 'Aula', segunda_chamada: 'Segunda chamada', exame_final: 'Exame final', extra: 'Aula extra', feriado: 'Feriado',
@@ -70,6 +69,20 @@
   })
   const codigosSessao = $derived(sessao?.secoes.map((s) => s.codigo).join(', ') ?? '')
 
+  // em Hoje só os tópicos que pedem algo agora; a matéria inteira fica no mapa de Tópicos
+  const paraCuidar = $derived((dados?.topicos ?? []).filter((t) => ['hoje', 'falta praticar', 'começado'].includes(t.estado)))
+  // o que revisar: primeiro a unidade atual, depois as outras
+  const revisarOrdenado = $derived([...(dados?.revisar ?? [])].sort((a, b) => Number(b.unidade === dados?.unidade) - Number(a.unidade === dados?.unidade)))
+  // dica do ? uma vez só
+  let dicaVista = $state(lerDica())
+  function lerDica(): boolean {
+    try { return localStorage.getItem('studia.dica-ajuda') === '1' } catch { return true }
+  }
+  function fecharDica() {
+    dicaVista = true
+    try { localStorage.setItem('studia.dica-ajuda', '1') } catch { /* segue */ }
+  }
+
   const totalRevisar = $derived(dados?.revisar.reduce((t, g) => t + g.questoes.length, 0) ?? 0)
   // na reta final, os tópicos com mais erros e dúvidas primeiro
   const fracos = $derived(
@@ -99,6 +112,12 @@
   {:else if !painel.unidade && !dados.sessao}
     <PrimeirosPassos hrefImportar={montarHash({ tela: 'importar', uid })} />
   {:else}
+    {#if painel.importacoes_pendentes > 0}
+      <p class="pendente">
+        {painel.importacoes_pendentes === 1 ? '1 arquivo esperando conferência' : `${painel.importacoes_pendentes} arquivos esperando conferência`}
+        <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Conferir →</a>
+      </p>
+    {/if}
     {#if dados.reta_final && prova}
       <section class="reta" aria-label="Reta final">
         <h2 class="rotulo">Reta final</h2>
@@ -180,14 +199,14 @@
         <section class="revisar" aria-label="Para revisar">
           <h2 class="rotulo">Para revisar</h2>
           {#if dados.revisar.length}
-            {#each dados.revisar as g (g.lista_id)}
+            {#each revisarOrdenado as g (g.lista_id)}
               <div class="linha-revisar">
                 <span class="nome">{g.lista_titulo}</span>
                 {#if g.unidade !== dados.unidade}<span class="suave unidade">{nomeUnidade(g.unidade)}</span>{/if}
                 <span class="numeros">
                   {#each g.questoes as q (q.id)}
                     <button class="numero {q.estado}" aria-label={rotuloQuestao(g.lista_codigo, q.rotulo, q.estado)}
-                      onclick={() => abrirQuestao(q.id, g.unidade)}>{q.rotulo}</button>
+                      title={q.enunciado || undefined} onclick={() => abrirQuestao(q.id, g.unidade)}>{q.rotulo}</button>
                   {/each}
                 </span>
               </div>
@@ -225,13 +244,14 @@
         </section>
 
         {#if dados.unidade}
-          <section aria-label={`Tópicos da ${ordinal(dados.unidade)} unidade`}>
-            <h2 class="rotulo">Tópicos da {ordinal(dados.unidade)} unidade</h2>
+          <section aria-label="Tópicos para cuidar">
+            <h2 class="rotulo">Tópicos para cuidar</h2>
+            {#if paraCuidar.length === 0}<p class="suave">Tudo em dia nesta unidade.</p>{/if}
             <ul class="topicos">
-              {#each dados.topicos as t (t.id)}
+              {#each paraCuidar as t (t.id)}
                 <li>
                   <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
-                  <span class="estado-topico {CLASSE_ESTADO[t.estado] ?? ''}">{t.estado}</span>
+                  <span class="estado-topico {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}">{t.estado}</span>
                   {#if t.total}
                     <span class="placar suave" title="questões trabalhadas (marcadas ou com resolução) / questões ligadas">{t.trabalhadas}/{t.total}</span>
                     <span class="fio" aria-hidden="true">
@@ -242,10 +262,17 @@
                 </li>
               {/each}
             </ul>
+            <a class="acao-texto mais" href={href('topicos', dados.unidade)}>Todos os tópicos da {ordinal(dados.unidade)} unidade →</a>
           </section>
         {/if}
       </div>
     </div>
+    {#if !dicaVista}
+      <p class="dica-ajuda suave" role="note">
+        Dica: aperte <kbd>?</kbd> para ver os atalhos e o que quer dizer cada estado.
+        <button class="acao-texto" onclick={fecharDica}>entendi</button>
+      </p>
+    {/if}
   {/if}
 </div>
 
@@ -275,6 +302,10 @@
   .questoes { display: flex; flex-wrap: wrap; gap: 0.4rem 1.6rem; }
   .grupo { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; }
   .lista { font-size: 0.85rem; }
+  .pendente { margin: 0; display: flex; gap: 1rem; align-items: baseline; color: var(--destaque-texto); }
+  .pendente .acao-texto { color: var(--texto); }
+  .dica-ajuda { margin: 0; font-size: 0.9rem; display: flex; gap: 0.8rem; align-items: baseline; }
+  .dica-ajuda kbd { font-family: var(--fonte-texto); padding: 0 0.35rem; border-radius: 4px; background: var(--leve); }
   .comecar { justify-self: start; margin-top: 0.6rem; padding: 0.4rem 1.2rem; }
   .sem-sessao { margin: 0; font-family: var(--fonte-titulo); font-size: 1.3rem; }
 
@@ -282,8 +313,8 @@
   .numero { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 2px; min-width: 1.4rem; font: inherit; font-variant-numeric: tabular-nums; color: var(--texto); cursor: pointer; }
   .numero:hover { color: var(--destaque-texto); }
   .numero.ok { color: var(--ok); border-bottom-color: var(--ok); }
-  .numero.err { color: var(--err); border-bottom-color: var(--err); }
-  .numero.dub { color: var(--dub-texto); border-bottom-color: var(--dub); }
+  .numero.err { color: var(--err); border-bottom: 3px double var(--err); }
+  .numero.dub { color: var(--dub-texto); border-bottom: 2px dashed var(--dub); }
   .numero.resolvida:not(.ok):not(.err):not(.dub) { border-bottom: 2px dotted var(--suave); }
 
   .revisar .linha-revisar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.9rem; padding: 0.35rem 0; border-top: 1px solid var(--fio); }
@@ -310,7 +341,8 @@
   .nome-topico:hover { text-decoration: underline; text-decoration-color: var(--destaque); text-underline-offset: 3px; }
   .estado-topico { font-size: 0.8rem; color: var(--suave); }
   .estado-topico.hoje { color: var(--destaque-texto); font-weight: 500; }
-  .estado-topico.visto { color: var(--texto); }   /* aula passada, não domínio: sem o verde do acerto */
+  .estado-topico.emdia { color: var(--ok); }
+  .estado-topico.falta { color: var(--texto); font-weight: 500; }
   .estado-topico.comecado { color: var(--texto); }
   .placar { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .fio { grid-column: 1 / -1; position: relative; display: flex; height: 2px; background: var(--fio); }

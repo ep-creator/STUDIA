@@ -63,6 +63,13 @@ test('título que cita a seção pelo código', async () => {
   expect(citaSecao('Polares 1525', '15.5')).toBe(false)
 })
 
+test('foco da sessão: título em negrito e o detalhe sem o travessão', async () => {
+  const { focoDaSessao } = await import('./apresentacao')
+  expect(focoDaSessao('**15.5 Aplicações** — massa, centro de massa\n\nExercícios: 15.5: 11')).toEqual({ titulo: '15.5 Aplicações', detalhe: 'massa, centro de massa' })
+  expect(focoDaSessao('**Integrais em polares**\n\nExercícios')).toEqual({ titulo: 'Integrais em polares', detalhe: '' })
+  expect(focoDaSessao('Revisão geral')).toEqual({ titulo: 'Revisão geral', detalhe: '' })
+})
+
 test('ordem natural de nomes', async () => {
   const { compararNomes } = await import('./apresentacao')
   expect(['Aula 10', 'Aula 2', 'Aula 1'].sort(compararNomes)).toEqual(['Aula 1', 'Aula 2', 'Aula 10'])

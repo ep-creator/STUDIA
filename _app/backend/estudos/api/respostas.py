@@ -154,6 +154,7 @@ class QuestaoRevisar(TypedDict):
     id: int
     rotulo: str
     estado: str
+    enunciado: str              # curto, para a prévia
 
 
 class GrupoRevisar(TypedDict):
@@ -167,7 +168,7 @@ class GrupoRevisar(TypedDict):
 class TopicoProgresso(TypedDict):
     id: int
     titulo: str
-    estado: str                 # hoje, visto, começado ou a seguir (derivado)
+    estado: str                 # hoje, em dia, falta praticar, aula passou, começado ou a seguir (derivado)
     secoes: list[str]
     total: int
     trabalhadas: int
@@ -223,6 +224,25 @@ class TopicoPagina(TypedDict):
     formulas: list[Formula]
     listas: list[ListaTopico]
     resolucoes: list[ResolucaoTopico]
+
+
+class QuestaoIndice(TypedDict):
+    id: int
+    rotulo: str
+    lista_codigo: str
+    lista_titulo: str
+    unidade: int
+
+
+class TopicoIndice(TypedDict):
+    id: int
+    titulo: str
+    unidade: int
+
+
+class Indice(TypedDict):
+    questoes: list[QuestaoIndice]
+    topicos: list[TopicoIndice]
 
 
 class Marcado(TypedDict):

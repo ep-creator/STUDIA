@@ -69,7 +69,7 @@ test('menos de 2 letras ou só palavras vazias não chamam o motor', async () =>
   await userEvent.clear(campo)
   await userEvent.type(campo, 'de a o')
   await new Promise((r) => setTimeout(r, 300))
-  expect(urls).toHaveLength(0)
+  expect(urls.filter((u) => u.includes('/busca'))).toHaveLength(0)   // o índice do "Ir para" não é busca
 })
 
 test('filtro Toda a matéria tira a unidade; filtro Textos manda os tipos de texto', async () => {

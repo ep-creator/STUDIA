@@ -5,7 +5,10 @@
   import { montarHash, type Area } from '../rotas/rota'
   import { busca } from '../estado/busca.svelte'
 
-  let { painel, area, hoje = new Date(), acoes }: { painel: Painel; area: Area; hoje?: Date; acoes?: Snippet } = $props()
+  // comUnidades: Adicionar material e Histórico são da matéria toda (sem as abas 1ª 2ª 3ª)
+  let { painel, area, hoje = new Date(), comUnidades = true, acoes }: {
+    painel: Painel; area: Area; hoje?: Date; comUnidades?: boolean; acoes?: Snippet
+  } = $props()
 
   const unidade = $derived(painel.unidades.find((u) => u.numero === painel.unidade) ?? null)
   const prova = $derived.by(() => {
@@ -16,6 +19,7 @@
 </script>
 
 <header class="topo nao-imprimir">
+  {#if comUnidades}
   <nav class="unidades" aria-label="Unidades">
     {#each painel.unidades as u (u.id)}
       <a
@@ -25,6 +29,7 @@
       >{ordinal(u.numero)}</a>
     {/each}
   </nav>
+  {/if}
   <!-- em Hoje a prova já está no cabeçalho da tela -->
   {#if unidade && area !== 'painel'}<span class="suave contagem" class:perto={provaPerto(prova, hoje)}>{textoTopoProva(prova, hoje)}</span>{/if}
   <button class="buscar" onclick={() => (busca.aberta = true)} aria-label="Buscar na matéria (Ctrl K)">

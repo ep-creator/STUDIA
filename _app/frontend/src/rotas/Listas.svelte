@@ -68,7 +68,8 @@
       aoMarcar(achada.questao.id, MARCA_TECLA[e.key])
     } else if (e.key.toLowerCase() === 'n') {
       const i = ordem.indexOf(selecionada ?? -1)
-      const seguinte = [...ordem.slice(i + 1), ...ordem.slice(0, i + 1)].find((id) => !painel.marcacoes[String(id)])
+      const resolvidas = new Set(painel.documentos.filter((d) => d.tipo === 'resolucao' && d.questao_id !== null).map((d) => d.questao_id))
+      const seguinte = [...ordem.slice(i + 1), ...ordem.slice(0, i + 1)].find((id) => !painel.marcacoes[String(id)] && !resolvidas.has(id))
       if (seguinte !== undefined) {
         e.preventDefault()
         selecionada = seguinte
@@ -126,7 +127,7 @@
   .coluna { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.6rem; }
   /* a questão aberta fica separada da lista por um fio, sem cartão */
   .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
-  .titulo-tela { font-size: 1.6rem; margin: 0 0 0.6rem; }
+  .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .titulo-tela span { font-family: var(--fonte-texto); font-size: 1rem; }
   .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
   .atalhos { margin: 0; font-size: 0.9rem; }

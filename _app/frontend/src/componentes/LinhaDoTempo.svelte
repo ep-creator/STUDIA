@@ -1,8 +1,7 @@
 <script lang="ts">
   import type { Sessao, SessaoProgresso } from '../api/tipos'
-  import { dataCurta, isoDe } from '../apresentacao'
+  import { dataCurta, focoDaSessao, isoDe } from '../apresentacao'
   import type { ItemLinha } from '../cronograma'
-  import Markdown from './Markdown.svelte'
 
   let { itens, hoje = new Date(), progresso = {}, onfeito, oneditar }: {
     itens: ItemLinha[]
@@ -17,22 +16,27 @@
     exame_final: 'Exame final',
   }
   const hojeIso = $derived(isoDe(hoje))
-  // na linha do tempo, só a primeira linha do foco (o resto aparece ao editar)
-  const primeiraLinha = (md: string) => md.split('\n').find((l) => l.trim()) ?? ''
+  // na linha do tempo, só a primeira linha do foco, em título e detalhe como em Hoje (o resto aparece ao editar)
 </script>
 
 <ol class="linha">
   {#each itens as item, i (i)}
+    <!-- a linha de hoje, mesmo sem nada marcado para hoje: separa o que passou do que vem -->
+    {#if item.data && item.data > hojeIso && (i === 0 || (itens[i - 1].data ?? '') < hojeIso)}
+      <li class="marco-hoje" aria-label="Hoje, {dataCurta(hojeIso)}"><span class="quando">{dataCurta(hojeIso)} · hoje</span><span class="fio-hoje"></span></li>
+    {/if}
     <li class="linha-acoes" class:hoje={item.data === hojeIso} class:prova={item.tipo === 'prova'} class:passado={item.data !== null && item.data < hojeIso}>
       <span class="quando">{item.data ? dataCurta(item.data, item.hora) : 'sem data'}{item.data === hojeIso ? ' · hoje' : ''}</span>
       {#if item.sessao}
         {@const s = item.sessao}
-        <span class="texto">
-          <b>{s.codigo}</b>{#if s.foco_md} · <span class="foco"><Markdown texto={primeiraLinha(s.foco_md)} /></span>{/if}
-        </span>
+        {@const foco = focoDaSessao(s.foco_md)}
         {@const p = progresso[s.id]}
+        <span class="texto">
+          <b>{s.codigo}</b>{#if foco.titulo} <span class="foco-titulo">{foco.titulo}</span>{/if}{#if foco.detalhe} <span class="suave foco-detalhe">{foco.detalhe}</span>{/if}
+        </span>
         {#if p?.estado === 'feita' || (!p && s.feito)}<span class="selo-feita">feita</span>
-        {:else if p && p.trabalhadas > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
+        {:else if p && p.trabalhadas > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>
+        {:else if p?.estado === 'passou'}<span class="selo-nao" title="a data passou sem nenhuma questão trabalhada">não feita</span>{/if}
         <span class="acoes-linha">
           <button class="acao-texto" aria-label={`Sessão ${s.codigo}: ${s.feito ? 'desmarcar feita' : 'marcar feita'}`} onclick={() => onfeito(s)}>
             {s.feito ? 'desmarcar' : 'marcar feita'}
@@ -55,12 +59,16 @@
   .passado, .passado :global(*) { color: var(--suave); }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }
-  /* o foco vem do Markdown (um div com parágrafo): aqui fica na mesma linha do código ("S3 · Polares…") */
-  .foco :global(.markdown), .foco :global(p) { display: inline; margin: 0; }
+  .foco-titulo { margin-left: 0.5rem; }
+  .foco-detalhe { margin-left: 0.6rem; }
   /* o estado numa coluna à direita, antes das ações que aparecem no hover */
-  .selo-parcial, .selo-feita { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .marco-hoje { border-bottom: 0; padding: 0.3rem 0; }
+  .marco-hoje .quando { color: var(--destaque-texto); }
+  .fio-hoje { flex: 1; height: 1px; background: var(--destaque); align-self: center; }
+  .selo-nao { font-size: 0.85rem; color: var(--suave); font-style: italic; }
+  .selo-parcial, .selo-feita, .selo-nao { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
   .selo-parcial { font-size: 0.85rem; color: var(--suave); }
   .selo-feita { font-size: 0.8rem; color: var(--ok); }
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }
-  .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha { margin-left: 0; }
+  .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha, .selo-nao + .acoes-linha { margin-left: 0; }
 </style>

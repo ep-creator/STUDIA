@@ -5,8 +5,10 @@ gravadas. As regras ficam explícitas para dar para conferir (spec 2026-11-05-re
 
 - questão trabalhada: tem marcação ou resolução gravada;
 - sessão: feita (à mão, ou com todas as suas questões trabalhadas), hoje, passou ou futura; com o placar x/y;
-- tópico: hoje (coberto pela sessão de hoje), visto (à mão, ou coberto por uma sessão que já passou), começado (tem
-  questão trabalhada, mas a aula ainda não chegou) ou a seguir. Uma questão só não faz o tópico "visto". Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos
+- tópico: o estado diz quanto se praticou, não só o calendário. hoje (coberto pela sessão de hoje); depois da aula
+  (sessão que cobre o tópico já passou, ou "visto" à mão): em dia (metade ou mais das questões trabalhadas), falta
+  praticar (menos da metade) ou aula passou (tópico sem questões); antes da aula: começado (já tem questão trabalhada)
+  ou a seguir. Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos
   ligados às listas das suas questões.
 """
 
@@ -212,7 +214,8 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
         if foco and foco["data"] == iso and cobre(foco):
             estado = "hoje"
         elif t["status"] == "visto" or any(s["data"] and s["data"] < iso and cobre(s) for s in todas):
-            estado = "visto"
+            feitas_topico = sum(1 for q in ids if q in feitas)
+            estado = "aula passou" if not ids else "em dia" if 2 * feitas_topico >= len(ids) else "falta praticar"
         elif any(q in feitas for q in ids):
             estado = "começado"
         else:
@@ -304,6 +307,7 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
 def revisar(con: sqlite3.Connection) -> list[dict]:
     """Questões com ✗ ou ? de todas as unidades, agrupadas por lista, na ordem das unidades e das listas."""
     marcas = _marcacoes(con)
+    enunciados = {l[0]: l[1] for l in con.execute("SELECT id, enunciado_md FROM questao")}
     grupos: dict[int, dict] = {}
     for q, d in _questoes(con).items():
         if marcas.get(q) not in ("err", "dub"):
@@ -312,8 +316,27 @@ def revisar(con: sqlite3.Connection) -> list[dict]:
             "lista_id": d["lista_id"], "lista_codigo": d["lista_codigo"], "lista_titulo": d["lista_titulo"],
             "unidade": d["unidade"], "questoes": [],
         })
-        g["questoes"].append({"id": q, "rotulo": d["rotulo"], "estado": marcas[q]})
+        g["questoes"].append({"id": q, "rotulo": d["rotulo"], "estado": marcas[q], "enunciado": _curto(enunciados.get(q, ""))})
     return list(grupos.values())
+
+
+def _curto(texto: str, limite: int = 160) -> str:
+    linha = " ".join(texto.split())
+    return linha if len(linha) <= limite else linha[: limite - 1].rstrip() + "…"
+
+
+def indice(con: sqlite3.Connection) -> dict:
+    """Questões e tópicos de todas as unidades, para a busca levar a qualquer um ("14.1 46", "polares")."""
+    return {
+        "questoes": [
+            {"id": q, "rotulo": d["rotulo"], "lista_codigo": d["lista_codigo"], "lista_titulo": d["lista_titulo"], "unidade": d["unidade"]}
+            for q, d in _questoes(con).items()
+        ],
+        "topicos": [
+            {"id": l["id"], "titulo": l["titulo"], "unidade": l["numero"]}
+            for l in con.execute("SELECT t.id, t.titulo, u.numero FROM topico t JOIN unidade u ON u.id = t.unidade_id ORDER BY u.numero, t.ordem, t.id")
+        ],
+    }
 
 
 def proximos(con: sqlite3.Connection, hoje: date, todas: list[dict]) -> list[dict]:

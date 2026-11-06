@@ -152,7 +152,7 @@
     <main id="conteudo" tabindex="-1" class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
         <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} {painel} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
-        <Topo {painel} area={rota.tela === 'materia' ? rota.area : 'painel'}>
+        <Topo {painel} area={rota.tela === 'materia' ? rota.area : 'painel'} comUnidades={rota.tela === 'materia'}>
           {#snippet acoes()}
             <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
             <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta} title="IA da matéria (Alt+I)">IA ›</button>
