@@ -64,11 +64,11 @@ test('marcar e desfazer', async ({ page }) => {
   await q1.click()   // clicar só abre a questão no menu ao lado
   await expect(page.getByRole('button', { name: 'Questão L1 #1', exact: true })).toBeVisible()
   await page.getByRole('group', { name: 'Marcar questão' }).getByRole('button', { name: /Errei/ }).click()
-  await expect(page.getByRole('button', { name: 'Questão L1 #1 (✗)' })).toBeVisible()
-  await page.getByRole('button', { name: 'Questão L1 #1 (✗)' }).focus()
+  await expect(page.getByRole('button', { name: 'Questão L1 #1, errei' })).toBeVisible()
+  await page.getByRole('button', { name: 'Questão L1 #1, errei' }).focus()
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('3')
-  await expect(page.getByRole('button', { name: 'Questão L1 #2 (?)' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Questão L1 #2, dúvida' })).toBeVisible()
   await expect(page.getByText('2/8', { exact: true })).toBeVisible()
 
   await page.keyboard.press('Control+z')
@@ -113,7 +113,7 @@ test('busca com Ctrl K abre o texto e o PDF', async ({ page }) => {
   await campo.fill('lista')
   await page.getByRole('radio', { name: 'Toda a matéria' }).click()
   await page.getByRole('radio', { name: 'Listas e provas' }).click()
-  await page.getByRole('option').first().click()
+  await page.locator('[role=option]:not(.ir)').first().click()   // o primeiro do conteúdo (o "Ir para" vem antes)
   await expect(page.locator('.leitor iframe')).toBeVisible()
 })
 

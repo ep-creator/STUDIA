@@ -93,9 +93,11 @@
     {#if textoProva}<span class="prova" class:perto={dados?.reta_final}>{textoProva}</span>{/if}
   </header>
 
-  {#if dados && !painel.unidade && !dados.sessao}
+  {#if !dados}
+    <p class="suave">Carregando…</p>
+  {:else if !painel.unidade && !dados.sessao}
     <PrimeirosPassos hrefImportar={montarHash({ tela: 'importar', uid })} />
-  {:else if dados}
+  {:else}
     {#if dados.reta_final && prova}
       <section class="reta" aria-label="Reta final">
         <h2 class="rotulo">Reta final</h2>
@@ -114,11 +116,13 @@
           <section class="sessao" aria-label={deHoje ? 'Sessão de hoje' : 'Próxima sessão'}>
             <h2 class="rotulo">
               {deHoje ? 'Sessão de hoje' : `Próxima sessão · ${dataCurta(sessao.data ?? '')}`} · {sessao.codigo}
-              {#if sessao.estado === 'feita'}<span class="feita">feita</span>
-              {:else if sessao.trabalhadas > 0}<span class="parcial">{sessao.trabalhadas} de {sessao.total}</span>{/if}
+              {#if sessao.estado === 'feita'}<span class="feita">feita</span>{/if}
             </h2>
             <h3 class="titulo">{sessao.titulo}</h3>
             {#if sessao.detalhe}<p class="suave detalhe">{sessao.detalhe}</p>{/if}
+            {#if sessao.estado !== 'feita' && sessao.trabalhadas > 0}
+              <p class="progresso-sessao">{sessao.trabalhadas} de {sessao.total} questões já trabalhadas</p>
+            {/if}
 
             <dl class="material">
               {#each sessao.secoes as s (s.secao_id)}
@@ -203,7 +207,7 @@
                   {#if item.tipo === 'sessao'}
                     <span class="codigo">{item.codigo}</span>
                     <span class="texto">{item.titulo}</span>
-                    {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado">{item.trabalhadas}/{item.total}</span>
+                    {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado" title="questões trabalhadas / questões da sessão">{item.trabalhadas}/{item.total}</span>
                     {:else if ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
                   {:else}
                     <span class="codigo">{TIPO_EVENTO[item.tipo] ?? item.tipo}</span>
@@ -256,7 +260,7 @@
   section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; align-content: start; min-width: 0; }
   h2.rotulo { margin: 0; font-family: var(--fonte-texto); font-weight: 400; display: flex; gap: 0.6rem; align-items: baseline; }
   .feita { color: var(--ok); letter-spacing: 0.12em; }
-  .parcial { letter-spacing: 0.06em; }
+  .progresso-sessao { margin: 0; font-size: 0.95rem; }
 
   /* a sessão: o único bloco com peso de título */
   .sessao { gap: 0.5rem; }

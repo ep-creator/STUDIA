@@ -110,3 +110,12 @@ test('desempenho de uma lista conta acertos, erros, dúvidas e o que falta', asy
   expect(desempenho({ questoes: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] }, { '1': 'ok', '2': 'ok', '3': 'err' }))
     .toEqual({ ok: 2, err: 1, dub: 0, falta: 1, total: 4 })
 })
+
+test('do trecho do livro, só o exercício pedido (e o enunciado do bloco, se houver)', async () => {
+  const { trechoDoExercicio } = await import('./apresentacao')
+  const trecho = '45–50 Faça o mapa de contorno.\n46. f (x, y) = ln(x²+ 4y²)\n47. f (x, y) = yex\n51–52 Faça o esboço.\n51. f (x, y) = x²+ 9y²'
+  expect(trechoDoExercicio(trecho, '46')).toBe('45–50 Faça o mapa de contorno.\n46. f (x, y) = ln(x²+ 4y²)')
+  expect(trechoDoExercicio(trecho, '51')).toBe('51–52 Faça o esboço.\n51. f (x, y) = x²+ 9y²')
+  expect(trechoDoExercicio('46. f (x, y)\ncontinua aqui\n47. outra', '46')).toBe('46. f (x, y)\ncontinua aqui')
+  expect(trechoDoExercicio('texto sem numeração', '46')).toBe('texto sem numeração')
+})

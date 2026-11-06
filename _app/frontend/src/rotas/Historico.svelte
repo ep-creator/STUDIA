@@ -8,10 +8,12 @@
   let { uid }: { uid: string } = $props()
 
   let grupos = $state<GrupoHistorico[]>([])
+  let lido = $state(false)
 
   async function carregar() {
     try {
       grupos = await requisitar<GrupoHistorico[]>('GET', `/api/materias/${uid}/historico?limite=100`)
+      lido = true
     } catch (e) {
       erro(e)
     }
@@ -28,7 +30,9 @@
 </script>
 
 <header class="cab"><h1>Histórico</h1><span class="suave dica">Ctrl+Z desfaz a última</span></header>
-{#if grupos.length === 0}
+{#if !lido}
+  <p class="suave">Carregando…</p>
+{:else if grupos.length === 0}
   <p class="suave">Nada por aqui ainda.</p>
 {:else}
   <ul>

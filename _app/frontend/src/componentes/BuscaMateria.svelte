@@ -1,14 +1,18 @@
 <script lang="ts">
-  // Busca na matéria (Ctrl K): procura em livros, listas e textos e abre o resultado no lugar certo
-  // (PDF na página; texto no bloco ## que casou). Teclado: setas andam, Enter abre, Esc fecha.
+  // Busca na matéria (Ctrl K): em cima, "Ir para" (áreas, unidades, tópicos e questões pelo código, como "14.1 46");
+  // embaixo, o conteúdo (livros, listas e textos), que abre no lugar certo (PDF na página; texto no bloco ## que casou).
+  // Teclado: setas andam, Enter abre, Esc fecha e devolve o foco a quem abriu.
   import { onDestroy, tick, untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
-  import type { ExercicioLivro, ResultadoBusca } from '../api/tipos'
+  import type { ExercicioLivro, Painel, ResultadoBusca } from '../api/tipos'
+  import { destinos } from '../irPara'
   import { slugTitulo } from '../markdown'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash } from '../rotas/rota'
 
-  let { uid, unidade, aberta, onfechar }: { uid: string; unidade: number | null; aberta: boolean; onfechar: () => void } = $props()
+  let { uid, unidade, painel, aberta, onfechar }: {
+    uid: string; unidade: number | null; painel: Painel; aberta: boolean; onfechar: () => void
+  } = $props()
 
   type Resultado = ResultadoBusca['resultados'][number]
   type Filtro = 'tudo' | 'livros' | 'listas' | 'textos'
@@ -46,6 +50,8 @@
   )
   const respostaDe = $derived(new Map(exercicios.map((e) => [e.exercicio.trecho_id, e.resposta])))
   const ordem = $derived(agrupados.flatMap((g) => g.itens))
+  const irPara = $derived(destinos(consulta, painel))
+  const total = $derived(irPara.length + ordem.length)
 
   async function buscar() {
     const q = consulta.trim()
@@ -88,9 +94,22 @@
   })
   onDestroy(() => clearTimeout(espera))
 
+  // abre com o foco no campo; fecha devolvendo o foco a quem abriu (o botão da busca ou o que estava focado)
+  let antes: HTMLElement | null = null
   $effect(() => {
-    if (aberta) void tick().then(() => campo?.focus())
+    if (aberta) {
+      antes = document.activeElement as HTMLElement | null
+      void tick().then(() => campo?.focus())
+    } else if (antes) {
+      antes.focus?.()
+      antes = null
+    }
   })
+
+  function ir(href: string) {
+    location.hash = href
+    onfechar()
+  }
 
   /** "15.4 Integrais — Mudança para polares" → âncora do bloco ## (o texto antes do " — " é o título do documento). */
   function ancoraDe(titulo: string): string | null {
@@ -111,9 +130,10 @@
 
   function teclar(e: KeyboardEvent) {
     if (e.key === 'Escape') { e.preventDefault(); onfechar() }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); ativo = Math.min(ativo + 1, ordem.length - 1) }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); ativo = Math.min(ativo + 1, total - 1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); ativo = Math.max(ativo - 1, 0) }
-    else if (e.key === 'Enter' && ordem[ativo]) { e.preventDefault(); abrir(ordem[ativo]) }
+    else if (e.key === 'Enter' && ativo < irPara.length) { e.preventDefault(); ir(irPara[ativo].href) }
+    else if (e.key === 'Enter' && ordem[ativo - irPara.length]) { e.preventDefault(); abrir(ordem[ativo - irPara.length]) }
   }
 
   // o trecho do FTS marca as palavras com [ ]; o resto é escapado antes de virar <mark>
@@ -134,10 +154,10 @@
       bind:value={consulta}
       oninput={agendar}
       role="combobox"
-      aria-expanded={ordem.length > 0}
+      aria-expanded={total > 0}
       aria-controls="busca-resultados"
       aria-label="Buscar na matéria"
-      placeholder="Buscar na matéria…"
+      placeholder="Buscar ou ir para… (ex.: 14.1 46, polares, Praticar)"
       autocomplete="off"
     />
     <div class="filtros">
@@ -156,10 +176,19 @@
     {#if montando}<p class="aviso">Montando o índice… os resultados podem ainda não incluir tudo.</p>{/if}
 
     <div class="resultados" id="busca-resultados" role="listbox" aria-label="Resultados">
+      {#if irPara.length}
+        <div class="grupo rotulo">Ir para</div>
+        {#each irPara as d, i (d.href + d.rotulo)}
+          <div class="item ir" class:ativo={i === ativo} role="option" tabindex="-1" aria-selected={i === ativo}
+            onmouseenter={() => (ativo = i)} onclick={() => ir(d.href)} onkeydown={teclar}>
+            <span class="titulo">{d.rotulo}</span> <span class="suave detalhe-ir">{d.detalhe}</span>
+          </div>
+        {/each}
+      {/if}
       {#each agrupados as g (g.nome)}
         <div class="grupo rotulo">{g.nome}</div>
         {#each g.itens as r (r.trecho_id)}
-          {@const i = ordem.indexOf(r)}
+          {@const i = irPara.length + ordem.indexOf(r)}
           <div
             class="item"
             class:ativo={i === ativo}
@@ -212,6 +241,8 @@
   .titulo { font-weight: 600; font-size: 0.95rem; }
   /* "pelo sentido": texto pequeno em tinta suave, sem moldura (achado pela busca semântica) */
   .sentido { margin-left: 0.5rem; font-size: 0.75rem; font-weight: 400; color: var(--suave); }
+  .item.ir { display: flex; align-items: baseline; gap: 0.6rem; padding-top: 0.35rem; padding-bottom: 0.35rem; }
+  .detalhe-ir { font-size: 0.85rem; }
   .resposta { font-size: 0.82rem; margin-top: 0.2rem; color: var(--texto); }
   .trecho { font-size: 0.85rem; color: var(--suave); margin-top: 0.15rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .trecho :global(mark) { background: none; color: var(--texto); font-weight: 600; }

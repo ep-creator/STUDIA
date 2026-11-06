@@ -43,6 +43,27 @@ export function nomeLegivel(fonte: { titulo: string; caminho: string }): string 
   return bruto.replace(/\.pdf$/i, '').replace(/_+/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * O índice do livro devolve a página em volta do exercício (46, 47, 48…). Para a questão aberta, só interessa o item
+ * dela e, se houver, o enunciado do bloco ("45–50 Faça o mapa de contorno."). Sem numeração reconhecível, tudo.
+ */
+export function trechoDoExercicio(trecho: string, rotulo: string): string {
+  const linhas = trecho.split('\n')
+  const item = (l: string) => l.trim().match(/^(\d+)[.)]\s/)
+  const bloco = (l: string) => l.trim().match(/^(\d+)\s*[–-]\s*(\d+)\s/)
+  const inicio = linhas.findIndex((l) => item(l)?.[1] === rotulo)
+  if (inicio < 0) return trecho
+  let fim = inicio + 1
+  while (fim < linhas.length && !item(linhas[fim]) && !bloco(linhas[fim])) fim++
+  const n = Number(rotulo)
+  let cabeca: string | null = null
+  for (let i = inicio - 1; i >= 0; i--) {
+    const b = bloco(linhas[i])
+    if (b) { if (Number(b[1]) <= n && n <= Number(b[2])) cabeca = linhas[i].trim(); break }
+  }
+  return [...(cabeca ? [cabeca] : []), ...linhas.slice(inicio, fim).map((l) => l.trim())].join('\n')
+}
+
 /** O título cita a seção pelo código ("Massa (15.5)" cita 15.5, mas não 15.50 nem 115.5) — a mesma regra do motor. */
 export function citaSecao(titulo: string, codigo: string): boolean {
   const escapado = codigo.replace(/\./g, '\\.')

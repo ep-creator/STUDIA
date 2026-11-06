@@ -5,6 +5,7 @@
   import type { Documento, DocumentoComCorpo, ExercicioLivro, Formula, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import { trechoDoExercicio } from '../apresentacao'
   import { renderizarFormula } from '../markdown'
   import PainelIA from './PainelIA.svelte'
   import Markdown from './Markdown.svelte'
@@ -62,7 +63,7 @@
   const abas = $derived.by(() => {
     const lista: [Aba, string][] = [['ajuda', 'Ajuda da IA']]
     if (doLivro?.resposta) lista.push(['resposta', 'Resposta do livro'])
-    if (resolucao) lista.push(['resolucao', 'Resolução'])
+    if (resolucao) lista.push(['resolucao', 'Resolução gravada'])
     if (formulas.length) lista.push(['formulas', `Fórmulas (${formulas.length})`])
     return lista
   })
@@ -89,7 +90,7 @@
     {#if doLivro}
       <div class="do-livro">
         <span class="rotulo">No livro{doLivro.exercicio.pagina ? ` · p. ${doLivro.exercicio.pagina}` : ''}</span>
-        <p>{doLivro.exercicio.trecho}</p>
+        <p>{trechoDoExercicio(doLivro.exercicio.trecho, questao.rotulo)}</p>
         {#if doLivro.exercicio.pagina && secao}
           <a class="acao-texto" href={urlArquivo(uid, secao.caminho, doLivro.exercicio.pagina)} target="_blank" rel="noopener">
             Abrir no livro na p. {doLivro.exercicio.pagina}
@@ -107,6 +108,7 @@
         {SIMBOLO[m]} {NOMES[m]}
       </button>
     {/each}
+    <span class="teclas suave" aria-hidden="true"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> marcam · <kbd>0</kbd> limpa · <kbd>N</kbd> próxima</span>
   </div>
 
   <div class="abas" role="tablist" aria-label="Ajuda para a questão">
@@ -154,6 +156,8 @@
   .marcas { display: flex; flex-wrap: wrap; gap: 1.4rem; }
   .marca { background: none; border: 0; padding: 0 0 2px; font: inherit; color: var(--suave); cursor: pointer; border-bottom: 1.5px solid transparent; }
   .marca:hover { color: var(--texto); }
+  .teclas { margin-left: auto; font-size: 0.85rem; align-self: center; }
+  .teclas kbd { font-family: var(--fonte-texto); font-size: 0.8rem; padding: 0 0.3rem; border-radius: 4px; background: var(--leve); }
   .marca[aria-pressed='true'] { font-weight: 500; }
   .marca[aria-pressed='true'].ok { color: var(--ok); border-bottom-color: var(--ok); }
   .marca[aria-pressed='true'].err { color: var(--err); border-bottom-color: var(--err); }

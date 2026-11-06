@@ -4,6 +4,7 @@
   import Marca from './Marca.svelte'
   import Seletor from './Seletor.svelte'
   import SeletorTema from './SeletorTema.svelte'
+  import { ajuda } from '../estado/ajuda.svelte'
 
   let { rota, materias, unidade, pendencias }: {
     rota: Exclude<Rota, { tela: 'materias' }>
@@ -48,7 +49,10 @@
     <li><a class:ativa={rota.tela === 'historico'} aria-current={rota.tela === 'historico' ? 'page' : undefined} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>
   </ul>
 
-  <div class="rodape"><SeletorTema /></div>
+  <div class="rodape">
+    <button class="acao-texto ajuda" onclick={() => (ajuda.aberta = true)} title="Atalhos e ajuda (?)">Atalhos e ajuda <kbd>?</kbd></button>
+    <SeletorTema />
+  </div>
 </nav>
 
 <style>
@@ -67,5 +71,7 @@
   .apoio a:hover, .apoio a.ativa { color: var(--texto); }
   /* número de pendências: texto na brasa, sem pílula (o amarelo é da dúvida) */
   .selo { color: var(--destaque-texto); font-weight: 600; font-size: 0.85rem; margin-left: 0.45rem; font-variant-numeric: tabular-nums; }
-  .rodape { margin-top: auto; }
+  .rodape { margin-top: auto; display: grid; gap: 0.8rem; }
+  .ajuda { justify-self: start; font-size: 0.9rem; padding: 0 0.5rem; }
+  .ajuda kbd { font-family: var(--fonte-texto); font-size: 0.8rem; margin-left: 0.3rem; padding: 0 0.35rem; border-radius: 4px; background: var(--leve); }
 </style>

@@ -7,6 +7,7 @@
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import { consumirQuestao, pedido } from '../estado/pedido.svelte'
   import { citaSecao } from '../apresentacao'
+  import { digitando } from '../estado/ajuda.svelte'
   import { montarHash } from './rota'
 
   let { painel, questao = null }: { painel: Painel; questao?: number | null } = $props()
@@ -56,6 +57,25 @@
   const formulasDa = (codigo: string | undefined, secaoId: number | undefined) =>
     codigo === undefined ? [] : painel.formulas.filter((f) => f.secao_id === secaoId || citaSecao(f.titulo, codigo))
 
+  // Teclas na tela toda (fora da grade, que tem as suas, e fora de campos de texto): 1/2/3/0 marcam a questão aberta;
+  // N vai para a próxima ainda não trabalhada (sem marca), na ordem da grade, voltando ao começo se preciso
+  const MARCA_TECLA: Record<string, Marca> = { '1': 'ok', '2': 'err', '3': 'dub', '0': null }
+  function teclaPraticar(e: KeyboardEvent) {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || digitando(e.target)) return
+    if (document.querySelector('[role="dialog"]')) return   // busca, ajuda ou IA abertas: as teclas são delas
+    if (achada && e.key in MARCA_TECLA) {
+      e.preventDefault()
+      aoMarcar(achada.questao.id, MARCA_TECLA[e.key])
+    } else if (e.key.toLowerCase() === 'n') {
+      const i = ordem.indexOf(selecionada ?? -1)
+      const seguinte = [...ordem.slice(i + 1), ...ordem.slice(0, i + 1)].find((id) => !painel.marcacoes[String(id)])
+      if (seguinte !== undefined) {
+        e.preventDefault()
+        selecionada = seguinte
+      }
+    }
+  }
+
   function aoMarcar(questaoId: number, marca: Marca) {
     const anterior = marcaDe(questaoId)
     const alvo = painel.listas.flatMap((l) => l.questoes.map((q) => ({ l, q }))).find((x) => x.q.id === questaoId)
@@ -67,10 +87,12 @@
   }
 </script>
 
+<svelte:window onkeydown={teclaPraticar} />
+
 {#if painel.listas.length === 0}
   <EstadoVazio texto="Nenhuma lista nesta unidade ainda." acao={{ rotulo: 'Importar listas', href: montarHash({ tela: 'importar', uid }) }} />
 {:else}
-  <h1 class="so-leitor">Praticar · {painel.unidade}ª unidade</h1>
+  <h1 class="titulo-tela">Praticar <span class="suave">· {painel.unidade}ª unidade</span></h1>
   <div class="listas">
     <div class="coluna questoes">
     <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
@@ -104,6 +126,8 @@
   .coluna { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.6rem; }
   /* a questão aberta fica separada da lista por um fio, sem cartão */
   .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
+  .titulo-tela { font-size: 1.6rem; margin: 0 0 0.6rem; }
+  .titulo-tela span { font-family: var(--fonte-texto); font-size: 1rem; }
   .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
   .atalhos { margin: 0; font-size: 0.9rem; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }

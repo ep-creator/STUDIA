@@ -9,7 +9,9 @@
   import FaixaMotor from './componentes/FaixaMotor.svelte'
   import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
+  import Ajuda from './componentes/Ajuda.svelte'
   import BuscaMateria from './componentes/BuscaMateria.svelte'
+  import { ajuda, digitando } from './estado/ajuda.svelte'
   import { busca } from './estado/busca.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
@@ -26,19 +28,41 @@
   import Materias from './rotas/Materias.svelte'
   import Hoje from './rotas/Hoje.svelte'
   import Topicos from './rotas/Topicos.svelte'
-  import { analisarRota, type Rota, precisaListaDeMaterias } from './rotas/rota'
+  import { analisarRota, montarHash, type Rota, precisaListaDeMaterias } from './rotas/rota'
 
   let rota = $state<Rota>(analisarRota(location.hash))
   let materias = $state<ResumoMateria[]>([])
 
   aplicarTema()
 
+  const AREAS_ATALHO: Record<string, 'painel' | 'topicos' | 'listas' | 'documentos'> = { '1': 'painel', '2': 'topicos', '3': 'listas', '4': 'documentos' }
+
   function teclado(e: KeyboardEvent) {
     // Ctrl K (ou ⌘K) abre a busca na matéria, em qualquer tela da matéria
-    if (rota.tela === 'materia' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    if (rota.tela !== 'materias' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       busca.aberta = true
       return
+    }
+    // ? abre a folha de atalhos e ajuda (fora de campos de texto)
+    if (e.key === '?' && !digitando(e.target) && !busca.aberta) {
+      e.preventDefault()
+      ajuda.aberta = !ajuda.aberta
+      return
+    }
+    // Alt 1–4: as quatro áreas; Alt I: a IA da matéria
+    if (rota.tela !== 'materias' && e.altKey && !e.ctrlKey && !e.metaKey) {
+      const area = AREAS_ATALHO[e.key] ?? AREAS_ATALHO[e.code.replace('Digit', '')]
+      if (area) {
+        e.preventDefault()
+        location.hash = montarHash({ tela: 'materia', uid: rota.uid, unidade: estadoMateria.unidade, area })
+        return
+      }
+      if (e.code === 'KeyI') {
+        e.preventDefault()
+        ia.aberta = !ia.aberta
+        return
+      }
     }
     if (rota.tela !== 'materias' && atalhoDesfazer(e)) {
       e.preventDefault()
@@ -127,14 +151,14 @@
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />
     <main id="conteudo" tabindex="-1" class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
+        <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} {painel} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
+        <Topo {painel} area={rota.tela === 'materia' ? rota.area : 'painel'}>
+          {#snippet acoes()}
+            <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
+            <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta} title="IA da matéria (Alt+I)">IA ›</button>
+          {/snippet}
+        </Topo>
         {#if rota.tela === 'materia'}
-          <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
-          <Topo {painel} area={rota.area}>
-            {#snippet acoes()}
-              <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
-              <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>IA ›</button>
-            {/snippet}
-          </Topo>
           <div class="area" class:ajustada={rota.area === 'documentos' || rota.area === 'listas'}>
             {#if rota.area === 'painel' || !painel.unidade}
               <Hoje {painel} />
@@ -166,6 +190,7 @@
     {#if ia.aberta}
       <GavetaIA uid={rota.uid} onfechar={() => (ia.aberta = false)} />
     {/if}
+    {#if ajuda.aberta}<Ajuda onfechar={() => (ajuda.aberta = false)} />{/if}
   </div>
 {/if}
 

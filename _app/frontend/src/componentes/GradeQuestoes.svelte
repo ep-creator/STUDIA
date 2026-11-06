@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte'
   import type { ListaComQuestoes, Questao } from '../api/tipos'
-  import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
+  import type { Marca } from '../estado/marcacoes.svelte'
   import { recolhidos } from '../estado/recolhidos.svelte'
 
   let { listas, marcacoes, selecionada, onmarcar, onselecionar }: {
@@ -66,6 +66,8 @@
     botoes[alvo.id]?.focus()
   }
 
+  const NOME_MARCA: Record<string, string> = { ok: 'acertei', err: 'errei', dub: 'dúvida' }
+
   function teclar(e: KeyboardEvent, q: Questao) {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); void mover(1) }
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); void mover(-1) }
@@ -95,7 +97,7 @@
               class="questao {m ?? ''}"
               class:selecionada={selecionada === q.id}
               tabindex={(focada ?? selecionada ?? todas[0]?.id) === q.id ? 0 : -1}
-              aria-label={`Questão ${l.codigo} #${q.rotulo}${m ? ` (${SIMBOLO[m]})` : ''}`}
+              aria-label={`Questão ${l.codigo} #${q.rotulo}${m ? `, ${NOME_MARCA[m]}` : ''}`}
               aria-pressed={selecionada === q.id}
               onclick={() => clicar(q)}
               onkeydown={(e) => teclar(e, q)}

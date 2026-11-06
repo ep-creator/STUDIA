@@ -104,9 +104,6 @@
   .item.ativo { font-weight: 600; }
   .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque-texto); }
   .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
-  .ia {
-    display: inline-block; margin-left: 0.4rem; padding: 0 0.3rem; border-radius: 4px; vertical-align: 0.1em;
-    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque-texto);
-    border: 1px solid color-mix(in srgb, var(--destaque) 55%, transparent);
-  }
+  /* feito pela IA: texto pequeno, sem moldura nem brasa */
+  .ia { margin-left: 0.4rem; font-size: 0.75rem; letter-spacing: 0.06em; color: var(--suave); }
 </style>

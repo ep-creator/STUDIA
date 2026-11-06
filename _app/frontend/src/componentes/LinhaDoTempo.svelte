@@ -55,10 +55,12 @@
   .passado, .passado :global(*) { color: var(--suave); }
   .texto { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .evento { color: var(--suave); }
-  .foco :global(p) { display: inline; margin: 0; }
-  .selo-parcial { font-size: 0.85rem; color: var(--suave); font-variant-numeric: tabular-nums; }
-  /* o foco vem do Markdown em parágrafo: aqui fica na mesma linha do código ("S3 · Polares…") */
-  .foco :global(p) { display: inline; margin: 0; }
-  .selo-feita { font-size: 0.78rem; color: var(--ok); }
+  /* o foco vem do Markdown (um div com parágrafo): aqui fica na mesma linha do código ("S3 · Polares…") */
+  .foco :global(.markdown), .foco :global(p) { display: inline; margin: 0; }
+  /* o estado numa coluna à direita, antes das ações que aparecem no hover */
+  .selo-parcial, .selo-feita { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .selo-parcial { font-size: 0.85rem; color: var(--suave); }
+  .selo-feita { font-size: 0.8rem; color: var(--ok); }
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }
+  .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha { margin-left: 0; }
 </style>

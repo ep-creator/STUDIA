@@ -30,7 +30,7 @@ test('a resolução fica escondida até abrir a aba Resolução', async () => {
   const chamadas = motor()
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
   expect(screen.queryByText(/isole a variável/)).toBeNull()
-  await userEvent.click(screen.getByRole('tab', { name: 'Resolução' }))
+  await userEvent.click(screen.getByRole('tab', { name: 'Resolução gravada' }))
   expect(await screen.findByText(/isole a variável/)).toBeInTheDocument()
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/documentos/16'))).toBe(true)
 })
@@ -40,7 +40,7 @@ test('abrir a resolução não fecha a gaveta da IA', async () => {
   const { ia } = await import('../estado/ia.svelte')
   ia.aberta = true
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao, onmarcar: vi.fn() })
-  await userEvent.click(screen.getByRole('tab', { name: 'Resolução' }))
+  await userEvent.click(screen.getByRole('tab', { name: 'Resolução gravada' }))
   expect(ia.aberta).toBe(true)
 })
 
@@ -58,7 +58,7 @@ test('sem Limpar: clicar na marca ativa desmarca, clicar em outra troca', async 
 test('sem resolução, não há a aba', () => {
   motor()
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: null, resolucao: null, onmarcar: vi.fn() })
-  expect(screen.queryByRole('tab', { name: 'Resolução' })).toBeNull()
+  expect(screen.queryByRole('tab', { name: 'Resolução gravada' })).toBeNull()
 })
 
 const SECAO = { secao_id: 31, codigo: '14.1', titulo: 'Funções de várias variáveis', fonte_id: 4, caminho: 'fontes/livros/stewart.pdf', pagina_pdf_ini: 303 }

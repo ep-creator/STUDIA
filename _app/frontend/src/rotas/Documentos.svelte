@@ -141,7 +141,7 @@
   const fonte = $derived(selecao?.tipo === 'fonte' ? fontes.find((f) => f.id === selecao!.id) ?? null : null)
 </script>
 
-<h1 class="so-leitor">Biblioteca</h1>
+<h1 class="titulo-tela">Biblioteca</h1>
 <div class="documentos">
   <aside>
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />
@@ -193,6 +193,9 @@
   /* As duas colunas rolam por dentro: a lista não é cortada e o texto não arrasta a página junto */
   .documentos { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; }
   aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
+  .titulo-tela { font-size: 1.6rem; margin: 0 0 0.6rem; }
+  /* o documento já tem o título no cabeçalho: o "# título" do próprio texto, se repetir, não aparece de novo */
+  .leitor :global(.leitura-medida > .markdown > h1:first-child) { display: none; }
   .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
   @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
