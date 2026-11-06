@@ -81,7 +81,7 @@ export function focoDaSessao(foco: string): { titulo: string; detalhe: string } 
  * em tinta suave. Os nomes vêm do motor (progresso.py).
  */
 export const CLASSE_ESTADO_TOPICO: Record<string, string> = {
-  hoje: 'hoje', 'em dia': 'emdia', 'falta praticar': 'falta', 'a seguir': 'seguir',
+  hoje: 'hoje', 'em dia': 'emdia', 'falta praticar': 'falta', 'a seguir': 'seguir', 'prova passou': 'passou',
 }
 
 /** O que cada estado do tópico quer dizer (a mesma frase da folha de ajuda), para a dica ao passar o mouse. */
@@ -90,6 +90,7 @@ export const DEFINICAO_ESTADO: Record<string, string> = {
   'em dia': 'a aula já passou e você trabalhou metade ou mais das questões (ou o tópico não tem questões)',
   'falta praticar': 'a aula já passou e você trabalhou menos da metade das questões',
   'a seguir': 'a aula ainda não chegou (o número ao lado mostra se você já adiantou)',
+  'prova passou': 'a prova da unidade já foi; o número ao lado mostra quanto você praticou',
 }
 
 /** Remove a primeira linha "# título" do texto quando repete o título já mostrado no cabeçalho. */

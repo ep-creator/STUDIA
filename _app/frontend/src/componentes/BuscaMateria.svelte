@@ -42,12 +42,39 @@
     q.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().split(/[^a-z0-9]+/).some((p) => p.length >= 2 && !VAZIAS.has(p))
 
   const grupoDe = (r: Resultado) => (Object.keys(TIPOS) as (keyof typeof TIPOS)[]).find((g) => TIPOS[g].includes(r.tipo)) ?? 'outros'
-  const agrupados = $derived(
-    [
-      ...GRUPOS.map(([g, nome]) => ({ nome, itens: resultados.filter((r) => grupoDe(r) === g) })),
+  // o mesmo título várias vezes (páginas vizinhas da mesma seção) vira um resultado só, com as outras páginas ao lado
+  // preenchido junto com os resultados (dentro do $derived abaixo), por isso não é estado próprio
+  const outrasPaginas = new Map<number, number[]>()
+  function semRepetir(itens: Resultado[]): Resultado[] {
+    const primeiro = new Map<string, Resultado>()
+    const lista: Resultado[] = []
+    for (const r of itens) {
+      const p = primeiro.get(r.titulo)
+      if (p) {
+        if (r.pagina) outrasPaginas.set(p.trecho_id, [...(outrasPaginas.get(p.trecho_id) ?? []), r.pagina])
+        continue
+      }
+      primeiro.set(r.titulo, r)
+      lista.push(r)
+    }
+    return lista
+  }
+  // trecho de PDF de livro de cálculo costuma sair quebrado (símbolos viram letras soltas): aí só o título e a página
+  const legivel = (t: string) => {
+    const palavras = t.replace(/[[\]]/g, '').split(/\s+/).filter(Boolean)
+    const soltas = palavras.filter((w) => /^[^\p{L}\p{N}]*\p{L}[^\p{L}\p{N}]*$/u.test(w)).length
+    // conta o que não é letra, número, pontuação comum ou sinal de conta simples (os [ ] são as marcas da busca)
+    const limpo = t.replace(/[[\]]/g, '')
+    const simbolos = (limpo.match(/[^\p{L}\p{N}\s.,;:()!?"'%/–—=+<>≤≥²³·-]/gu) ?? []).length
+    return palavras.length > 0 && soltas / palavras.length < 0.3 && simbolos / limpo.length < 0.06
+  }
+  const agrupados = $derived.by(() => {
+    outrasPaginas.clear()
+    return [
+      ...GRUPOS.map(([g, nome]) => ({ nome, itens: semRepetir(resultados.filter((r) => grupoDe(r) === g)) })),
       { nome: 'Exercícios do livro', itens: exercicios.map((e) => e.exercicio) },
-    ].filter((g) => g.itens.length),
-  )
+    ].filter((g) => g.itens.length)
+  })
   const respostaDe = $derived(new Map(exercicios.map((e) => [e.exercicio.trecho_id, e.resposta])))
   const ordem = $derived(agrupados.flatMap((g) => g.itens))
   // o índice da matéria inteira (questões e tópicos de todas as unidades), lido ao abrir a busca
@@ -207,10 +234,10 @@
             onkeydown={teclar}
           >
             <div class="titulo">
-              {r.titulo.replace(/\.pdf$/i, '').replace(/_+/g, ' ')}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}
+              {r.titulo.replace(/\.pdf$/i, '').replace(/_+/g, ' ')}{#if r.pagina}<span class="suave"> · p. {r.pagina}{#if outrasPaginas.get(r.trecho_id)?.length}, também {outrasPaginas.get(r.trecho_id)?.join(', ')}{/if}</span>{/if}
               {#if r.por === 'sentido'}<span class="sentido" title="Achado pelo sentido, sem palavras em comum com a busca">pelo sentido</span>{/if}
             </div>
-            <div class="trecho">{@html destacar(r.trecho)}</div>
+            {#if legivel(r.trecho)}<div class="trecho">{@html destacar(r.trecho)}</div>{/if}
             {#if respostaDe.get(r.trecho_id)}<div class="resposta"><strong>Resposta:</strong> {respostaDe.get(r.trecho_id)?.trecho}</div>{/if}
           </div>
         {/each}

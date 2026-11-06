@@ -11,7 +11,7 @@
   import PainelIA from './PainelIA.svelte'
   import Markdown from './Markdown.svelte'
 
-  let { uid, lista, questao, marca, secao, resolucao = null, formulas = [], onmarcar, onproxima, onanterior }: {
+  let { uid, lista, questao, marca, secao, resolucao = null, formulas = [], onmarcar, onproxima, onanterior, rotuloProxima = 'Próxima ›' }: {
     uid: string
     lista: ListaComQuestoes
     questao: Questao
@@ -22,6 +22,7 @@
     onmarcar: (questaoId: number, marca: Marca) => void
     onproxima?: () => void
     onanterior?: () => void
+    rotuloProxima?: string   // no fim da sessão: "Voltar às que faltam ›"
   } = $props()
 
   const NOMES: Record<string, string> = { ok: 'Acertei', err: 'Errei', dub: 'Dúvida' }
@@ -62,10 +63,11 @@
   }
 
   // "[Sessão S4] Calcule…": o prefixo veio do material da turma e só atrapalha a leitura
-  const enunciado = $derived((questao.enunciado_md ?? '').replace(/^\s*\[Sessão[^\]]*\]\s*/, ''))
+  const enunciado = $derived((questao.enunciado_md ?? '').replace(/^\s*\[[^\]]*Sessão[^\]]*\]\s*/, ''))
   const paginaLivro = $derived(doLivro?.exercicio.pagina && secao ? doLivro.exercicio.pagina : null)
   const paginaResposta = $derived(doLivro?.resposta?.pagina ?? null)
-  const pdf = (pagina: number) => `${urlArquivo(uid, secao!.caminho, pagina)}&view=FitH`
+  // só a página, na largura da coluna: sem a barra e a coluna de miniaturas do leitor de PDF do navegador
+  const pdf = (pagina: number) => `${urlArquivo(uid, secao!.caminho, pagina)}&toolbar=0&navpanes=0&view=FitH`
 
   const abas = $derived.by(() => {
     const lista: [Aba, string][] = [['ajuda', 'Ajuda da IA']]
@@ -83,7 +85,7 @@
     {#if onanterior || onproxima}
       <span class="passos">
         {#if onanterior}<button class="acao-texto" onclick={onanterior}>‹ Anterior</button>{/if}
-        {#if onproxima}<button class="acao-texto" onclick={onproxima}>Próxima ›</button>{/if}
+        {#if onproxima}<button class="acao-texto" onclick={onproxima}>{rotuloProxima}</button>{/if}
       </span>
     {/if}
   </header>
@@ -187,7 +189,7 @@
   .do-livro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem 1rem; align-items: baseline; margin-top: 0.8rem; font-size: 1rem; }
   .do-livro .acao-texto { font-size: 0.88rem; }
   /* a página do livro, no lugar do texto extraído: é onde o exercício está escrito direito */
-  .pagina { grid-column: 1 / -1; width: 100%; height: min(24rem, 40vh); border: 1px solid var(--fio); border-radius: var(--raio); background: #fff; }
+  .pagina { grid-column: 1 / -1; width: 100%; height: min(34rem, 47vh); border: 1px solid var(--fio); border-radius: var(--raio); background: #fff; }
   .procurando { margin: 0.8rem 0 0; font-size: 0.9rem; }
   .livro p { margin: 0; }
   .formula { padding: 0.5rem 0; border-top: 1px solid var(--fio); }

@@ -169,7 +169,7 @@ class GrupoRevisar(TypedDict):
 class TopicoProgresso(TypedDict):
     id: int
     titulo: str
-    estado: str                 # hoje, a seguir, em dia ou falta praticar (derivado)
+    estado: str                 # hoje, a seguir, em dia, falta praticar ou prova passou (derivado)
     secoes: list[str]
     ultima_aula: str | None     # data da última sessão já passada que cobre o tópico (o mais recente primeiro)
     total: int

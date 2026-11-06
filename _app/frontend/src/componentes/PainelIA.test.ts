@@ -250,3 +250,20 @@ test('N1–N3 continuam enviando direto, sem pergunta', async () => {
   await waitFor(() => expect(pedidos.some((p) => p.url.includes('/agente/mensagem'))).toBe(true))
   expect(screen.queryByText(/entrega a questão pronta/)).toBeNull()
 })
+
+test('na questão, a conversa já gravada começa recolhida: reabrir não entrega a resposta', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.includes('/agente/conversa')) {
+      return json({ id: 1, alvo: 'questao:5', papel: 'tutor', mensagens: [
+        { autor: 'voce', texto: 'N4 Resolução' }, { autor: 'agente', texto: 'O resultado final é 16/15.' },
+      ] })
+    }
+    if (url.endsWith('/api/agente/estado')) return json({ chave_configurada: true, modelo: 'g', total_mes: 0, teto: 20 })
+    throw new Error(`rota não simulada: ${url}`)
+  }))
+  render(PainelIA, { uid: 'u1', alvo: 'questao:5', papel: 'tutor', atalhos: ['N1', 'N2', 'N3', 'N4'] })
+  expect(await screen.findByText(/Conversa anterior · último pedido: N4 Resolução/)).toBeInTheDocument()
+  expect(screen.queryByText(/16\/15/)).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'ver' }))
+  expect(screen.getByText(/16\/15/)).toBeInTheDocument()
+})

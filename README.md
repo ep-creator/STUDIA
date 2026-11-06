@@ -84,7 +84,7 @@ cada coisa. Ele também escreve resumos de seção e monta um plano de revisão 
 Precisa de **Python 3.13** e **Node.js**, no Windows.
 
 1. Dê dois cliques em **`abrir.bat`**, na raiz. Na primeira vez ele prepara o ambiente, o que leva alguns minutos.
-2. O app abre em **http://127.0.0.1:8790**. Crie uma matéria e solte os PDFs em **＋ Material**.
+2. O app abre em **http://127.0.0.1:8790**. Crie uma matéria e solte os PDFs em **＋ Adicionar material**.
 3. Para usar a IA, crie uma chave grátis no Google AI Studio e cole em **IA › → API key**.
 
 O passo a passo de cada tela está no **[Guia de uso](docs/guia.md)**.

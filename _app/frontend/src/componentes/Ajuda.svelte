@@ -2,9 +2,14 @@
   // Atalhos e ajuda (tecla ?): o que cada área faz, as teclas, o que querem dizer os estados e os códigos da tela.
   // Curto de propósito: o guia completo fica em docs/guia.md.
   import { tick } from 'svelte'
+  import guiaBruto from '../../../../docs/guia.md?raw'
+  import Markdown from './Markdown.svelte'
 
   let { onfechar }: { onfechar: () => void } = $props()
   let caixa: HTMLElement
+  // o guia completo abre aqui mesmo (o app é local: sem depender de internet); as imagens ficam de fora
+  const GUIA = guiaBruto.split('\n').filter((l) => !l.trim().startsWith('<img')).join('\n')
+  let guia = $state(false)
 
   $effect(() => {
     const antes = document.activeElement as HTMLElement | null
@@ -29,6 +34,7 @@
     ['a seguir', 'a aula do tópico ainda não chegou'],
     ['em dia', 'a aula já passou e você trabalhou metade ou mais das questões'],
     ['falta praticar', 'a aula já passou e você trabalhou menos da metade das questões'],
+    ['prova passou', 'a unidade terminou; o tópico não cobra mais nada'],
   ]
   const CODIGOS: [string, string][] = [
     ['S3, P1', 'sessão do plano de estudo (S de sessão, P de preparação)'],
@@ -45,9 +51,13 @@
 <div class="fundo" onclick={onfechar}></div>
 <div class="ajuda" role="dialog" aria-modal="true" aria-labelledby="ajuda-titulo" tabindex="-1" bind:this={caixa}>
   <header>
-    <h2 id="ajuda-titulo">Atalhos e ajuda</h2>
+    <h2 id="ajuda-titulo">{guia ? 'Guia de uso' : 'Atalhos e ajuda'}</h2>
     <button class="acao-texto" aria-label="Fechar a ajuda" onclick={onfechar}>✕</button>
   </header>
+  {#if guia}
+    <div class="guia leitura-medida"><Markdown texto={GUIA} rebaixar={1} /></div>
+    <p class="rodape"><button class="acao-texto" onclick={() => (guia = false)}>← Atalhos e ajuda</button></p>
+  {:else}
   <div class="colunas">
     <section aria-label="Teclas">
       <h3 class="rotulo">Teclas</h3>
@@ -62,7 +72,8 @@
       <dl>{#each CODIGOS as [nome, oque] (nome)}<dt>{nome}</dt><dd>{oque}</dd>{/each}</dl>
     </section>
   </div>
-  <p class="suave rodape">As áreas: <b>Hoje</b> (a sessão do dia), <b>Tópicos</b> (uma página por tópico), <b>Praticar</b> (as listas) e <b>Biblioteca</b> (resumos e PDFs). <a href="https://github.com/ep-creator/plataforma-estudos/blob/main/docs/guia.md" target="_blank" rel="noopener">Guia completo de uso ↗</a></p>
+  <p class="suave rodape">As áreas: <b>Hoje</b> (a sessão do dia), <b>Tópicos</b> (uma página por tópico), <b>Praticar</b> (as listas) e <b>Biblioteca</b> (resumos e PDFs). <button class="acao-texto" onclick={() => { guia = true; caixa?.scrollTo?.({ top: 0 }) }}>Guia completo de uso</button></p>
+  {/if}
 </div>
 
 <style>
@@ -83,5 +94,6 @@
   dd { margin: 0; color: var(--suave); }
   kbd { font-family: var(--fonte-texto); font-size: 0.88rem; padding: 0.05rem 0.4rem; border-radius: 4px; background: var(--leve); }
   .rodape { margin: 0.4rem 0 0; font-size: 0.92rem; }
+  .guia { font-size: 0.98rem; line-height: 1.6; }
   @media (max-width: 900px) { .colunas { grid-template-columns: 1fr; } }
 </style>

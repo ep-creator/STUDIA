@@ -21,7 +21,7 @@ Gemini, se você configurar a chave).
 ## Criar uma matéria
 
 1. Na tela inicial, clique em **＋ Nova matéria** e dê um nome (ex.: *Cálculo 2*).
-2. Vá em **＋ Material** (a matéria vazia já mostra os três passos) e solte os PDFs da disciplina na área tracejada: programa, calendário, informações da turma,
+2. Vá em **＋ Adicionar material** (a matéria vazia já mostra os três passos) e solte os PDFs da disciplina na área tracejada: programa, calendário, informações da turma,
    livros, listas de exercícios, slides. Pode mandar tudo de uma vez, em qualquer ordem.
 3. Cada arquivo entra na **fila** com um estado:
    - **pronto**: o app entendeu tudo com segurança;
@@ -41,7 +41,7 @@ Cada matéria vira uma pasta na raiz do projeto, com o banco (`materia.db`), os 
 ## As telas da matéria
 
 A barra lateral tem as quatro áreas do estudo — **Hoje**, **Tópicos**, **Praticar** e **Biblioteca** — e, embaixo, o
-apoio: **Plano completo**, **Folha de fórmulas**, **＋ Material** e **Histórico**. No topo, **1ª 2ª 3ª** trocam de unidade.
+apoio: **Plano**, **Folha de fórmulas**, **＋ Adicionar material** e **Histórico**. No topo, **1ª 2ª 3ª** trocam de unidade.
 
 O progresso se calcula sozinho: uma sessão conta como **feita** quando todas as questões dela foram marcadas ou
 resolvidas (antes disso mostra quantas, ex.: "2 de 3"). Um tópico tem quatro estados: **hoje** (é o da sessão do dia),
@@ -84,7 +84,7 @@ Para criar um tópico, escreva no campo do fim e aperte Enter.
   **Resolução** pergunta antes, porque entrega a questão pronta), **Resposta do livro**, **Resolução** (a gravada, que
   fica escondida até você abrir a aba) e **Fórmulas** da seção.
 
-### Plano completo
+### Plano
 
 Aulas, provas e as suas sessões de estudo numa linha do tempo. **+ sessão** cria uma sessão (data, foco e questões);
 é dela que a tela Hoje tira a sessão do dia.

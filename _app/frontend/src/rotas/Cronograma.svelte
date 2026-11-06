@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte'
   import { requisitar } from '../api/cliente'
   import type { Painel, Sessao, SessaoProgresso } from '../api/tipos'
   import { nomeUnidade } from '../apresentacao'
@@ -43,20 +44,26 @@
       else id = (await requisitar<{ id: number }>('POST', base, { unidade_id: unidade.id, ...dados })).id
       const antes = [...(atual?.questao_ids ?? [])].sort((a, b) => a - b).join()
       if ([...questao_ids].sort((a, b) => a - b).join() !== antes) await requisitar('PUT', `${base}/${id}/questoes`, questao_ids)
-      editando = null
+      fechar()
     })
+  }
+  // fechar o editor devolve o foco ao "editar" da sessão (ou ao "+ sessão"): o teclado não volta para o começo
+  function fechar() {
+    const codigo = editando?.codigo
+    editando = null
+    void tick().then(() => document.querySelector<HTMLElement>(codigo ? `[aria-label="Editar sessão ${codigo}"]` : '.nova-sessao')?.focus())
   }
   const hrefPraticar = (s: Sessao) => montarHash({ tela: 'materia', uid: painel.materia.uid, unidade: unidade.numero, area: 'listas', sessao: s.id })
 </script>
 
 <header class="cabecalho">
   <h1>Plano da {nomeUnidade(unidade.numero)}</h1>
-  <button class="acao-texto" onclick={() => (editando = {})}>+ sessão</button>
+  <button class="acao-texto nova-sessao" onclick={() => (editando = {})}>+ sessão</button>
 </header>
 
 {#if editando}
   {#key editando}
-    <EditorSessao sessao={editando} listas={painel.listas} onsalvar={salvar} oncancelar={() => (editando = null)} />
+    <EditorSessao sessao={editando} listas={painel.listas} onsalvar={salvar} oncancelar={fechar} />
   {/key}
 {/if}
 

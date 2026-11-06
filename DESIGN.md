@@ -181,7 +181,7 @@ Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títul
 
 ## Layout
 
-Barra lateral fixa de 13rem à esquerda e conteúdo fluido à direita com respiro de 2rem. A barra tem as **quatro áreas do estudo** (Hoje · Tópicos · Praticar · Biblioteca) em texto maior e, depois de um fio, o **apoio** em tinta suave (Plano completo, Folha de fórmulas, ＋ Material, Histórico). No topo de cada tela da matéria: abas de unidade, a prova (fora de Hoje, que a tem no cabeçalho), a busca (Ctrl K), Desfazer e "IA ›". Cada tela tem um título real (h1).
+Barra lateral fixa de 13rem à esquerda e conteúdo fluido à direita com respiro de 2rem. A barra tem as **quatro áreas do estudo** (Hoje · Tópicos · Praticar · Biblioteca) em texto maior e, depois de um fio, o **apoio** em tinta suave (Plano, Folha de fórmulas, ＋ Adicionar material, Histórico). No topo de cada tela da matéria: abas de unidade, a prova (fora de Hoje, que a tem no cabeçalho), a busca (Ctrl K), Desfazer e "IA ›". Cada tela tem um título real (h1).
 
 - **Hoje:** cabeçalho (título, data, prova à direita) e duas colunas 1.55fr / 1fr: à esquerda a sessão do plano (o foco da tela) e "Para revisar"; à direita "Próximos 7 dias" e os tópicos da unidade. A faixa "Reta final" entra por cima com 7 dias ou menos.
 - **Tópico:** cabeçalho (voltar, título, estado, seções do livro) e duas colunas 1.5fr / 1fr: o resumo para ler (até 42rem) e, ao lado, questões, fórmulas e resoluções.

@@ -291,3 +291,20 @@ def test_resolucao_da_ia_nao_conta_como_pratica(con, materia, plano):
     q = next(x for x in progresso.hoje(con, HOJE)["sessao"]["questoes"] if x["id"] == plano.q5["9"])
     assert q["resolucao_id"] == doc                                         # continua à mão para ler
 
+
+def test_unidade_encerrada_nao_cobra_o_que_ficou(con, plano):
+    depois = date(2099, 3, 20)                                  # a prova da 1ª foi em 15/03
+    t = {x["id"]: x for x in progresso.topicos(con, plano.u1, depois)}
+    assert t[plano.polares]["estado"] == "em dia"              # o que ficou em dia continua em dia
+    assert t[plano.aplicacoes]["estado"] == "prova passou"     # o resto não vira "falta praticar" para sempre
+    assert t[plano.aplicacoes]["trabalhadas"] == 1             # o placar continua dizendo quanto se praticou
+
+
+def test_topico_conta_so_listas_da_propria_unidade(con, materia, plano):
+    with operacao(con, "outra unidade", materia.pasta) as op:
+        lu2 = con.execute("SELECT id FROM lista WHERE codigo = '14.6'").fetchone()[0]
+        listas.vincular_topico(op, lu2, plano.polares)   # uma lista da 2ª ligada a um tópico da 1ª
+    t = {x["id"]: x for x in progresso.topicos(con, plano.u1, HOJE)}
+    assert t[plano.polares]["total"] == 3                      # a 14.6 (2ª unidade) não entra no placar
+    assert all(l["unidade"] == 1 for l in progresso.pagina_topico(con, plano.polares, HOJE)["listas"])
+

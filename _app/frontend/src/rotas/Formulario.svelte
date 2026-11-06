@@ -57,7 +57,7 @@
 {/if}
 {#each grupos as [topico, formulas] (topico)}
   <section class="grupo">
-    <h2>{topico}</h2>
+    {#if grupos.length > 1 || topico !== 'Sem tópico'}<h2>{topico}</h2>{/if}
     {#each formulas as f (f.id)}
       <CartaoFormula formula={f} oneditar={() => (editando = f)} onapagar={() => apagar(f)} />
     {/each}

@@ -7,7 +7,7 @@
   import { avisar } from '../estado/avisos.svelte'
   import { marcaDe, marcar, SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
   import { consumirQuestao, pedido } from '../estado/pedido.svelte'
-  import { citaSecao, focoDaSessao } from '../apresentacao'
+  import { citaSecao, focoDaSessao, isoDe } from '../apresentacao'
   import { digitando } from '../estado/ajuda.svelte'
   import { montarHash } from './rota'
 
@@ -72,6 +72,15 @@
     if (daSessao && selecionada === null && idsSessao.length) selecionada = idsSessao.find((id) => !trabalhada(id)) ?? idsSessao[0]
   })
 
+  // na sessão, a grade mostra só as listas dela (a unidade inteira fica a um clique)
+  let verUnidade = $state(false)
+  const listasDaGrade = $derived(daSessao && idsSessao.length && !verUnidade
+    ? painel.listas.filter((l) => l.questoes.some((q) => idsSessao.includes(q.id))) : painel.listas)
+  // sem questão aberta e sem sessão: a sessão de hoje ou a próxima com questões por fazer
+  const sugerida = $derived(sessao !== null ? null : painel.sessoes
+    .filter((s) => s.data && s.data >= isoDe(new Date()) && s.questao_ids.some((id) => porId.has(id) && !trabalhada(id)))
+    .sort((a, b) => (a.data ?? '').localeCompare(b.data ?? ''))[0] ?? null)
+
   // a ordem: dentro da sessão, anterior e próxima andam pelas questões dela; fora, pela grade
   const ordemGrade = $derived(painel.listas.flatMap((l) => l.questoes.map((q) => q.id)))
   const ordem = $derived(selecionada !== null && idsSessao.includes(selecionada) ? idsSessao : ordemGrade)
@@ -79,6 +88,9 @@
     const i = lista.indexOf(selecionada ?? -1)
     return [...lista.slice(i + 1), ...lista.slice(0, i + 1)].find((id) => id !== selecionada && !trabalhada(id))
   }
+  // a última da sessão não é beco: se ainda falta alguma, a "próxima" volta para ela
+  const ultimaDaSessao = $derived(selecionada !== null && idsSessao.length > 0 && idsSessao.at(-1) === selecionada)
+  const faltaNaSessao = $derived(ultimaDaSessao ? proximaNaoTrabalhada(idsSessao) : undefined)
   const passo = (delta: number) => {
     const i = ordem.indexOf(selecionada ?? -1)
     const alvo = ordem[i + delta]
@@ -133,7 +145,12 @@
   {/if}
   <div class="listas">
     <div class="coluna questoes">
-    <GradeQuestoes listas={painel.listas} marcacoes={painel.marcacoes} {selecionada} {resolvidas} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
+    {#if daSessao && idsSessao.length}
+      <button class="acao-texto alternar-grade" onclick={() => (verUnidade = !verUnidade)}>
+        {verUnidade ? 'Só as listas da sessão' : 'Ver a unidade inteira'}
+      </button>
+    {/if}
+    <GradeQuestoes listas={listasDaGrade} marcacoes={painel.marcacoes} {selecionada} {resolvidas} onmarcar={aoMarcar} onselecionar={(id) => (selecionada = id)} />
     </div>
     <div class="coluna menu" bind:this={menu}>
     {#if achada}
@@ -147,10 +164,18 @@
         formulas={formulasDa(painel.vinculos.listas[String(achada.lista.id)]?.secao?.codigo, painel.vinculos.listas[String(achada.lista.id)]?.secao?.secao_id)}
         onmarcar={aoMarcar}
         onanterior={ordem.indexOf(achada.questao.id) > 0 ? () => passo(-1) : undefined}
-        onproxima={ordem.indexOf(achada.questao.id) < ordem.length - 1 ? () => passo(1) : undefined}
+        onproxima={ultimaDaSessao
+          ? (faltaNaSessao !== undefined ? () => (selecionada = faltaNaSessao ?? null) : undefined)
+          : ordem.indexOf(achada.questao.id) < ordem.length - 1 ? () => passo(1) : undefined}
+        rotuloProxima={ultimaDaSessao ? 'Voltar às que faltam ›' : 'Próxima ›'}
       />
     {:else}
       <p class="dica">Escolha uma questão.</p>
+      {#if sugerida}
+        <a class="acao-texto" href={montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', sessao: sugerida.id })}>
+          Ou siga a sessão {sugerida.codigo} · {focoDaSessao(sugerida.foco_md).titulo} →
+        </a>
+      {/if}
     {/if}
     </div>
   </div>
@@ -165,6 +190,7 @@
   .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
   .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .titulo-tela span { font-family: var(--fonte-texto); font-size: 1rem; }
+  .alternar-grade { font-size: 0.88rem; margin-bottom: 0.6rem; }
   .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }
 </style>

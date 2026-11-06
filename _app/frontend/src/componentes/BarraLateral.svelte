@@ -32,12 +32,13 @@
   />
 
   <ul class="principais">
-    {#each AREAS as [area, nome] (area)}
+    {#each AREAS as [area, nome], i (area)}
       <li>
         {#if unidade === null && area !== 'painel'}
           <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
         {:else}
-          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a>
+          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}
+            aria-keyshortcuts={`Alt+${i + 1}`} title={`Alt ${i + 1}`}>{nome}</a>
         {/if}
       </li>
     {/each}

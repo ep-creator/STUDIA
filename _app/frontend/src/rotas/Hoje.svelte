@@ -203,7 +203,7 @@
         {:else if dados.prova_passada}
           <section class="sessao" aria-label="Sessão">
             <p class="sem-sessao">A prova da {nomeUnidade(dados.unidade ?? 0)} foi na {dataCurta(dados.prova_passada, null)}.</p>
-            <p class="suave">Esta unidade terminou: o que ficou para revisar está logo abaixo.</p>
+            <p class="suave">{revisarDaUnidade.length ? 'Esta unidade terminou: o que ficou para revisar está logo abaixo.' : 'Esta unidade terminou, sem nada marcado para revisar.'}</p>
             {#if dados.unidade_atual !== null && dados.unidade_atual !== dados.unidade}
               <a class="acao-suave comecar" href={href('painel', dados.unidade_atual)}>Ir para a {nomeUnidade(dados.unidade_atual)}</a>
             {/if}
@@ -214,6 +214,12 @@
             <p class="suave">Com o calendário conferido, o plano ganha datas e esta tela passa a mostrar a sessão do dia.</p>
             <a class="acao-suave comecar" href={montarHash({ tela: 'importar', uid })}>Conferir</a>
           </section>
+        {:else if !dados.tem_datas}
+          <section class="sessao" aria-label="Sessão">
+            <p class="sem-sessao">Sem datas ainda.</p>
+            <p class="suave">Com o calendário da turma, o plano ganha datas e esta tela passa a mostrar a sessão do dia.</p>
+            <a class="acao-suave comecar" href={montarHash({ tela: 'importar', uid })}>Adicionar o calendário</a>
+          </section>
         {:else}
           <section class="sessao" aria-label="Sessão">
             <p class="sem-sessao">Nenhuma sessão marcada no plano daqui para a frente.</p>
@@ -222,6 +228,7 @@
           </section>
         {/if}
 
+        {#if dados.tem_datas || dados.revisar.length}
         <section class="revisar" aria-label="Para revisar">
           <h2 class="rotulo">Para revisar</h2>
           {#if dados.revisar.length}
@@ -247,9 +254,11 @@
             <p class="suave">Nada para revisar.</p>
           {/if}
         </section>
+        {/if}
       </div>
 
       <div class="lateral-hoje">
+        {#if dados.tem_datas || dados.proximos.length}
         <section aria-label="Próximos 7 dias">
           <h2 class="rotulo">Próximos 7 dias</h2>
           {#if dados.proximos.length}
@@ -274,8 +283,9 @@
           {/if}
           <a class="acao-texto mais" href={href('cronograma')}>Plano completo →</a>
         </section>
+        {/if}
 
-        {#if dados.unidade}
+        {#if dados.unidade && dados.tem_datas}
           <section aria-label="Tópicos para cuidar">
             <h2 class="rotulo">Tópicos para cuidar</h2>
             {#if dados.prova_passada}

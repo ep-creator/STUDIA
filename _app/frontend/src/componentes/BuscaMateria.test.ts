@@ -155,3 +155,19 @@ test('"Ir para": questão pelo código abre direto em Praticar, sem buscar no co
   expect(location.hash).toBe('#/m/ab/u/3/listas/4')
   expect(onfechar).toHaveBeenCalled()
 })
+
+test('o mesmo título vira um resultado com as outras páginas; trecho ilegível do PDF não aparece', async () => {
+  motor([
+    livro(),
+    livro({ trecho_id: 3, pagina: 408, trecho: 'mais [polares] aqui' }),
+    livro({ trecho_id: 4, titulo: '15.10 Mudança de Variáveis', pagina: 1012, trecho: '∂∂((ux,, yv)) √₀ [polares] ∂∂' }),
+  ])
+  abrir()
+  await userEvent.type(screen.getByRole('combobox', { name: /Buscar na matéria/ }), 'polares')
+  expect(await screen.findByText(/p\. 406, também 408/)).toBeInTheDocument()
+  expect(screen.getAllByText(/15\.4 Integrais Duplas/)).toHaveLength(1)
+  expect(screen.getByText(/dA = r dr dθ/)).toBeInTheDocument()          // conta simples continua legível
+  expect(screen.getByText(/15\.10 Mudança de Variáveis/)).toBeInTheDocument()
+  expect(screen.queryByText(/ux,, yv/)).toBeNull()
+})
+

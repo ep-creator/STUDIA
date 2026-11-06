@@ -62,3 +62,23 @@ test('sem sessão no endereço: nenhuma faixa', () => {
   render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [S3] }), questao: 1 })
   expect(screen.queryByRole('region', { name: /Sessão/ })).toBeNull()
 })
+
+test('na sessão, a grade mostra só as listas dela; a unidade inteira a um clique', async () => {
+  const l9 = lista(30, '15.9', [questao(9, '21', { lista_id: 30 })])
+  render(Listas, { painel: painel({ listas: [l155, l9, l5], sessoes: [S3] }), sessao: 1, questao: 3 })
+  expect(screen.queryByText('15.9')).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Ver a unidade inteira' }))
+  expect(screen.getByText('15.9')).toBeInTheDocument()
+})
+
+test('a última da sessão não é beco: volta às que faltam', async () => {
+  render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [S3], marcacoes: { '5': 'ok' } }), sessao: 1, questao: 5 })
+  await userEvent.click(await screen.findByRole('button', { name: 'Voltar às que faltam ›' }))
+  expect(screen.getByRole('heading', { level: 2, name: '15.5 #18' })).toBeInTheDocument()
+})
+
+test('Praticar sem questão aberta sugere a próxima sessão com questões por fazer', () => {
+  const futura = sessao(5, 'S9', '2999-01-01', [2], '**Escolher o sistema**')
+  render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [futura] }) })
+  expect(screen.getByRole('link', { name: /Ou siga a sessão S9 · Escolher o sistema/ })).toHaveAttribute('href', '#/m/ab/u/1/listas?sessao=5')
+})

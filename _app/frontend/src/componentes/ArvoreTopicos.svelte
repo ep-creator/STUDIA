@@ -84,7 +84,8 @@
       {:else}
         <a class="titulo" href={montarHash({ tela: 'materia', uid, unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
       {/if}
-      {#if p?.secoes.length}<span class="suave secoes">{p.secoes.join(' · ')}</span>{/if}
+      <!-- só códigos de seção ("15.4"); números soltos de capítulo ou de aula não dizem nada aqui -->
+      {#if p?.secoes.some((c) => c.includes('.'))}<span class="suave secoes">{p.secoes.filter((c) => c.includes('.')).join(' · ')}</span>{/if}
       <span class="acoes-linha">
         <button class="acao-texto" aria-label={`Subir ${t.titulo}`} onclick={() => mover(t, -1)}>↑</button>
         <button class="acao-texto" aria-label={`Descer ${t.titulo}`} onclick={() => mover(t, 1)}>↓</button>
@@ -98,6 +99,12 @@
         <span class="estado {CLASSE_ESTADO_TOPICO[p.estado] ?? ''}" title={DEFINICAO_ESTADO[p.estado]}>{p.estado}</span>
         {#if p.err + p.dub}<span class="revisar">{p.err + p.dub} para revisar</span>{/if}
         <span class="placar suave" title="questões trabalhadas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
+        {#if p.total}
+          <span class="fio" aria-hidden="true">
+            <span class="feito" style:width={`${(100 * Math.max(0, p.trabalhadas - p.err - p.dub)) / p.total}%`}></span>
+            {#if p.err + p.dub}<span class="erros" style:width={`${(100 * (p.err + p.dub)) / p.total}%`}></span>{/if}
+          </span>
+        {/if}
       {/if}
     </div>
     {#if filhos(t.id).length}
@@ -130,6 +137,9 @@
   .estado { font-size: 0.85rem; color: var(--suave); min-width: 4.5rem; text-align: right; }
   .estado.hoje { color: var(--destaque-texto); font-weight: 500; }
   .estado.emdia { color: var(--ok); }
+  .fio { flex: none; width: 4rem; display: flex; height: 2px; background: var(--fio); align-self: center; }
+  .fio .feito { background: var(--ok); }
+  .fio .erros { background: var(--err); }
   .estado.falta { color: var(--texto); font-weight: 500; }
   .estado.comecado { color: var(--texto); }
   .revisar { font-size: 0.85rem; color: var(--err); white-space: nowrap; }

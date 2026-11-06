@@ -34,6 +34,11 @@
   let confirmarResolucao = $state(false)   // N4 entrega a questão pronta: pergunta antes de pedir
   let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number; motivo?: string } | null>(null)
   let escrita = $state('')
+  // na questão, a conversa já gravada começa recolhida: reabrir para tentar de novo não pode mostrar a resposta
+  let anteriores = $state(0)
+  let verAnteriores = $state(false)
+  const recolher = $derived(papel === 'tutor' && anteriores > 0 && !verAnteriores)
+  const ultimoPedido = $derived([...itens.slice(0, anteriores)].reverse().find((i) => i.autor === 'voce')?.texto ?? null)
   let fontes: FonteResumo[] | null = null
   let corrente: AbortController | null = null   // a resposta em andamento; trocar de alvo a corta
 
@@ -43,6 +48,8 @@
     try {
       const c = await requisitar<ConversaSaida>('GET', `/api/materias/${uid}/agente/conversa?alvo=${encodeURIComponent(alvo)}&papel=${papel}`)
       itens = c.mensagens.map((m) => ({ autor: m.autor, texto: m.texto }))
+      anteriores = itens.length
+      verAnteriores = false
       estado = await requisitar<EstadoAgente>('GET', '/api/agente/estado')
     } catch {
       itens = []   // motor desligado ou matéria sem as tabelas ainda: o painel fica vazio, sem quebrar a tela
@@ -155,6 +162,7 @@
     try {
       const c = await requisitar<ConversaSaida>('POST', `/api/materias/${uid}/agente/conversa/recomecar`, { alvo, papel })
       itens = c.mensagens.map((m) => ({ autor: m.autor, texto: m.texto }))
+      anteriores = 0
       ultimoCusto = null
     } catch (e) {
       erro(e)
@@ -244,9 +252,17 @@
     </div>
   {/if}
 
-  <div class="conversa" class:vazia={!itens.length && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
+  {#if recolher}
+    <p class="anterior suave">
+      Conversa anterior{ultimoPedido ? ` · último pedido: ${ultimoPedido}` : ''}
+      <button class="acao-texto" aria-expanded="false" onclick={() => (verAnteriores = true)}>ver</button>
+    </p>
+  {/if}
+  <div class="conversa" class:vazia={itens.length <= (recolher ? anteriores : 0) && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
     {#each itens as item, i (i)}
-      {#if item.gravado}
+      {#if recolher && i < anteriores}
+        <!-- recolhida -->
+      {:else if item.gravado}
         {@const g = item.gravado}
         <div class="gravado" role="status">
           <span>✓ {item.texto}</span>
@@ -312,6 +328,7 @@
   .gravado .acao-texto { color: var(--suave); }
   .gravado span { margin-right: auto; }
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
+  .anterior { margin: 0; font-size: 0.88rem; display: flex; gap: 0.8rem; align-items: baseline; }
   .alerta { padding: 0.5rem 0; border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
   /* o campo e o gasto do mês ficam presos ao pé da coluna: uma resolução longa não os empurra para fora da vista */

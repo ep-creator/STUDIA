@@ -41,6 +41,22 @@
 
   // O que o "desfazer" do motor atinge: a ação mais recente que ainda não foi desfeita nem é um desfazer
   const alvo = $derived(grupos.find((g) => !g.desfeito_em && g.desfaz_grupo === null)?.id ?? null)
+
+  // marcar e remarcar a mesma questão em sequência vira uma linha só (a mais recente), com as anteriores a um clique;
+  // a linha que o desfazer atinge nunca fica escondida
+  const questaoMarcada = (g: GrupoHistorico) => g.descricao.match(/^Marcar questão (\S+ #\S+)/)?.[1] ?? null
+  type Linha = { g: GrupoHistorico; antes: GrupoHistorico[] }
+  function juntar(doDia: GrupoHistorico[]): Linha[] {
+    const linhas: Linha[] = []
+    for (const g of doDia) {
+      const ultima = linhas.at(-1)
+      const q = questaoMarcada(g)
+      if (ultima && q && q === questaoMarcada(ultima.g) && g.id !== alvo) ultima.antes.push(g)
+      else linhas.push({ g, antes: [] })
+    }
+    return linhas
+  }
+  let abertas = $state<number[]>([])
 </script>
 
 <header class="cab"><h1>Histórico</h1><span class="suave dica">Ctrl+Z desfaz a última</span></header>
@@ -52,7 +68,18 @@
   {#each porDia as [dia, doDia] (dia)}
     <h2 class="rotulo dia">{dia}</h2>
     <ul>
-      {#each doDia as g (g.id)}<ItemHistorico {uid} grupo={g} ultimo={g.id === alvo} ondesfazer={() => void desfazer()} />{/each}
+      {#each juntar(doDia) as { g, antes } (g.id)}
+        <ItemHistorico {uid} grupo={g} ultimo={g.id === alvo} ondesfazer={() => void desfazer()} />
+        {#if antes.length}
+          {#if abertas.includes(g.id)}
+            {#each antes as a (a.id)}<ItemHistorico {uid} grupo={a} ultimo={false} ondesfazer={() => void desfazer()} />{/each}
+          {:else}
+            <li class="antes"><button class="acao-texto" onclick={() => (abertas = [...abertas, g.id])}>
+              +{antes.length} {antes.length === 1 ? 'marcação anterior' : 'marcações anteriores'} da mesma questão
+            </button></li>
+          {/if}
+        {/if}
+      {/each}
     </ul>
   {/each}
 {/if}
@@ -63,4 +90,5 @@
   h1 { font-size: 2.2rem; margin: 0 0 0.6rem; }
   .dica { font-size: 0.8rem; }
   ul { list-style: none; margin: 1rem 0 0; padding: 0; }
+  .antes { padding: 0.15rem 0 0.4rem 4.2rem; font-size: 0.85rem; }
 </style>

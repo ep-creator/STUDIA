@@ -6,10 +6,11 @@ gravadas. As regras ficam explícitas para dar para conferir (spec 2026-11-05-re
 - questão trabalhada: tem marcação ou uma resolução gravada pelo estudante (a escrita pela IA não conta: ler a
   resolução da IA não é praticar);
 - sessão: feita (à mão, ou com todas as suas questões trabalhadas), hoje, passou ou futura; com o placar x/y;
-- tópico: quatro estados. hoje (coberto pela sessão de hoje); a seguir (a aula ainda não chegou); depois da aula
-  (sessão que cobre o tópico já passou, ou "visto" à mão): em dia (metade ou mais das questões trabalhadas, ou sem
-  questões) ou falta praticar (menos da metade). Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem
-  seção cobre os tópicos ligados às listas das suas questões.
+- tópico: hoje (coberto pela sessão de hoje); a seguir (a aula ainda não chegou); depois da aula (sessão que cobre o
+  tópico já passou, ou "visto" à mão): em dia (metade ou mais das questões trabalhadas, ou sem questões) ou falta
+  praticar (menos da metade). Com a prova da unidade já feita, o que não está em dia vira "prova passou" (não cobra
+  mais nada). Tópico e sessão se cobrem quando têm uma seção em comum; sessão sem seção cobre os tópicos ligados às
+  listas das suas questões. Só contam as questões de listas da mesma unidade do tópico.
 """
 
 import re
@@ -206,10 +207,12 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
     secoes_lista = _secoes_das_listas(con)
     foco = _foco(todas, hoje)
     iso = hoje.isoformat()
+    prova = con.execute("SELECT MAX(data) FROM evento WHERE unidade_id = ? AND tipo = 'prova'", (unidade_id,)).fetchone()[0]
+    encerrada = bool(prova and prova < iso)
     resultado = []
     for t in con.execute("SELECT * FROM topico WHERE unidade_id = ? ORDER BY ordem, id", (unidade_id,)):
         secoes, listas_ids = _ligacoes(con, t["id"], secoes_lista)
-        ids = [q for q, d in questoes.items() if d["lista_id"] in listas_ids]
+        ids = [q for q, d in questoes.items() if d["lista_id"] in listas_ids and d["unidade_id"] == unidade_id]
 
         def cobre(s: dict) -> bool:
             # a seção decide; a ligação lista→tópico só vale para sessão sem seção (listas como a "L5" ligam vários tópicos)
@@ -225,6 +228,8 @@ def topicos(con: sqlite3.Connection, unidade_id: int, hoje: date, todas: list[di
             estado = "em dia" if 2 * feitas_topico >= len(ids) else "falta praticar"
         else:
             estado = "a seguir"
+        if encerrada and estado != "em dia":
+            estado = "prova passou"
         codigos = [
             l[0] for l in con.execute(
                 "SELECT s.codigo FROM topico_secao ts JOIN secao_livro s ON s.id = ts.secao_id "
@@ -287,10 +292,10 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
     ]
     listas = []
     for l in con.execute(
-        "SELECT l.id, l.codigo, l.titulo, u.numero FROM lista l JOIN unidade u ON u.id = l.unidade_id "
+        "SELECT l.id, l.codigo, l.titulo, l.unidade_id, u.numero FROM lista l JOIN unidade u ON u.id = l.unidade_id "
         "ORDER BY u.numero, l.ordem, l.id"
     ):
-        if l["id"] not in listas_ids:
+        if l["id"] not in listas_ids or l["unidade_id"] != t["unidade_id"]:   # o mesmo recorte do placar do tópico
             continue
         listas.append({
             "id": l["id"], "codigo": l["codigo"], "titulo": l["titulo"], "unidade": l["numero"],
@@ -302,7 +307,7 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
         })
     resolvidas = [
         {"id": resolucoes[q], "questao_id": q, "rotulo": d["lista_codigo"] + " #" + d["rotulo"]}
-        for q, d in questoes.items() if d["lista_id"] in listas_ids and q in resolucoes
+        for q, d in questoes.items() if d["lista_id"] in listas_ids and d["unidade_id"] == t["unidade_id"] and q in resolucoes
     ]
     return {
         "topico": progresso_topico, "unidade": t["numero"], "secoes": [_secao(con, s) for s in secao_ids],

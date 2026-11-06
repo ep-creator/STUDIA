@@ -97,6 +97,11 @@
     ...secoes.map(({ secao, livro }) => ({ valor: String(secao.id), rotulo: `${secao.codigo} ${secao.titulo}`, detalhe: livro })),
   ])
   const TIPOS_COM_SECAO = ['resumo', 'resolucao', 'plano']
+  let trocandoSecao = $state(false)
+  $effect(() => {
+    void documento?.id
+    trocandoSecao = false
+  })
 
   // documento ainda sem seção (e sem decisão): mostra a sugestão do motor, que só é gravada com "Sim"
   type Sugestao = { secao_id: number; codigo: string; titulo: string; confianca: number; por: string }
@@ -168,9 +173,16 @@
       <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
       {#if TIPOS_COM_SECAO.includes(documento.tipo) && !editando}
         <div class="secao" bind:this={seletorSecao}>
-          <Seletor rotulo="Seção do livro" variante="compacto" mostrarRotulo vazio="sem seção ligada"
-            valor={documento.secao_id !== null ? String(documento.secao_id) : documento.secao_decidida ? '' : null}
-            opcoes={opcoesSecao} onmudar={(v) => void escolherSecao(v ? Number(v) : null)} />
+          {#if documento.secao_id !== null && !trocandoSecao}
+            <!-- ler não muda nada: a seção aparece como texto, e trocar é pedido de propósito -->
+            <span class="rotulo">Seção do livro</span>
+            <span>{opcoesSecao.find((o) => o.valor === String(documento!.secao_id))?.rotulo ?? documento.secao_codigo}</span>
+            <button class="acao-texto" onclick={() => { trocandoSecao = true; void tick().then(() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()) }}>trocar</button>
+          {:else}
+            <Seletor rotulo="Seção do livro" variante="compacto" mostrarRotulo vazio="sem seção ligada"
+              valor={documento.secao_id !== null ? String(documento.secao_id) : documento.secao_decidida ? '' : null}
+              opcoes={opcoesSecao} onmudar={(v) => { trocandoSecao = false; void escolherSecao(v ? Number(v) : null) }} />
+          {/if}
         </div>
         {#if sugestao}
           <div class="sugestao" role="status">
