@@ -154,7 +154,7 @@
             <h3 class="titulo">{sessao.titulo}</h3>
             {#if sessao.detalhe}<p class="suave detalhe">{sessao.detalhe}</p>{/if}
             {#if sessao.estado !== 'feita' && sessao.trabalhadas > 0}
-              <p class="progresso-sessao">{sessao.trabalhadas} de {sessao.total} questões já trabalhadas</p>
+              <p class="progresso-sessao">{sessao.trabalhadas} de {sessao.total} questões já feitas</p>
             {/if}
 
             <dl class="material">
@@ -199,11 +199,22 @@
             {#if acao}
               <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade, acao.sessao)}>{acao.rotulo}</button>
             {/if}
+            {#if dados.atrasadas.length}
+              <!-- sem culpa: só o que dá para recuperar, cada sessão a um clique (abre Praticar dentro dela) -->
+              <p class="atrasadas">
+                <span class="suave">Ficaram para trás:</span>
+                {#each dados.atrasadas as s, i (s.id)}
+                  {#if i > 0}<span class="suave" aria-hidden="true">·</span>{/if}
+                  <a class="acao-texto" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'listas', sessao: s.id })}
+                    aria-label={`Recuperar a sessão ${s.codigo}: ${plural(s.faltam, 'questão por fazer', 'questões por fazer')}`}>{s.codigo} <span class="suave">({s.faltam})</span></a>
+                {/each}
+              </p>
+            {/if}
           </section>
         {:else if dados.prova_passada}
           <section class="sessao" aria-label="Sessão">
             <p class="sem-sessao">A prova da {nomeUnidade(dados.unidade ?? 0)} foi na {dataCurta(dados.prova_passada, null)}.</p>
-            <p class="suave">{revisarDaUnidade.length ? 'Esta unidade terminou: o que ficou para revisar está logo abaixo.' : 'Esta unidade terminou, sem nada marcado para revisar.'}</p>
+            <p class="suave">{revisarDaUnidade.length ? 'Esta unidade terminou: o que ficou para revisar está logo abaixo.' : 'Esta unidade terminou.'}</p>
             {#if dados.unidade_atual !== null && dados.unidade_atual !== dados.unidade}
               <a class="acao-suave comecar" href={href('painel', dados.unidade_atual)}>Ir para a {nomeUnidade(dados.unidade_atual)}</a>
             {/if}
@@ -269,7 +280,7 @@
                   {#if item.tipo === 'sessao'}
                     <span class="codigo">{item.codigo}</span>
                     <span class="texto">{item.titulo}</span>
-                    {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado" title="questões trabalhadas / questões da sessão">{item.trabalhadas}/{item.total}</span>
+                    {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado" title="questões feitas / questões da sessão">{item.trabalhadas}/{item.total}</span>
                     {:else if ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
                   {:else}
                     <span class="codigo">{TIPO_EVENTO[item.tipo] ?? item.tipo}</span>
@@ -285,7 +296,7 @@
         </section>
         {/if}
 
-        {#if dados.unidade && dados.tem_datas}
+        {#if dados.unidade && dados.tem_datas && !dados.prova_passada}
           <section aria-label="Tópicos para cuidar">
             <h2 class="rotulo">Tópicos para cuidar</h2>
             {#if dados.prova_passada}
@@ -361,6 +372,8 @@
   .dica-ajuda { margin: 0; font-size: 0.9rem; display: flex; gap: 0.8rem; align-items: baseline; }
   .dica-ajuda kbd { font-family: var(--fonte-texto); padding: 0 0.35rem; border-radius: 4px; background: var(--leve); }
   .comecar { justify-self: start; margin-top: 0.6rem; padding: 0.4rem 1.2rem; }
+  .atrasadas { margin: 0.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.2rem 0.6rem; align-items: baseline; font-size: 0.92rem; }
+  .atrasadas .acao-texto { color: var(--texto); }
   .sem-sessao { margin: 0; font-family: var(--fonte-titulo); font-size: 1.3rem; }
 
   /* números de questão: o mesmo gesto da grade de Praticar */

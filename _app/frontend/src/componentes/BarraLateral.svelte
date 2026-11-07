@@ -38,7 +38,7 @@
           <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
         {:else}
           <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}
-            aria-keyshortcuts={`Alt+${i + 1}`} title={`Alt ${i + 1}`}>{nome}</a>
+            aria-keyshortcuts={`Alt+${i + 1}`} title={`${nome} (Alt+${i + 1})`}>{nome}</a>
         {/if}
       </li>
     {/each}

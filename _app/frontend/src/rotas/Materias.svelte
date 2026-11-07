@@ -25,7 +25,6 @@
     const t = textoContagem(proxima?.proxima_prova ?? null, agora)
     return t === 'hoje' || t === 'amanhã' ? t : `em ${t}`
   })
-  const pendentes =$derived(materias.reduce((t, m) => t + m.importacoes_pendentes, 0))
 
   // Apagar não destrói nada: a pasta vai para _lixeira/, de onde dá para recuperar movendo de volta
   async function apagar(m: ResumoMateria) {
@@ -71,7 +70,9 @@
       {:else}
         Comece criando a primeira matéria.
       {/if}
-      {#if pendentes > 0}<span class="pendentes">{pendentes} {pendentes === 1 ? 'arquivo' : 'arquivos'} para conferir.</span>{/if}
+      {#each materias.filter((m) => m.importacoes_pendentes > 0) as m (m.uid)}
+        <span class="pendentes">{m.nome}: {m.importacoes_pendentes} {m.importacoes_pendentes === 1 ? 'arquivo' : 'arquivos'} para conferir.</span>
+      {/each}
     </p>
   </section>
 

@@ -87,8 +87,8 @@ export const CLASSE_ESTADO_TOPICO: Record<string, string> = {
 /** O que cada estado do tópico quer dizer (a mesma frase da folha de ajuda), para a dica ao passar o mouse. */
 export const DEFINICAO_ESTADO: Record<string, string> = {
   hoje: 'é o tópico da sessão do dia',
-  'em dia': 'a aula já passou e você trabalhou metade ou mais das questões (ou o tópico não tem questões)',
-  'falta praticar': 'a aula já passou e você trabalhou menos da metade das questões',
+  'em dia': 'a aula já passou e você fez metade ou mais das questões (ou o tópico não tem questões)',
+  'falta praticar': 'a aula já passou e você fez menos da metade das questões',
   'a seguir': 'a aula ainda não chegou (o número ao lado mostra se você já adiantou)',
   'prova passou': 'a prova da unidade já foi; o número ao lado mostra quanto você praticou',
 }

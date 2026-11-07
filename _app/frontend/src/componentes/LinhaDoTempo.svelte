@@ -36,7 +36,7 @@
           <b>{s.codigo}</b>{#if foco.titulo} <span class="foco-titulo">{foco.titulo}</span>{/if}{#if foco.detalhe} <span class="suave foco-detalhe">{foco.detalhe}</span>{/if}
         </span>
         {#if p?.estado === 'feita' || (!p && s.feito)}<span class="selo-feita">feita</span>
-        {:else if p && p.total > 0}<span class="selo-parcial" title="questões trabalhadas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
+        {:else if p && p.total > 0}<span class="selo-parcial" title="questões feitas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
         <span class="acoes-linha">
           {#if hrefPraticar && s.questao_ids.length && p?.estado !== 'feita'}
             <a class="acao-texto" aria-label={`Praticar a sessão ${s.codigo}`} href={hrefPraticar(s)}>praticar</a>

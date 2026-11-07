@@ -87,7 +87,7 @@
           <svg class="seta" class:aberto viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" /></svg>
           <span class="codigo-lista">{l.codigo}</span> <span class="nome-lista">{l.titulo}</span>
         </button></h2>
-        <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões trabalhadas (marcadas ou com resolução gravada)`}>{feitas(l)}/{l.questoes.length}</span>
+        <span class="placar" title={`${feitas(l)} de ${l.questoes.length} questões feitas (marcadas ou resolvidas por você)`}>{feitas(l)}/{l.questoes.length}</span>
       </header>
       {#if aberto}
       {#each linhas(l) as [titulo, questoes] (titulo)}

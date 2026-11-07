@@ -23,6 +23,7 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
         { id: 201, rotulo: '8', lista_id: 19, lista_codigo: 'L5', unidade: 3, estado: 'err', resolucao_id: null, trabalhada: true },
       ],
     },
+    atrasadas: [],
     proximos: [
       { tipo: 'sessao', data: '2026-11-05', hora_inicio: null, codigo: 'S3', titulo: '15.5 Aplicações', estado: 'hoje', unidade: 3, trabalhadas: 2, total: 3 },
       { tipo: 'sessao', data: '2026-11-07', hora_inicio: null, codigo: 'S4', titulo: 'Triplas', estado: 'futura', unidade: 3, trabalhadas: 0, total: 4 },
@@ -160,3 +161,12 @@ test('matéria vazia leva a adicionar material', async () => {
   await waitFor(() => expect(screen.getByRole('region', { name: 'Primeiros passos' })).toBeInTheDocument())
   expect(screen.getByRole('link', { name: /Adicionar material/ })).toHaveAttribute('href', '#/m/ab/importar')
 })
+
+test('o que ficou para trás aparece numa linha, cada sessão abrindo Praticar dentro dela', async () => {
+  resposta = dados({ atrasadas: [{ id: 7, codigo: 'S1', faltam: 4 }, { id: 8, codigo: 'S2', faltam: 1 }] })
+  render(Hoje, { painel: p3 })
+  const s1 = await screen.findByRole('link', { name: 'Recuperar a sessão S1: 4 questões por fazer' })
+  expect(s1).toHaveAttribute('href', '#/m/ab/u/3/listas?sessao=7')
+  expect(screen.getByRole('link', { name: 'Recuperar a sessão S2: 1 questão por fazer' })).toBeInTheDocument()
+})
+

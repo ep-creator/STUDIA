@@ -52,7 +52,7 @@
   label { display: grid; gap: 0.25rem; font-size: 0.85rem; }
   .largo, .botoes { grid-column: 1 / -1; }
   .botoes { display: flex; gap: 0.5rem; }
-  input, textarea { border: 1px solid var(--borda); border-radius: 6px; padding: 0.3rem 0.5rem; background: var(--fundo); }
+  input, textarea { border: 0; border-radius: 6px; padding: 0.35rem 0.55rem; background: var(--leve); color: var(--texto); font: inherit; }
   .questoes { border: 0; padding: 0; margin: 0; display: grid; gap: 0.35rem; font-size: 0.9rem; }
   legend { font-size: 0.85rem; padding: 0; margin-bottom: 0.3rem; }
   .lista { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.5rem; }

@@ -113,7 +113,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .rotulo { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
 /* texto corrido longo (resumos, documentos, resoluções): no máximo ~70 caracteres por linha */
-.leitura-medida { max-width: 42rem; }
+/* a medida em caracteres, não em rem: 42rem davam ~88 por linha em Inter 16px; 68ch dá ~70 */
+.leitura-medida { max-width: 68ch; }
 /* título só para leitor de tela (telas de altura fixa que já mostram o nome na barra lateral) */
 .so-leitor { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .suave { color: var(--suave); }

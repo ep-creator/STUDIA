@@ -32,6 +32,8 @@ export function analisarRota(hash: string): Rota {
   if (partes.length === 3 && (partes[2] === 'importar' || partes[2] === 'historico')) {
     return { tela: partes[2], uid }
   }
+  // área sem unidade (endereço digitado ou antigo): a matéria na unidade atual, na área pedida
+  if (partes.length === 3 && AREAS.includes(partes[2] as Area)) return { tela: 'materia', uid, unidade: null, area: partes[2] as Area }
   if (partes.length === 5 && partes[2] === 'u') {
     const unidade = Number(partes[3])
     const area = partes[4] as Area

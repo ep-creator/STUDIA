@@ -4,6 +4,7 @@ import sqlite3
 from dataclasses import asdict
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 
 from estudos.api.deps import Contexto, contexto_dep
 from estudos.api.respostas import ExercicioLivro, ResultadoBusca, ResumoSincronizacao, TextoSecao
@@ -12,6 +13,8 @@ from estudos.ia.embeddings import obter_embeddings
 from estudos.rag.busca import buscar_modo, exercicio_de, resposta_de, secao_completa
 from estudos.rag.indexador import ResumoSincronizacao as Resumo, agendar_sincronizacao, sincronizar
 from estudos.rag.indice import abrir_indice, descartar_indice, eh_corrupcao, indice_desatualizado
+from estudos.recorte import recortar
+from estudos.seguranca import caminho_seguro
 from estudos.workspace import ARQUIVO_DB
 
 router = APIRouter(prefix="/api/materias/{materia_uid}", tags=["busca"])
@@ -129,3 +132,27 @@ def exercicio_do_livro(secao_id: int, numero: int, ctx: Contexto = Depends(conte
         raise NaoEncontrado(f"Exercício {numero} da seção {secao_id} não está no índice")
     resposta = _com_indice(ctx, lambda indice: resposta_de(indice, secao_id, numero))
     return {"exercicio": asdict(exercicio), "resposta": asdict(resposta) if resposta else None}
+
+
+@router.get("/secoes/{secao_id}/exercicios/{numero}/recorte", response_class=Response)
+def recorte_do_exercicio(secao_id: int, numero: int, parte: str = "exercicio", ctx: Contexto = Depends(contexto_dep)) -> Response:
+    """O exercício (ou a resposta do gabarito, com parte=resposta) recortado da página do livro, em PNG.
+
+    404 quando o índice não tem o exercício ou o rótulo não é achado com segurança na página: a tela mostra a página
+    inteira."""
+    if _refazendo(ctx):
+        raise NaoEncontrado("O índice da busca está sendo refeito")
+    busca = resposta_de if parte == "resposta" else exercicio_de
+    achado = _com_indice(ctx, lambda indice: busca(indice, secao_id, numero))
+    if achado is None or achado.pagina is None or achado.fonte_id is None:
+        raise NaoEncontrado(f"Exercício {numero} da seção {secao_id} não está no índice")
+    fonte = ctx.con.execute("SELECT caminho FROM fonte WHERE id = ?", (achado.fonte_id,)).fetchone()
+    if fonte is None:
+        raise NaoEncontrado("O livro do exercício não está mais na matéria")
+    pdf = caminho_seguro(ctx.materia.pasta, fonte["caminho"])
+    for pagina in dict.fromkeys([achado.pagina, achado.pagina_fim or achado.pagina]):
+        png = recortar(pdf, pagina, numero, achado.trecho)
+        if png is not None:
+            return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
+    raise NaoEncontrado(f"Não deu para recortar o exercício {numero} na página {achado.pagina}")
+

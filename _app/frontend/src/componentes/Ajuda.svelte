@@ -8,7 +8,8 @@
   let { onfechar }: { onfechar: () => void } = $props()
   let caixa: HTMLElement
   // o guia completo abre aqui mesmo (o app é local: sem depender de internet); as imagens ficam de fora
-  const GUIA = guiaBruto.split('\n').filter((l) => !l.trim().startsWith('<img')).join('\n')
+  const GUIA = guiaBruto.slice(Math.max(0, guiaBruto.indexOf('## As telas da matéria')))
+    .split('\n').filter((l) => !l.trim().startsWith('<img')).join('\n')
   let guia = $state(false)
 
   $effect(() => {
@@ -22,18 +23,18 @@
     ['Alt 1 · 2 · 3 · 4', 'Hoje · Tópicos · Praticar · Biblioteca'],
     ['Alt I', 'abrir ou fechar a IA da matéria'],
     ['1 · 2 · 3 · 0', 'em Praticar: acertei · errei · dúvida · limpar, na questão aberta'],
-    ['N', 'em Praticar: a próxima questão ainda não trabalhada'],
+    ['N', 'em Praticar: a próxima questão ainda não feita'],
     ['setas', 'na grade de Praticar: andar entre as questões'],
     ['Ctrl Z', 'desfazer a última alteração'],
     ['?', 'esta ajuda'],
   ]
   const ESTADOS: [string, string][] = [
     ['feita', 'todas as questões da sessão foram marcadas ou resolvidas por você'],
-    ['2 de 3', 'sessão começada: questões trabalhadas de quantas tem'],
+    ['2 de 3', 'sessão começada: questões feitas de quantas tem'],
     ['hoje', 'o tópico é o da sessão do dia'],
     ['a seguir', 'a aula do tópico ainda não chegou'],
-    ['em dia', 'a aula já passou e você trabalhou metade ou mais das questões'],
-    ['falta praticar', 'a aula já passou e você trabalhou menos da metade das questões'],
+    ['em dia', 'a aula já passou e você fez metade ou mais das questões'],
+    ['falta praticar', 'a aula já passou e você fez menos da metade das questões'],
     ['prova passou', 'a unidade terminou; o tópico não cobra mais nada'],
   ]
   const CODIGOS: [string, string][] = [

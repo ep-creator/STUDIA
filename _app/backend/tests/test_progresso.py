@@ -146,7 +146,7 @@ def test_materia_vazia(con):
     h = progresso.hoje(con, HOJE)
     assert h == {
         "data": "2099-03-10", "unidade": None, "prova": None, "reta_final": False, "tem_datas": False, "prova_passada": None, "unidade_atual": None,
-        "sessao": None, "proximos": [], "revisar": [], "topicos": [],
+        "sessao": None, "atrasadas": [], "proximos": [], "revisar": [], "topicos": [],
     }
 
 
@@ -307,4 +307,14 @@ def test_topico_conta_so_listas_da_propria_unidade(con, materia, plano):
     t = {x["id"]: x for x in progresso.topicos(con, plano.u1, HOJE)}
     assert t[plano.polares]["total"] == 3                      # a 14.6 (2ª unidade) não entra no placar
     assert all(l["unidade"] == 1 for l in progresso.pagina_topico(con, plano.polares, HOJE)["listas"])
+
+
+def test_sessoes_que_ficaram_para_tras(con, plano):
+    h = progresso.hoje(con, date(2099, 3, 12))
+    assert h["atrasadas"] == [{"id": h["atrasadas"][0]["id"], "codigo": "S2", "faltam": 3}]   # a S1 foi feita; a S2 não
+    assert progresso.hoje(con, date(2099, 3, 20), 1)["atrasadas"] == []                      # prova feita: não cobra
+
+
+def test_proximos_dias_sao_da_unidade_mostrada(con, plano):
+    assert all(i["unidade"] in (None, 2) for i in progresso.hoje(con, date(2099, 4, 15), 2)["proximos"])
 

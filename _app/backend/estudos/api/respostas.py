@@ -115,6 +115,12 @@ class QuestaoSessao(TypedDict):
     trabalhada: bool            # marcada ou resolvida por você (a resolução da IA não conta)
 
 
+class SessaoAtrasada(TypedDict):
+    id: int
+    codigo: str
+    faltam: int                 # questões da sessão ainda por fazer
+
+
 class SessaoHoje(TypedDict):
     id: int
     codigo: str
@@ -195,6 +201,7 @@ class Hoje(TypedDict):
     prova_passada: str | None   # data da prova da unidade mostrada, se já passou (a unidade terminou)
     unidade_atual: int | None   # a unidade da próxima prova (para onde apontar quando a mostrada terminou)
     sessao: SessaoHoje | None
+    atrasadas: list[SessaoAtrasada]
     proximos: list[ItemProximo]
     revisar: list[GrupoRevisar]
     topicos: list[TopicoProgresso]

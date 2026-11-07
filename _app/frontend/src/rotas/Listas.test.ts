@@ -80,5 +80,5 @@ test('a última da sessão não é beco: volta às que faltam', async () => {
 test('Praticar sem questão aberta sugere a próxima sessão com questões por fazer', () => {
   const futura = sessao(5, 'S9', '2999-01-01', [2], '**Escolher o sistema**')
   render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [futura] }) })
-  expect(screen.getByRole('link', { name: /Ou siga a sessão S9 · Escolher o sistema/ })).toHaveAttribute('href', '#/m/ab/u/1/listas?sessao=5')
+  expect(screen.getByRole('link', { name: /Seguir a sessão S9 · Escolher o sistema/ })).toHaveAttribute('href', '#/m/ab/u/1/listas?sessao=5')
 })

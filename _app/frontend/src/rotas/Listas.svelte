@@ -136,6 +136,13 @@
   <EstadoVazio texto="Nenhuma lista nesta unidade ainda." acao={{ rotulo: 'Importar listas', href: montarHash({ tela: 'importar', uid }) }} />
 {:else}
   <h1 class="titulo-tela">Praticar <span class="suave">· {painel.unidade}ª unidade</span></h1>
+  {#if sugerida && !daSessao}
+    <p class="sugerida">
+      <a class="acao-texto" href={montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', sessao: sugerida.id })}>
+        Seguir a sessão {sugerida.codigo} · {focoDaSessao(sugerida.foco_md).titulo} →
+      </a>
+    </p>
+  {/if}
   {#if daSessao && questoesSessao.length}
     <FaixaSessao codigo={daSessao.codigo} titulo={focoDaSessao(daSessao.foco_md).titulo} questoes={questoesSessao} {selecionada}
       proxima={proximaSessao}
@@ -171,11 +178,6 @@
       />
     {:else}
       <p class="dica">Escolha uma questão.</p>
-      {#if sugerida}
-        <a class="acao-texto" href={montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'listas', sessao: sugerida.id })}>
-          Ou siga a sessão {sugerida.codigo} · {focoDaSessao(sugerida.foco_md).titulo} →
-        </a>
-      {/if}
     {/if}
     </div>
   </div>
@@ -190,6 +192,7 @@
   .menu { border-left: 1px solid var(--fio); padding-left: 2rem; }
   .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .titulo-tela span { font-family: var(--fonte-texto); font-size: 1rem; }
+  .sugerida { margin: -0.2rem 0 0.8rem; font-size: 0.95rem; }
   .alternar-grade { font-size: 0.88rem; margin-bottom: 0.6rem; }
   .dica { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-size: 1.3rem; }
   @media print { .listas { display: block; } .coluna { overflow: visible; } .menu { display: none; } }

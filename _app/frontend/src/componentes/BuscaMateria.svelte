@@ -51,7 +51,10 @@
     for (const r of itens) {
       const p = primeiro.get(r.titulo)
       if (p) {
-        if (r.pagina) outrasPaginas.set(p.trecho_id, [...(outrasPaginas.get(p.trecho_id) ?? []), r.pagina])
+        if (r.pagina && r.pagina !== p.pagina) {
+          const ja = outrasPaginas.get(p.trecho_id) ?? []
+          if (!ja.includes(r.pagina)) outrasPaginas.set(p.trecho_id, [...ja, r.pagina].sort((a, b) => a - b))
+        }
         continue
       }
       primeiro.set(r.titulo, r)
@@ -171,7 +174,8 @@
 
   // o trecho do FTS marca as palavras com [ ]; o resto é escapado antes de virar <mark>
   function destacar(texto: string): string {
-    const limpo = texto.replace(/\*\*|__|`|^#+\s*|\s\|\s?/gm, ' ').replace(/\s+/g, ' ')
+    // sem a marcação do Markdown nem os $ do LaTeX: o trecho é uma prévia em texto
+    const limpo = texto.replace(/\*\*|__|`|\$|^#+\s*|\s\|\s?/gm, ' ').replace(/\s+/g, ' ')
     const seguro = limpo.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     return seguro.replace(/\[([^\]]*)\]/g, '<mark>$1</mark>')
   }

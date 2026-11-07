@@ -172,7 +172,7 @@ Três tons derivados do texto, sempre por mistura e nunca como hex fixo: **fio**
 - **Label** (Inter 400, 0.7rem = 11,2px, tracking 0.1em, CAIXA ALTA, tinta suave): rótulos de seção ("SESSÃO DE HOJE", "PARA REVISAR", "LINHA 1"). Nunca abaixo de 11px.
 - **Marca** (Fraunces 500, tracking 0.28em, caixa alta): só o nome STUDIA.
 
-Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títulos quebram com `text-wrap: balance`; parágrafos e itens com `text-wrap: pretty`. Texto corrido longo (resumo, documento, resolução) fica em no máximo 42rem (≈70 caracteres, classe `.leitura-medida`).
+Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títulos quebram com `text-wrap: balance`; parágrafos e itens com `text-wrap: pretty`. Texto corrido longo (resumo, documento, resolução) fica em no máximo 68ch (≈70 caracteres por linha, classe `.leitura-medida`).
 
 ### Named Rules
 **The Serifa Nomeia Rule.** Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.
@@ -184,7 +184,7 @@ Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títul
 Barra lateral fixa de 13rem à esquerda e conteúdo fluido à direita com respiro de 2rem. A barra tem as **quatro áreas do estudo** (Hoje · Tópicos · Praticar · Biblioteca) em texto maior e, depois de um fio, o **apoio** em tinta suave (Plano, Folha de fórmulas, ＋ Adicionar material, Histórico). No topo de cada tela da matéria: abas de unidade, a prova (fora de Hoje, que a tem no cabeçalho), a busca (Ctrl K), Desfazer e "IA ›". Cada tela tem um título real (h1).
 
 - **Hoje:** cabeçalho (título, data, prova à direita) e duas colunas 1.55fr / 1fr: à esquerda a sessão do plano (o foco da tela) e "Para revisar"; à direita "Próximos 7 dias" e os tópicos da unidade. A faixa "Reta final" entra por cima com 7 dias ou menos.
-- **Tópico:** cabeçalho (voltar, título, estado, seções do livro) e duas colunas 1.5fr / 1fr: o resumo para ler (até 42rem) e, ao lado, questões, fórmulas e resoluções.
+- **Tópico:** cabeçalho (voltar, título, estado, seções do livro) e duas colunas 1.5fr / 1fr: o resumo para ler (até 68ch) e, ao lado, questões, fórmulas e resoluções.
 - **Praticar:** grade de números estreita (≥17rem, 0.8fr) e a questão aberta larga (1.5fr), cada coluna rolando por conta própria com a página parada; Biblioteca segue o mesmo modelo de altura fixa.
 
 Ritmo de espaçamento: 0.4rem entre itens de uma linha, 0.6rem dentro de um bloco, 2–2.4rem entre blocos, 3–4rem entre colunas. Só computador; abaixo de 1100px as colunas empilham. Colunas de grade usam `minmax(0, 1fr)` para fórmulas largas rolarem dentro, sem empurrar a página.
@@ -259,7 +259,7 @@ Linhas do mapa de Tópicos, do Plano, da Folha de fórmulas e do Histórico most
 - **Do** organizar cada tela pelo que o aluno faz na sessão (a sessão de hoje, o tópico, a questão), não pelo tipo de dado guardado.
 - **Do** mostrar progresso que se deriva sozinho (datas do plano, marcações, resoluções); nunca pedir registro manual para a tela fazer sentido.
 - **Do** mostrar estado com cor e traço: 2px à esquerda para o item ativo de lista vertical, 2px embaixo para número marcado, 1.5px embaixo para aba e marcação.
-- **Do** limitar texto corrido a 42rem e quebrar títulos com `text-wrap: balance`.
+- **Do** limitar texto corrido a 68ch e quebrar títulos com `text-wrap: balance`.
 - **Do** escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.
 - **Do** deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.
 - **Do** derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.

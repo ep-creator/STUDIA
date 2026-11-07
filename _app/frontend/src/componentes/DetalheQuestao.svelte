@@ -3,7 +3,7 @@
   // área de ajuda em abas (IA, resposta do livro, resolução, fórmulas). O enunciado do livro aparece como a própria
   // página do PDF: o texto extraído de um livro de cálculo sai quebrado (∭ vira "xxx", √ vira "s", colunas se misturam)
   // e não dá para confiar nele. A resolução continua escondida até a aba ser aberta.
-  import { requisitar, urlArquivo } from '../api/cliente'
+  import { API_BASE, requisitar, urlArquivo } from '../api/cliente'
   import type { Documento, DocumentoComCorpo, ExercicioLivro, Formula, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
@@ -63,9 +63,26 @@
   }
 
   // "[Sessão S4] Calcule…": o prefixo veio do material da turma e só atrapalha a leitura
-  const enunciado = $derived((questao.enunciado_md ?? '').replace(/^\s*\[[^\]]*Sessão[^\]]*\]\s*/, ''))
+  const enunciado = $derived((questao.enunciado_md ?? '').replace(/^\s*(?:\*\*|__)?\[[^\]]*Sessão[^\]]*\](?:\*\*|__)?\s*/, ''))
   const paginaLivro = $derived(doLivro?.exercicio.pagina && secao ? doLivro.exercicio.pagina : null)
   const paginaResposta = $derived(doLivro?.resposta?.pagina ?? null)
+  // O exercício recortado da página (o motor acha o rótulo "13." e corta até o seguinte): é o enunciado de verdade, sem
+  // procurar numa página cheia. Sem recorte (rótulo não achado com segurança), a página inteira no lugar.
+  let semRecorte = $state(false)
+  let semRecorteResposta = $state(false)
+  $effect(() => {
+    void questao.id
+    semRecorte = false
+    semRecorteResposta = false
+  })
+  const recorte = (parte: 'exercicio' | 'resposta') =>
+    `${API_BASE}/api/materias/${encodeURIComponent(uid)}/secoes/${secao!.secao_id}/exercicios/${questao.rotulo}/recorte${parte === 'resposta' ? '?parte=resposta' : ''}`
+  // a imagem vem em 2,5× para ficar nítida; na tela, em 2× o tamanho do livro (o texto corrido fica perto do da página)
+  const noTamanho = (e: Event) => {
+    const img = e.currentTarget as HTMLImageElement
+    img.style.width = `${Math.round(img.naturalWidth / 1.25)}px`   // 2,5 ÷ 1,25 = o dobro do tamanho no livro: limites legíveis
+  }
+
   // só a página, na largura da coluna: sem a barra e a coluna de miniaturas do leitor de PDF do navegador
   const pdf = (pagina: number) => `${urlArquivo(uid, secao!.caminho, pagina)}&toolbar=0&navpanes=0&view=FitH`
 
@@ -96,7 +113,17 @@
     {:else if !doLivro && !procurandoLivro}
       <p class="suave">Exercício do livro{secao ? `: seção ${secao.codigo}` : ''}.</p>
     {/if}
-    {#if paginaLivro}
+    {#if paginaLivro && !semRecorte}
+      <figure class="recorte">
+        {#key questao.id}
+          <span class="papel"><img src={recorte('exercicio')} alt={`Exercício ${questao.rotulo} do livro, recortado da página ${paginaLivro}`}
+            onload={noTamanho} onerror={() => (semRecorte = true)} /></span>
+        {/key}
+        <figcaption class="suave">
+          Livro · p. {paginaLivro} · <a class="acao-texto" href={urlArquivo(uid, secao!.caminho, paginaLivro)} target="_blank" rel="noopener">página inteira ↗</a>
+        </figcaption>
+      </figure>
+    {:else if paginaLivro}
       <div class="do-livro">
         <span class="rotulo">Exercício {questao.rotulo} no livro · p. {paginaLivro}</span>
         <a class="acao-texto" href={urlArquivo(uid, secao!.caminho, paginaLivro)} target="_blank" rel="noopener">Abrir em outra aba ↗</a>
@@ -131,7 +158,13 @@
   </div>
   {#if aba === 'resposta' && doLivro?.resposta}
     <div role="tabpanel" id="painel-resposta" aria-labelledby="aba-resposta" class="texto livro">
-      {#if paginaResposta && secao}
+      {#if paginaResposta && secao && !semRecorteResposta}
+        <figure class="recorte">
+          <span class="papel"><img src={recorte('resposta')} alt={`Resposta do exercício ${questao.rotulo}, recortada da página ${paginaResposta} do livro`}
+            onload={noTamanho} onerror={() => (semRecorteResposta = true)} /></span>
+          <figcaption class="suave">Respostas do livro · p. {paginaResposta} · <a class="acao-texto" href={urlArquivo(uid, secao.caminho, paginaResposta)} target="_blank" rel="noopener">página inteira ↗</a></figcaption>
+        </figure>
+      {:else if paginaResposta && secao}
         <span class="suave">Respostas do livro · p. {paginaResposta} (procure o {questao.rotulo})</span>
         <iframe class="pagina" title={`Página ${paginaResposta} das respostas do livro`} src={pdf(paginaResposta)}></iframe>
       {:else}
@@ -186,6 +219,13 @@
   .texto :global(h2), .texto :global(h3) { font-size: 1rem; margin: 0.9rem 0 0.35rem; }
   .livro { display: grid; gap: 0.6rem; white-space: pre-line; }
   /* o enunciado original do livro, logo abaixo do resumo da questão */
+  /* o recorte é um pedaço de papel do livro sobre a mesa: fundo de papel nos dois temas (no escuro, um pouco
+     mais apagado), a tinta do livro por cima (multiply some com o branco da imagem) */
+  .recorte { margin: 0.8rem 0 0; display: grid; gap: 0.35rem; justify-items: start; }
+  .papel { display: block; max-width: 100%; padding: 0.7rem 0.9rem; border-radius: var(--raio); background: #f7f1e6; isolation: isolate; box-sizing: border-box; }
+  .papel img { display: block; max-width: 100%; height: auto; mix-blend-mode: multiply; }
+  :global([data-tema='editorial-escuro']) .papel { filter: brightness(0.86); }
+  .recorte figcaption { font-size: 0.85rem; }
   .do-livro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem 1rem; align-items: baseline; margin-top: 0.8rem; font-size: 1rem; }
   .do-livro .acao-texto { font-size: 0.88rem; }
   /* a página do livro, no lugar do texto extraído: é onde o exercício está escrito direito */

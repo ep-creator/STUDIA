@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte'
+import { fireEvent, render, screen } from '@testing-library/svelte'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 import type { Documento } from '../api/tipos'
@@ -81,13 +81,22 @@ function motorDoLivro(status: number, corpo: unknown = null) {
 test('exercício do livro: a própria página do livro no lugar do texto extraído; a resposta numa aba', async () => {
   const chamadas = motorDoLivro(200, { exercicio: exercicio(), resposta: { ...exercicio(), parte: 'resposta', trecho: '29. o paraboloide', pagina: 980 } })
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
-  const pagina = await screen.findByTitle('Página 312 do livro, com o exercício 30')
-  expect(pagina.getAttribute('src')).toMatch(/stewart\.pdf#page=312/)
+  // o exercício recortado da página (o motor corta do "30." até o seguinte); a página inteira fica a um link
+  const recorte = await screen.findByAltText('Exercício 30 do livro, recortado da página 312')
+  expect(recorte.getAttribute('src')).toBe('/api/materias/u1/secoes/31/exercicios/30/recorte')
+  expect(screen.getByRole('link', { name: /página inteira/ }).getAttribute('href')).toMatch(/stewart\.pdf#page=312/)
   expect(chamadas.some((u) => u.endsWith('/api/materias/u1/secoes/31/exercicios/30'))).toBe(true)
   expect(screen.queryByText(/x² \+ y²/)).toBeNull()          // o texto extraído (quebrado em livros de cálculo) não aparece
-  expect(screen.getByRole('link', { name: /Abrir em outra aba/ })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('tab', { name: 'Resposta do livro' }))
-  expect(screen.getByTitle('Página 980 das respostas do livro').getAttribute('src')).toMatch(/#page=980/)
+  expect(screen.getByAltText(/Resposta do exercício 30/).getAttribute('src')).toMatch(/exercicios\/30\/recorte\?parte=resposta$/)
+})
+
+test('sem recorte (rótulo não achado), a página inteira do livro no lugar', async () => {
+  motorDoLivro(200, { exercicio: exercicio(), resposta: null })
+  render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
+  const recorte = await screen.findByAltText(/Exercício 30 do livro/)
+  await fireEvent.error(recorte)
+  expect(screen.getByTitle('Página 312 do livro, com o exercício 30').getAttribute('src')).toMatch(/#page=312&toolbar=0/)
 })
 
 test('resposta do livro sem página: o trecho em texto', async () => {
@@ -150,7 +159,7 @@ test('enquanto procura no livro, uma linha já ocupa o lugar, para a tela não p
   render(DetalheQuestao, { uid: 'u1', lista: l, questao: q, marca: null, secao: SECAO, onmarcar: vi.fn() })
   expect(screen.getByText('Procurando o exercício no livro…')).toBeInTheDocument()
   responder(new Response(JSON.stringify({ exercicio: exercicio(), resposta: null }), { status: 200, headers: { 'content-type': 'application/json' } }))
-  expect(await screen.findByTitle(/Página 312 do livro/)).toBeInTheDocument()
+  expect(await screen.findByAltText(/Exercício 30 do livro/)).toBeInTheDocument()
   expect(screen.queryByText(/Procurando/)).toBeNull()
 })
 

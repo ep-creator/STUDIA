@@ -753,6 +753,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/secoes/{secao_id}/exercicios/{numero}/recorte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recorte Do Exercicio
+         * @description O exercício (ou a resposta do gabarito, com parte=resposta) recortado da página do livro, em PNG.
+         *
+         *     404 quando o índice não tem o exercício ou o rótulo não é achado com segurança na página: a tela mostra a página
+         *     inteira.
+         */
+        get: operations["recorte_do_exercicio_api_materias__materia_uid__secoes__secao_id__exercicios__numero__recorte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/fontes": {
         parameters: {
             query?: never;
@@ -1213,6 +1236,8 @@ export interface components {
             /** Unidade Atual */
             unidade_atual: number | null;
             sessao: components["schemas"]["SessaoHoje"] | null;
+            /** Atrasadas */
+            atrasadas: components["schemas"]["SessaoAtrasada"][];
             /** Proximos */
             proximos: components["schemas"]["ItemProximo"][];
             /** Revisar */
@@ -1806,6 +1831,15 @@ export interface components {
             origem: string;
             /** Questao Ids */
             questao_ids: number[];
+        };
+        /** SessaoAtrasada */
+        SessaoAtrasada: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Faltam */
+            faltam: number;
         };
         /** SessaoCriar */
         SessaoCriar: {
@@ -3794,6 +3828,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExercicioLivro"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recorte_do_exercicio_api_materias__materia_uid__secoes__secao_id__exercicios__numero__recorte_get: {
+        parameters: {
+            query?: {
+                parte?: string;
+            };
+            header?: never;
+            path: {
+                secao_id: number;
+                numero: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

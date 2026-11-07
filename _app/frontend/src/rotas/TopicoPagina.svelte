@@ -71,7 +71,7 @@
       <h1>{t.titulo}</h1>
       <p class="meta">
         <span class="estado {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}" title={DEFINICAO_ESTADO[t.estado]}>{t.estado}</span>
-        {#if t.total}<span class="suave">{t.trabalhadas} de {t.total} questões trabalhadas</span>{/if}
+        {#if t.total}<span class="suave">{t.trabalhadas} de {t.total} questões feitas</span>{/if}
         {#if erros}<span class="erros">{erros} para revisar</span>{/if}
         {#each dados.secoes as s (s.secao_id)}
           <button class="acao-texto" aria-label={`${s.codigo} no livro, página ${s.pagina_pdf_ini}`} onclick={() => abrirSecao(s)}>
@@ -113,7 +113,7 @@
             <h2 class="rotulo">Questões</h2>
             {#each dados.listas as l (l.id)}
               <div class="lista">
-                <span class="nome-lista">{l.titulo}</span>
+                <span class="nome-lista"><span class="suave codigo">{l.codigo}</span> {l.titulo}</span>
                 {#if l.unidade !== dados.unidade}<span class="suave">{nomeUnidade(l.unidade)}</span>{/if}
                 <span class="numeros">
                   {#each [...l.questoes].sort((a, b) => compararNomes(a.rotulo, b.rotulo)) as q (q.id)}
@@ -173,7 +173,7 @@
   .erros { color: var(--err); }
 
   .colunas { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 2rem 4rem; align-items: start; padding-top: 1.2rem; border-top: 1px solid var(--fio); }
-  .leitura { max-width: 42rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
+  .leitura { max-width: 68ch; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
   .abas { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-bottom: 1rem; }
   .abas button { background: none; border: 0; padding: 0 0 2px; font: inherit; font-family: var(--fonte-titulo); color: var(--suave); border-bottom: 1.5px solid transparent; cursor: pointer; }
   .abas button.ativa { color: var(--texto); border-bottom-color: var(--destaque); }

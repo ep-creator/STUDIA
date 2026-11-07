@@ -395,6 +395,13 @@ def hoje(con: sqlite3.Connection, dia: date, numero: int | None = None) -> dict:
         ).fetchone()
         dias = (date.fromisoformat(evento["data"]) - dia).days
         prova = {"data": evento["data"], "hora_inicio": evento["hora_inicio"], "unidade": atual.numero, "dias": dias}
+    # sessões da unidade cuja data passou com questões por fazer: Hoje mostra numa linha neutra, para dar para recuperar
+    # (unidade encerrada não cobra mais nada)
+    atrasadas = [
+        {"id": s["id"], "codigo": s["codigo"], "faltam": s["total"] - s["trabalhadas"]}
+        for s in todas
+        if atual and not prova_passada and s["unidade"] == atual.numero and s["estado"] == "passou" and s["total"] > s["trabalhadas"]
+    ]
     return {
         "data": dia.isoformat(),
         "unidade": atual.numero if atual else None,
@@ -404,7 +411,9 @@ def hoje(con: sqlite3.Connection, dia: date, numero: int | None = None) -> dict:
         "prova_passada": prova_passada,
         "unidade_atual": corrente.numero if corrente else None,
         "sessao": _material(con, foco) if foco else None,
-        "proximos": proximos(con, dia, todas),
+        "atrasadas": atrasadas,
+        # os próximos dias da unidade mostrada (e os eventos sem unidade): o "Plano completo" ao lado é o dela
+        "proximos": [i for i in proximos(con, dia, todas) if atual is None or i["unidade"] in (None, atual.numero)],
         "revisar": revisar(con),
         "topicos": topicos(con, atual.id, dia, todas) if atual else [],
     }

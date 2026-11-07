@@ -98,7 +98,7 @@
       {#if p}
         <span class="estado {CLASSE_ESTADO_TOPICO[p.estado] ?? ''}" title={DEFINICAO_ESTADO[p.estado]}>{p.estado}</span>
         {#if p.err + p.dub}<span class="revisar">{p.err + p.dub} para revisar</span>{/if}
-        <span class="placar suave" title="questões trabalhadas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
+        <span class="placar suave" title="questões feitas / questões ligadas ao tópico">{p.total ? `${p.trabalhadas}/${p.total}` : ''}</span>
         {#if p.total}
           <span class="fio" aria-hidden="true">
             <span class="feito" style:width={`${(100 * Math.max(0, p.trabalhadas - p.err - p.dub)) / p.total}%`}></span>

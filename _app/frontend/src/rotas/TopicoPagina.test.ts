@@ -40,7 +40,7 @@ test('o resumo no centro; seção, estado e o que revisar no cabeçalho', async 
   render(TopicoPagina, { uid: 'ab', topico: 13, versao: 1 })
   expect(await screen.findByRole('heading', { level: 1, name: 'Integrais em polares' })).toBeInTheDocument()
   expect(await screen.findByText('dA = r dr dθ')).toBeInTheDocument()
-  expect(screen.getByText('2 de 3 questões trabalhadas')).toBeInTheDocument()
+  expect(screen.getByText('2 de 3 questões feitas')).toBeInTheDocument()
   expect(screen.getByText('1 para revisar')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '15.4 no livro, página 412' }))
   expect(pedido.fonte).toEqual({ id: 2, pagina: 412 })
