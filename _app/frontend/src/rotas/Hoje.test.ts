@@ -30,7 +30,7 @@ function dados(extra: Partial<DadosHoje> = {}): DadosHoje {
       { tipo: 'prova', data: '2026-11-12', hora_inicio: '14:00', codigo: null, titulo: '', estado: null, unidade: 3, trabalhadas: 0, total: 0 },
     ],
     revisar: [
-      { lista_id: 1, lista_codigo: '14.1', lista_titulo: 'Funções', unidade: 1, questoes: [{ id: 4, rotulo: '46', estado: 'err' }] },
+      { lista_id: 1, lista_codigo: '14.1', lista_titulo: 'Funções', unidade: 1, questoes: [{ id: 4, rotulo: '46', estado: 'err', enunciado: '' }] },
     ],
     topicos: [
       { id: 13, titulo: 'Integrais em polares', estado: 'falta praticar', secoes: ['15.4'], total: 13, trabalhadas: 4, ok: 0, err: 1, dub: 0, ultima_aula: '2026-11-01' },

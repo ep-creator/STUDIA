@@ -6,7 +6,7 @@ import { topico } from '../teste-dados'
 import ArvoreTopicos from './ArvoreTopicos.svelte'
 
 const progresso = (id: number, estado: string, extra: Partial<TopicoProgresso> = {}): TopicoProgresso => ({
-  id, titulo: '', estado, secoes: [], total: 0, trabalhadas: 0, ok: 0, err: 0, dub: 0, ...extra,
+  id, titulo: '', estado, secoes: [], ultima_aula: null, total: 0, trabalhadas: 0, ok: 0, err: 0, dub: 0, ...extra,
 })
 
 function motor(lista: TopicoProgresso[] = []) {
