@@ -37,7 +37,7 @@
 
 {#each proposta.unidades as u, i (u.numero)}
   <section>
-    <h4>{u.titulo || `${u.numero}ª unidade`} {#if u.existente_id}<span class="suave">· já existe, os tópicos novos entram nela</span>{/if}</h4>
+    <h3>{u.titulo || `${u.numero}ª unidade`} {#if u.existente_id}<span class="suave">· já existe, os tópicos novos entram nela</span>{/if}</h3>
     {@render arvore(u.topicos, [i])}
   </section>
 {/each}
@@ -47,7 +47,7 @@
 
 <style>
   section { border-top: 1px solid color-mix(in srgb, var(--borda) 30%, transparent); padding: 0.6rem 0; }
-  h4 { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-weight: 500; }
+  h3 { margin: 0 0 0.3rem; font-family: var(--fonte-titulo); font-weight: 500; }
   ul { list-style: none; margin: 0; padding-left: 1rem; }
   li { padding: 0.15rem 0; }
   .titulo { margin-right: 0.4rem; }

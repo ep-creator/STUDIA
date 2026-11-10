@@ -1,16 +1,18 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import type { MateriaCriada, ResumoMateria } from '../api/tipos'
-  import { dataPorExtenso, nomeUnidade, proximaProvaGeral, saudacao, textoContagem } from '../apresentacao'
+  import type { MateriaApagada, MateriaCriada, ResumoMateria } from '../api/tipos'
+  import { dataPorExtenso, nomeUnidade, provaPerto, proximaProvaGeral, saudacao, textoContagem } from '../apresentacao'
   import Abertura, { deveAbrir } from '../componentes/Abertura.svelte'
   import CartaoMateria from '../componentes/CartaoMateria.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
+  import MenuMais from '../componentes/MenuMais.svelte'
   import Marca from '../componentes/Marca.svelte'
   import SeletorTema from '../componentes/SeletorTema.svelte'
-  import { erro } from '../estado/avisos.svelte'
+  import { avisar, erro } from '../estado/avisos.svelte'
+  import { esquecerMateria } from '../estado/materia.svelte'
   import { montarHash } from './rota'
 
-  let { materias }: { materias: ResumoMateria[] } = $props()
+  let { materias, onmudou = () => {} }: { materias: ResumoMateria[]; onmudou?: () => void } = $props()
 
   const agora = new Date()
   let abrindo = $state(deveAbrir())
@@ -23,7 +25,19 @@
     const t = textoContagem(proxima?.proxima_prova ?? null, agora)
     return t === 'hoje' || t === 'amanhã' ? t : `em ${t}`
   })
-  const pendentes =$derived(materias.reduce((t, m) => t + m.importacoes_pendentes, 0))
+
+  // Apagar não destrói nada: a pasta vai para _lixeira/, de onde dá para recuperar movendo de volta
+  async function apagar(m: ResumoMateria) {
+    if (!confirm(`Apagar "${m.nome}"? A pasta vai para _lixeira, na pasta do projeto; dá para recuperar movendo de volta.`)) return
+    try {
+      const r = await requisitar<MateriaApagada>('DELETE', `/api/materias/${encodeURIComponent(m.uid)}`)
+      esquecerMateria(m.uid)
+      avisar(`${m.nome} foi para ${r.movida_para}`)
+      onmudou()
+    } catch (e) {
+      erro(e)
+    }
+  }
 
   async function criar(evento: SubmitEvent) {
     evento.preventDefault()
@@ -45,18 +59,20 @@
   </nav>
 
   <section class="boas-vindas">
-    <p class="rotulo aparece" style="--i: 0">{dataPorExtenso(agora)}</p>
-    <h1 class="aparece" style="--i: 1">{saudacao(agora)}.</h1>
+    <h1 class="aparece" style="--i: 0">{saudacao(agora)}.</h1>
+    <p class="data aparece suave" style="--i: 1">{dataPorExtenso(agora)}</p>
     <p class="resumo aparece" style="--i: 2">
       {#if proxima?.proxima_prova}
         Próxima prova: <b>{proxima.nome}</b>{proxima.proxima_prova.unidade ? `, ${nomeUnidade(proxima.proxima_prova.unidade)}` : ''}
-        — <span class="contagem">{quando}</span>.
+        — <span class="contagem" class:perto={provaPerto(proxima.proxima_prova, agora)}>{quando}</span>.
       {:else if materias.length > 0}
         Nenhuma prova marcada por enquanto.
       {:else}
         Comece criando a primeira matéria.
       {/if}
-      {#if pendentes > 0}<span class="pendentes">{pendentes} {pendentes === 1 ? 'arquivo esperando' : 'arquivos esperando'} revisão.</span>{/if}
+      {#each materias.filter((m) => m.importacoes_pendentes > 0) as m (m.uid)}
+        <span class="pendentes">{m.nome}: {m.importacoes_pendentes} {m.importacoes_pendentes === 1 ? 'arquivo' : 'arquivos'} para conferir.</span>
+      {/each}
     </p>
   </section>
 
@@ -78,7 +94,12 @@
     <EstadoVazio texto="Nenhuma matéria ainda. Crie a primeira: dê um nome e solte os PDFs." />
   {/if}
   <div class="grade">
-    {#each materias as m, i (m.uid)}<div class="aparece" style="--i: {4 + i}"><CartaoMateria materia={m} /></div>{/each}
+    {#each materias as m, i (m.uid)}
+      <div class="aparece linha-acoes cartao-com-menu" style="--i: {4 + i}">
+        <CartaoMateria materia={m} />
+        <span class="acoes-linha menu-materia"><MenuMais rotulo={`Mais ações de ${m.nome}`} itens={[{ rotulo: 'Apagar matéria', acao: () => void apagar(m), perigo: true }]} /></span>
+      </div>
+    {/each}
   </div>
 </div>
 
@@ -88,24 +109,24 @@
   .logo.escondido { visibility: hidden; }
 
   .boas-vindas { margin-bottom: 3.5rem; }
-  .boas-vindas .rotulo { margin: 0 0 0.6rem; }
-  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 0.9rem; letter-spacing: -0.01em; }
+  .data { margin: 0 0 0.9rem; font-size: 1rem; }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
   .resumo { margin: 0; font-size: 1.1rem; color: var(--suave); max-width: 40rem; }
   .resumo b { color: var(--texto); font-weight: 600; }
-  .contagem { color: var(--destaque); font-weight: 600; }
-  .pendentes { display: block; margin-top: 0.3rem; color: var(--destaque); font-size: 0.95rem; }
+  .contagem { font-weight: 600; }
+  .contagem.perto { color: var(--destaque-texto); }
+  .pendentes { display: block; margin-top: 0.3rem; color: var(--destaque-texto); font-size: 0.95rem; }
 
   header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
   h2 { font-size: 1.35rem; margin: 0; display: flex; align-items: center; gap: 0.6rem; }
-  .contador {
-    font-family: var(--fonte-texto); font-size: 0.75rem; font-weight: 600; color: var(--suave);
-    border: 1px solid color-mix(in srgb, var(--borda) 50%, transparent); border-radius: 999px; padding: 0.05rem 0.5rem;
-  }
+  .contador { font-family: var(--fonte-texto); font-size: 0.9rem; font-weight: 400; color: var(--suave); font-variant-numeric: tabular-nums; }
   .nova { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; }
-  .nova input { margin-left: 0.5rem; padding: 0.3rem 0.5rem; border: 1px solid var(--borda); border-radius: 6px; background: var(--fundo); }
+  .nova input { margin-left: 0.5rem; padding: 0.35rem 0.7rem; border: 0; border-radius: 8px; background: var(--leve); color: var(--texto); }
   .nova p { flex-basis: 100%; margin: 0; }
   .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.6rem 3rem; }
   .grade > div { display: grid; }
+  .cartao-com-menu { position: relative; }
+  .menu-materia { position: absolute; top: 0.2rem; right: 0; z-index: 3; }
 
   /* Entrada: cada bloco sobe um pouco e aparece, um depois do outro (depois da abertura, quando houver) */
   .materias:not(.revelado) .aparece { opacity: 0; }

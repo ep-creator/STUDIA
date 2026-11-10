@@ -4,6 +4,7 @@ import { ErroApi, requisitar } from '../api/cliente'
 import type { Painel } from '../api/tipos'
 import type { Rota } from '../rotas/rota'
 import { erro } from './avisos.svelte'
+import { esquecerFontes } from './fontes'
 
 export const estadoMateria = $state<{
   uid: string | null
@@ -15,11 +16,13 @@ export const estadoMateria = $state<{
 /** Qual painel a rota pede, ou null se o que está carregado já serve. Outra matéria nunca herda a unidade da anterior. */
 export function painelACarregar(
   rota: Rota,
-  atual: { uid: string | null; unidade: number | null },
+  atual: { uid: string | null; unidade: number | null; unidades?: number[] | null },
 ): { uid: string; unidade: number | null } | null {
   if (rota.tela === 'materias') return null
   const pedida = rota.tela === 'materia' ? rota.unidade : null
   if (rota.uid !== atual.uid) return { uid: rota.uid, unidade: pedida }
+  // a unidade pedida não existe nesta matéria (já carregada): o motor devolveu a atual, pedir de novo seria um laço
+  if (pedida !== null && atual.unidades && !atual.unidades.includes(pedida)) return null
   if (pedida !== null && pedida !== atual.unidade) return { uid: rota.uid, unidade: pedida }
   return null
 }
@@ -44,7 +47,13 @@ export async function carregarPainel(uid: string, unidade: number | null = null)
   }
 }
 
+/** A matéria foi apagada: se era a aberta, esquece o painel dela (voltar ao endereço antigo pede de novo e dá 404). */
+export function esquecerMateria(uid: string): void {
+  if (estadoMateria.uid === uid) Object.assign(estadoMateria, { uid: null, unidade: null, painel: null })
+}
+
 export function recarregar(): Promise<void> {
   if (!estadoMateria.uid) return Promise.resolve()
+  esquecerFontes(estadoMateria.uid)   // uma escrita pode ter trazido ou tirado arquivos
   return carregarPainel(estadoMateria.uid, estadoMateria.unidade)
 }

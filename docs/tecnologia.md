@@ -47,7 +47,7 @@ _app/
 │   ├── agente/           # modelo, papéis, contexto, ferramentas, laço, custo
 │   └── avaliacao/        # gabaritos e o comando que mede busca, vínculos e contexto
 └── frontend/src/
-    ├── rotas/            # uma tela por área (Painel, Listas, Assistente…)
+    ├── rotas/            # uma tela por área (Hoje, Tópicos, Praticar, Biblioteca…)
     ├── componentes/
     ├── estado/           # estado compartilhado (matéria, tema, IA…)
     └── temas/temas.css   # paleta Editorial e as classes de ação
@@ -96,7 +96,7 @@ O assistente tem três **papéis**, cada um num arquivo de texto em `estudos/age
 |---|---|---|
 | tutor | questão aberta (N1–N4) | buscar, ler seção, exercício do livro, calcular, salvar resolução |
 | resumidor | seção do livro | buscar, ler seção, calcular, salvar resumo, adicionar fórmula |
-| estrategista | painel e página do Assistente | buscar, ler seção |
+| estrategista | gaveta da IA (a matéria) | buscar, ler seção |
 
 A cada pedido:
 
@@ -167,8 +167,11 @@ Os números e as regras de decisão (fixadas antes de medir) estão em `docs/ava
 ### Depois da Fase 6
 
 - **Assistente**: os três papéis, ferramentas, calculadora segura, custo e teto, conversas por questão e seção.
-- **Redesenho minimalista**: tema único, sem caixas, menos texto, a IA numa gaveta por cima da página e uma página só
-  do Assistente.
+- **Redesenho minimalista**: tema único, sem caixas, menos texto, a IA numa gaveta por cima da página.
+- **Redesenho pela sessão de estudo** (crítica com o Impeccable): a casa da matéria vira **Hoje**, com a sessão do plano
+  em foco e o material a um clique; o progresso passa a ser **derivado** no motor (`estudos/progresso.py`: datas do
+  plano, marcações e resoluções, sem registro manual); quatro áreas (Hoje, Tópicos com página por tópico, Praticar,
+  Biblioteca); uma IA só por contexto (a da questão na questão, a da matéria na gaveta) e a página do Assistente sai.
 
 ### O que ainda falta
 

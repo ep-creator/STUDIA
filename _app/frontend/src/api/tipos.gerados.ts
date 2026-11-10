@@ -25,6 +25,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{uid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Apagar */
+        delete: operations["apagar_api_materias__uid__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/painel": {
         parameters: {
             query?: never;
@@ -34,6 +51,103 @@ export interface paths {
         };
         /** Painel */
         get: operations["painel_api_materias__materia_uid__painel_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/hoje": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hoje
+         * @description Hoje da unidade pedida (a aba aberta); sem ela, a unidade atual. `data` só serve para testar outro dia.
+         */
+        get: operations["hoje_api_materias__materia_uid__hoje_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/progresso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Progresso Da Unidade
+         * @description Tópicos da unidade com o estado e o placar derivados.
+         */
+        get: operations["progresso_da_unidade_api_materias__materia_uid__progresso_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/indice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Indice
+         * @description Questões e tópicos de todas as unidades (a busca leva a qualquer um, em qualquer unidade).
+         */
+        get: operations["indice_api_materias__materia_uid__indice_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/sessoes/progresso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Progresso Das Sessoes
+         * @description Estado derivado de cada sessão da unidade (o plano completo usa o mesmo que a tela Hoje).
+         */
+        get: operations["progresso_das_sessoes_api_materias__materia_uid__sessoes_progresso_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/topicos/{topico_id}/pagina": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pagina Do Topico */
+        get: operations["pagina_do_topico_api_materias__materia_uid__topicos__topico_id__pagina_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -639,6 +753,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/secoes/{secao_id}/exercicios/{numero}/recorte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recorte Do Exercicio
+         * @description O exercício (ou a resposta do gabarito, com parte=resposta) recortado da página do livro, em PNG.
+         *
+         *     404 quando o índice não tem o exercício ou o rótulo não é achado com segurança na página: a tela mostra a página
+         *     inteira.
+         */
+        get: operations["recorte_do_exercicio_api_materias__materia_uid__secoes__secao_id__exercicios__numero__recorte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/materias/{materia_uid}/questoes/{questao_id}/recorte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recorte Da Questao
+         * @description A questão recortada do PDF da lista dela (a lista da turma), em PNG: procura o rótulo na página guardada ou, sem
+         *     ela, nas páginas do PDF. 404 quando a lista não tem PDF ou o rótulo não é achado com segurança.
+         */
+        get: operations["recorte_da_questao_api_materias__materia_uid__questoes__questao_id__recorte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/fontes": {
         parameters: {
             query?: never;
@@ -1065,10 +1223,48 @@ export interface components {
             /** Desfeito Em */
             desfeito_em: string | null;
         };
+        /** GrupoRevisar */
+        GrupoRevisar: {
+            /** Lista Id */
+            lista_id: number;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Lista Titulo */
+            lista_titulo: string;
+            /** Unidade */
+            unidade: number;
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoRevisar"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Hoje */
+        Hoje: {
+            /** Data */
+            data: string;
+            /** Unidade */
+            unidade: number | null;
+            prova: components["schemas"]["ProvaHoje"] | null;
+            /** Reta Final */
+            reta_final: boolean;
+            /** Tem Datas */
+            tem_datas: boolean;
+            /** Prova Passada */
+            prova_passada: string | null;
+            /** Unidade Atual */
+            unidade_atual: number | null;
+            sessao: components["schemas"]["SessaoHoje"] | null;
+            /** Atrasadas */
+            atrasadas: components["schemas"]["SessaoAtrasada"][];
+            /** Proximos */
+            proximos: components["schemas"]["ItemProximo"][];
+            /** Revisar */
+            revisar: components["schemas"]["GrupoRevisar"][];
+            /** Topicos */
+            topicos: components["schemas"]["TopicoProgresso"][];
         };
         /** ImportacaoSaida */
         ImportacaoSaida: {
@@ -1090,6 +1286,41 @@ export interface components {
             confirmada_em: string | null;
             /** Pendencias */
             pendencias: number;
+        };
+        /** Indice */
+        Indice: {
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoIndice"][];
+            /** Topicos */
+            topicos: components["schemas"]["TopicoIndice"][];
+        };
+        /** ItemMaterial */
+        ItemMaterial: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+        };
+        /** ItemProximo */
+        ItemProximo: {
+            /** Tipo */
+            tipo: string;
+            /** Data */
+            data: string;
+            /** Hora Inicio */
+            hora_inicio: string | null;
+            /** Codigo */
+            codigo: string | null;
+            /** Titulo */
+            titulo: string;
+            /** Estado */
+            estado: string | null;
+            /** Unidade */
+            unidade: number | null;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
         };
         /** Ligados */
         Ligados: {
@@ -1144,6 +1375,19 @@ export interface components {
             /** Liberacao */
             liberacao?: string | null;
         };
+        /** ListaTopico */
+        ListaTopico: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Titulo */
+            titulo: string;
+            /** Unidade */
+            unidade: number;
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoTopico"][];
+        };
         /** MarcacaoDefinir */
         MarcacaoDefinir: {
             /** Estado */
@@ -1169,6 +1413,11 @@ export interface components {
             professor: string | null;
             /** Email Professor */
             email_professor: string | null;
+        };
+        /** MateriaApagada */
+        MateriaApagada: {
+            /** Movida Para */
+            movida_para: string;
         };
         /** MateriaCriada */
         MateriaCriada: {
@@ -1306,6 +1555,17 @@ export interface components {
             /** Taxa Acerto */
             taxa_acerto: number | null;
         };
+        /** ProvaHoje */
+        ProvaHoje: {
+            /** Data */
+            data: string;
+            /** Hora Inicio */
+            hora_inicio: string | null;
+            /** Unidade */
+            unidade: number;
+            /** Dias */
+            dias: number;
+        };
         /** ProximaProva */
         ProximaProva: {
             /** Data */
@@ -1356,6 +1616,71 @@ export interface components {
             pagina_pdf?: number | null;
             /** Figura */
             figura?: string | null;
+        };
+        /** QuestaoIndice */
+        QuestaoIndice: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Lista Titulo */
+            lista_titulo: string;
+            /** Unidade */
+            unidade: number;
+        };
+        /** QuestaoRevisar */
+        QuestaoRevisar: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Estado */
+            estado: string;
+            /** Enunciado */
+            enunciado: string;
+        };
+        /** QuestaoSessao */
+        QuestaoSessao: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Lista Id */
+            lista_id: number;
+            /** Lista Codigo */
+            lista_codigo: string;
+            /** Unidade */
+            unidade: number;
+            /** Estado */
+            estado: string | null;
+            /** Resolucao Id */
+            resolucao_id: number | null;
+            /** Trabalhada */
+            trabalhada: boolean;
+        };
+        /** QuestaoTopico */
+        QuestaoTopico: {
+            /** Id */
+            id: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Estado */
+            estado: string | null;
+            /** Resolucao Id */
+            resolucao_id: number | null;
+            /** Trabalhada */
+            trabalhada: boolean;
+        };
+        /** ResolucaoTopico */
+        ResolucaoTopico: {
+            /** Id */
+            id: number;
+            /** Questao Id */
+            questao_id: number;
+            /** Rotulo */
+            rotulo: string;
         };
         /** Resultado */
         Resultado: {
@@ -1528,6 +1853,17 @@ export interface components {
             /** Questao Ids */
             questao_ids: number[];
         };
+        /** SessaoAtrasada */
+        SessaoAtrasada: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Titulo */
+            titulo: string;
+            /** Faltam */
+            faltam: number;
+        };
         /** SessaoCriar */
         SessaoCriar: {
             /** Unidade Id */
@@ -1554,6 +1890,55 @@ export interface components {
             feito?: boolean | null;
             /** Ordem */
             ordem?: number | null;
+        };
+        /** SessaoHoje */
+        SessaoHoje: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Data */
+            data: string | null;
+            /** Unidade */
+            unidade: number;
+            /** Titulo */
+            titulo: string;
+            /** Detalhe */
+            detalhe: string;
+            /** Estado */
+            estado: string;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoVinculada"][];
+            /** Resumos */
+            resumos: components["schemas"]["ItemMaterial"][];
+            /** Formulas */
+            formulas: components["schemas"]["ItemMaterial"][];
+            /** Questoes */
+            questoes: components["schemas"]["QuestaoSessao"][];
+        };
+        /** SessaoProgresso */
+        SessaoProgresso: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+            /** Estado */
+            estado: string;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Total */
+            total: number;
+        };
+        /** SessaoRef */
+        SessaoRef: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
         };
         /** SugestaoSecao */
         SugestaoSecao: {
@@ -1624,6 +2009,55 @@ export interface components {
             ordem?: number | null;
             /** Pai Id */
             pai_id?: number | null;
+        };
+        /** TopicoIndice */
+        TopicoIndice: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+            /** Unidade */
+            unidade: number;
+        };
+        /** TopicoPagina */
+        TopicoPagina: {
+            topico: components["schemas"]["TopicoProgresso"];
+            /** Unidade */
+            unidade: number;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoVinculada"][];
+            /** Resumos */
+            resumos: components["schemas"]["ItemMaterial"][];
+            /** Formulas */
+            formulas: components["schemas"]["Formula"][];
+            /** Listas */
+            listas: components["schemas"]["ListaTopico"][];
+            /** Resolucoes */
+            resolucoes: components["schemas"]["ResolucaoTopico"][];
+            sessao_hoje: components["schemas"]["SessaoRef"] | null;
+        };
+        /** TopicoProgresso */
+        TopicoProgresso: {
+            /** Id */
+            id: number;
+            /** Titulo */
+            titulo: string;
+            /** Estado */
+            estado: string;
+            /** Secoes */
+            secoes: string[];
+            /** Ultima Aula */
+            ultima_aula: string | null;
+            /** Total */
+            total: number;
+            /** Trabalhadas */
+            trabalhadas: number;
+            /** Ok */
+            ok: number;
+            /** Err */
+            err: number;
+            /** Dub */
+            dub: number;
         };
         /** Unidade */
         Unidade: {
@@ -1749,6 +2183,37 @@ export interface operations {
             };
         };
     };
+    apagar_api_materias__uid__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MateriaApagada"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     painel_api_materias__materia_uid__painel_get: {
         parameters: {
             query?: {
@@ -1769,6 +2234,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Painel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hoje_api_materias__materia_uid__hoje_get: {
+        parameters: {
+            query?: {
+                unidade?: number | null;
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Hoje"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    progresso_da_unidade_api_materias__materia_uid__progresso_get: {
+        parameters: {
+            query: {
+                unidade: number;
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicoProgresso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    indice_api_materias__materia_uid__indice_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Indice"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    progresso_das_sessoes_api_materias__materia_uid__sessoes_progresso_get: {
+        parameters: {
+            query: {
+                unidade: number;
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessaoProgresso"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pagina_do_topico_api_materias__materia_uid__topicos__topico_id__pagina_get: {
+        parameters: {
+            query?: {
+                data?: string | null;
+            };
+            header?: never;
+            path: {
+                topico_id: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicoPagina"];
                 };
             };
             /** @description Validation Error */
@@ -3227,6 +3859,69 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExercicioLivro"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recorte_do_exercicio_api_materias__materia_uid__secoes__secao_id__exercicios__numero__recorte_get: {
+        parameters: {
+            query?: {
+                parte?: string;
+            };
+            header?: never;
+            path: {
+                secao_id: number;
+                numero: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recorte_da_questao_api_materias__materia_uid__questoes__questao_id__recorte_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                questao_id: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -173,3 +173,16 @@ def test_uso_ja_recebido_conta_quando_o_modelo_cai(con, materia, ajustes, questa
     erro.uso = Uso(2000, 1000)
     _rodar(con, materia, ajustes, alvo, "tutor", [[Texto("Começ"), erro]])
     assert conversas.mensagens(con, conversas.conversa_ativa(con, alvo, "tutor").id)[-1].custo_brl > 0
+
+
+def test_ultima_rodada_sem_ferramentas_obriga_a_responder(con, materia, ajustes, questao_do_livro):
+    # revisão do uso real: o modelo passava as rodadas buscando e o app cortava sem resposta nenhuma
+    curto = dataclasses.replace(ajustes, max_rodadas=2)
+    busca = [Chamada("buscar", {"consulta": "triplas"})]
+    saidas, modelo = _rodar(con, materia, curto, f"questao:{questao_do_livro}", "tutor",
+                            [busca, busca, [Texto("Use polares: a integral vale π/4.")]])
+    sistema_final, _, ferramentas_finais = modelo.pedidos[-1]
+    assert ferramentas_finais == [] and "responda agora" in sistema_final.lower()
+    textos = "".join(s.dados.get("texto", "") for s in saidas if s.tipo == "texto")
+    assert "π/4" in textos and "parei" not in textos.lower()
+    assert all(f for _, _, f in modelo.pedidos[:-1])   # as rodadas anteriores tinham ferramentas

@@ -15,6 +15,7 @@
   } = $props()
 
   let pendentes = $state<ImportacaoSaida[]>([])
+  let carregada = $state(false)   // antes da primeira leitura, a fila não diz "nenhum arquivo"
   let nomes = $state<Record<number, string>>({})
   let enviando = $state(false)
   let progresso = $state('')
@@ -35,7 +36,9 @@
       ])
       nomes = Object.fromEntries(fontes.map((f) => [f.id, f.caminho.split('/').pop() ?? f.titulo]))
       pendentes = lista
+      carregada = true
       if (selecionada !== null && !lista.some((i) => i.id === selecionada)) onselecionar(lista[0]?.id ?? null)
+      else if (selecionada === null && lista.length === 1) onselecionar(lista[0].id)   // um só: já aberto para conferir
     } catch (e) {
       erro(e)
     }
@@ -88,13 +91,13 @@
   <AreaSoltar onarquivos={enviar} ocupado={enviando} {progresso} />
 
   {#if pendentes.length}
-    <ul aria-label="Arquivos esperando revisão">
+    <ul aria-label="Arquivos para conferir">
       {#each ordenados as imp (imp.id)}
         <li>
           <button class:ativa={imp.id === selecionada} aria-current={imp.id === selecionada ? 'true' : undefined} onclick={() => onselecionar(imp.id)}>
             <span class="nome">{nomes[imp.fonte_id] ?? `Arquivo ${imp.fonte_id}`}</span>
             {#if imp.pendencias > 0}
-              <span class="estado revisar" title={`${NOME_TIPO[imp.tipo] ?? imp.tipo}: itens que pedem revisão`}>revisar {imp.pendencias}</span>
+              <span class="estado revisar" title={`${NOME_TIPO[imp.tipo] ?? imp.tipo}: itens para conferir`}>conferir {imp.pendencias}</span>
             {:else}
               <span class="estado pronto" title={NOME_TIPO[imp.tipo] ?? imp.tipo}>pronto</span>
             {/if}
@@ -102,23 +105,26 @@
         </li>
       {/each}
     </ul>
-    <button class="acao-suave confirmar" disabled={prontas.length === 0} onclick={confirmarProntas}>
-      ✔ Confirmar todos sem pendências ({prontas.length})
-    </button>
-  {:else if !enviando}
-    <p class="suave">Nenhum arquivo esperando revisão.</p>
+    {#if prontas.length > 0}
+      <button class="acao-suave confirmar" onclick={confirmarProntas}>
+        ✔ Confirmar todos sem pendências ({prontas.length})
+      </button>
+    {/if}
+  {:else if !enviando && carregada}
+    <p class="suave">Nenhum arquivo para conferir.</p>
   {/if}
 </div>
 
 <style>
   .fila { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.9rem; align-content: start; min-width: 0; }
-  ul { list-style: none; margin: 0; padding: 0; display: grid; max-height: 55vh; overflow-y: auto; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); max-height: 55vh; overflow-y: auto; overflow-x: hidden; }
+  li { min-width: 0; }
   li button { width: 100%; display: flex; gap: 0.6rem; align-items: baseline; text-align: left; background: none; border: 0; border-left: 2px solid transparent; padding: 0.45rem 0.6rem; cursor: pointer; font: inherit; color: var(--texto); }
   li button.ativa { border-left-color: var(--destaque); font-weight: 600; }
   li button:hover:not(.ativa) { border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .estado { font-size: 0.78rem; font-weight: 400; }
-  .revisar { color: var(--dub); }
+  .revisar { color: var(--dub-texto); }
   .pronto { color: var(--ok); }
   .confirmar { justify-self: start; }
 </style>

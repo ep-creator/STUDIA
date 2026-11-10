@@ -20,10 +20,25 @@ _FRACAO_REPETIDO = 0.3
 _BORDA = 2               # linhas do topo e do rodapé onde cabeçalhos repetidos aparecem
 _MIN_CARACTERES = 10     # página com menos caracteres úteis que isso conta como "sem texto"
 _FRACAO_SEM_TEXTO = 0.9
+_MAX_PAGINAS_TABELAS = 20  # calendários e planejamentos são curtos; procurar tabelas num livro custaria caro
+_ACIMA_DA_TABELA = 90      # pontos acima da tabela lidos como o título dela ("1ª Unidade", "Exame final")
 
 
 class PdfInvalido(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class CelulaPdf:
+    texto: str   # linhas da célula separadas por "\n"
+    x0: float
+    x1: float
+
+
+@dataclass(frozen=True)
+class TabelaPdf:
+    titulo: str  # texto logo acima da tabela
+    linhas: tuple[tuple[CelulaPdf, ...], ...]  # só as células com texto, da esquerda para a direita
 
 
 @dataclass(frozen=True)
@@ -33,6 +48,7 @@ class PaginaPdf:
     texto: str
     largura: float
     altura: float
+    tabelas: tuple[TabelaPdf, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -59,6 +75,10 @@ class DocumentoPdf:
     def texto(self, ini: int = 1, fim: int | None = None) -> str:
         fim = fim or len(self.paginas)
         return "\n".join(p.texto for p in self.paginas if ini <= p.indice <= fim)
+
+    def tabelas(self, ini: int = 1, fim: int | None = None) -> list[TabelaPdf]:
+        fim = fim or len(self.paginas)
+        return [t for p in self.paginas if ini <= p.indice <= fim for t in p.tabelas]
 
 
 def _juntar_acento(m: re.Match) -> str:
@@ -341,6 +361,32 @@ def ler_paginas_limpas(caminho: Path, tabelas: dict[str, dict[str, str]] | None 
     return paginas, total
 
 
+def _texto_em(pagina: pymupdf.Page, retangulo: pymupdf.Rect) -> str:
+    return "\n".join(l for l in limpar_texto(pagina.get_text(clip=retangulo)).split("\n") if l)
+
+
+def ler_tabelas(pagina: pymupdf.Page) -> tuple[TabelaPdf, ...]:
+    """Tabelas da página, de cima para baixo. O texto de cada célula sai do recorte da página (o texto que o
+    `find_tables` monta perde espaços: "Cálculo2"); células mescladas e vazias ficam de fora."""
+    try:  # sem o modelo de layout do PyMuPDF: ~5 s por página contra < 1 s, e as tabelas de bordas saem iguais
+        achadas = sorted(pagina.find_tables(use_layout=False).tables, key=lambda t: (t.bbox[1], t.bbox[0]))
+    except Exception:  # desenho estranho na página: sem tabelas, fica o texto de sempre
+        return ()
+    tabelas, fundo = [], 0.0
+    for t in achadas:
+        topo = t.bbox[1]
+        titulo = _texto_em(pagina, pymupdf.Rect(0, max(fundo, topo - _ACIMA_DA_TABELA), pagina.rect.width, topo))
+        linhas = []
+        for linha in t.rows:
+            celulas = tuple(CelulaPdf(texto, c[0], c[2]) for c in linha.cells
+                            if c is not None and (texto := _texto_em(pagina, pymupdf.Rect(c))))
+            if celulas:
+                linhas.append(celulas)
+        tabelas.append(TabelaPdf(titulo, tuple(linhas)))
+        fundo = t.bbox[3]
+    return tuple(tabelas)
+
+
 def abrir_pdf(caminho: Path, limite_paginas: int | None = None) -> DocumentoPdf:
     try:
         # Abre a partir dos bytes: no Windows, um PDF que falha ao abrir ficaria preso pelo PyMuPDF
@@ -355,8 +401,10 @@ def abrir_pdf(caminho: Path, limite_paginas: int | None = None) -> DocumentoPdf:
         total = doc.page_count if limite_paginas is None else min(doc.page_count, limite_paginas)
         brutas = [doc[i] for i in range(total)]
         textos = remover_repetidos([limpar_texto(p.get_text()) for p in brutas])
+        com_tabelas = doc.page_count <= _MAX_PAGINAS_TABELAS
         paginas = tuple(
-            PaginaPdf(indice=i + 1, rotulo=p.get_label() or "", texto=textos[i], largura=p.rect.width, altura=p.rect.height)
+            PaginaPdf(indice=i + 1, rotulo=p.get_label() or "", texto=textos[i], largura=p.rect.width, altura=p.rect.height,
+                      tabelas=ler_tabelas(p) if com_tabelas else ())
             for i, p in enumerate(brutas)
         )
         sumario = tuple(EntradaSumario(nivel=n, titulo=limpar_texto(t), pagina=pg) for n, t, pg, *_ in doc.get_toc())

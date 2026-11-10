@@ -4,8 +4,8 @@
 
 **Uma plataforma de estudos para a faculdade, construída inteira conversando com uma IA.**
 
-Você solta os PDFs da matéria. Ela monta as unidades, os tópicos e as listas, mostra o que revisar
-e tem um assistente que ajuda nas questões citando o livro.
+Você solta os PDFs da matéria. Ela monta as unidades, os tópicos e as listas, abre cada dia na sessão de estudo
+certa, com o material a um clique, e tem uma IA que ajuda nas questões citando o livro.
 
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -18,7 +18,7 @@ e tem um assistente que ajuda nas questões citando o livro.
 
 <br>
 
-<img src="docs/imagens/listas.png" alt="Tela de Listas: as questões da unidade à esquerda, com as marcas de acerto e erro, e a questão aberta à direita com os níveis de ajuda N1 a N4 e uma resposta do assistente" width="900">
+<img src="docs/imagens/hoje.png" alt="Tela Hoje de Cálculo 2: a sessão do dia (15.5 Aplicações) com o livro, o resumo, as fórmulas e as questões; o que revisar; os próximos 7 dias e os tópicos da unidade com o progresso" width="900">
 
 </div>
 
@@ -40,48 +40,52 @@ Solte os PDFs (programa, calendário, livros, listas) e o app propõe as unidade
 questões e as seções do livro. Cada item vem com uma nota de confiança, e o que ele não tem certeza aparece para você
 conferir antes de gravar. Nada disso depende de IA.
 
-<img src="docs/imagens/importar.png" alt="Tela de Importar com a área grande para soltar os PDFs" width="760">
+<img src="docs/imagens/importar.png" alt="Tela Adicionar material com a área grande para soltar os PDFs" width="760">
 
-### Mostra o que revisar
+### Abre o dia na sessão certa
 
-O Painel junta a prova, a próxima aula, os tópicos vistos, as questões que você errou e o desempenho em cada lista.
+A tela **Hoje** mostra a sessão do plano de estudo: a seção no livro, o resumo, as fórmulas e as questões daquela
+sessão, cada um a um clique. Embaixo, o que você errou em todas as unidades; ao lado, os próximos 7 dias e cada
+tópico com o progresso, que se calcula sozinho pelas datas do plano, pelas marcações e pelas resoluções (nada de
+marcar à mão). Com 7 dias ou menos até a prova, entra a **reta final**.
 
-<img src="docs/imagens/painel-revisar.png" alt="Painel da 1ª unidade: prova feita, 6 de 6 tópicos vistos, quatro questões para revisar e o desempenho nas listas" width="760">
+Cada tópico tem uma página própria: o resumo para ler no centro e, ao lado, as questões, as fórmulas e as resoluções.
+
+<img src="docs/imagens/topico.png" alt="Página do tópico Polares (fim) · aplicações: o resumo da seção 15.4 no centro e, ao lado, as questões com as marcações e as fórmulas" width="760">
 
 ### Ajuda nas questões, do jeito que você pedir
 
-Na questão aberta, **N1** dá só uma dica, **N2** o caminho, **N3** um esboço e **N4** a resolução completa, que fica
-gravada. O assistente já recebe o exercício original do livro, a teoria da seção e o seu resumo, e cita de onde tirou
+Em **Praticar**, a questão aberta mostra o enunciado e, logo abaixo, o original do livro. A ajuda vem em níveis:
+**Dica**, **Caminho**, **Esboço** e **Resolução** completa (que pergunta antes e fica gravada). O assistente já recebe o exercício original do livro, a teoria da seção e o seu resumo, e cita de onde tirou
 cada coisa. Ele também escreve resumos de seção e monta um plano de revisão até a prova, com o custo de cada resposta
 à vista e um teto mensal.
 
 | | |
 |---|---|
-| <img src="docs/imagens/gaveta.png" alt="O assistente aberto numa gaveta por cima da tela de Listas" width="430"> | <img src="docs/imagens/assistente.png" alt="Página do Assistente com as conversas da matéria e uma conversa aberta" width="430"> |
-| A gaveta abre por cima de qualquer tela | A página do Assistente reúne as conversas da matéria |
+| <img src="docs/imagens/praticar.png" alt="Praticar: a grade de questões à esquerda e a questão 14.1 #46 aberta, com o enunciado do livro, a marcação e a ajuda da IA em abas" width="430"> | <img src="docs/imagens/gaveta.png" alt="A IA da matéria aberta numa gaveta por cima da tela Hoje" width="430"> |
+| Praticar: a questão e a ajuda em abas | A IA da matéria, numa gaveta por cima de qualquer tela |
 
 > As respostas nas fotos vêm do **modo de demonstração**, que roda sem chamar o Gemini.
 
 ### E o resto do dia a dia
 
-- **Tópicos**, **cronograma** de aulas e sessões de estudo, **documentos** em Markdown com fórmulas e um **formulário**
-  para imprimir;
+- o **plano** de aulas e sessões de estudo, a **Biblioteca** de resumos e PDFs, e a **folha de fórmulas** para imprimir;
 - **busca** na matéria inteira com Ctrl K, abrindo o PDF na página certa;
 - **desfazer** qualquer alteração (Ctrl Z) e um **histórico** de tudo o que mudou;
 - tema **claro e escuro**.
 
 | | |
 |---|---|
-| <img src="docs/imagens/inicio-claro.png" alt="Tela inicial no tema claro, com a próxima prova e as matérias" width="430"> | <img src="docs/imagens/listas-claro.png" alt="Tela de Listas no tema claro" width="430"> |
-| Tela inicial, tema claro | Listas, tema claro |
+| <img src="docs/imagens/inicio-claro.png" alt="Tela inicial no tema claro, com a próxima prova e as matérias" width="430"> | <img src="docs/imagens/hoje-claro.png" alt="Tela Hoje no tema claro" width="430"> |
+| Tela inicial, tema claro | Hoje, tema claro |
 
 ## Começar
 
 Precisa de **Python 3.13** e **Node.js**, no Windows.
 
 1. Dê dois cliques em **`abrir.bat`**, na raiz. Na primeira vez ele prepara o ambiente, o que leva alguns minutos.
-2. O app abre em **http://127.0.0.1:8790**. Crie uma matéria e solte os PDFs em **Importar**.
-3. Para usar o assistente, crie uma chave grátis no Google AI Studio e cole em **Assistente → API key**.
+2. O app abre em **http://127.0.0.1:8790**. Crie uma matéria e solte os PDFs em **＋ Adicionar material**.
+3. Para usar a IA, crie uma chave grátis no Google AI Studio e cole em **IA › → API key**.
 
 O passo a passo de cada tela está no **[Guia de uso](docs/guia.md)**.
 

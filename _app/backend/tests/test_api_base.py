@@ -1,4 +1,5 @@
 from contextlib import closing
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -100,3 +101,35 @@ def test_questao_inexistente_404(cliente, materia_com_lista):
 def test_post_text_plain_403(cliente):
     r = cliente.post("/api/materias", content=b'{"nome": "X"}', headers={"Content-Type": "text/plain"})
     assert r.status_code == 403
+
+
+def test_apagar_materia_move_a_pasta_para_a_lixeira(cliente):
+    uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+    r = cliente.delete(f"/api/materias/{uid}")
+    assert r.status_code == 200
+    destino = r.json()["movida_para"]
+    assert destino.startswith("_lixeira/Sistemas Digitais")
+    assert all(m["uid"] != uid for m in cliente.get("/api/materias").json())
+    raiz = Path(cliente.app.state.settings.workspace)
+    assert not (raiz / "Sistemas Digitais").exists() and (raiz / destino / "materia.db").is_file()
+
+
+def test_apagar_materia_inexistente_404(cliente):
+    assert cliente.delete("/api/materias/nao-existe").status_code == 404
+
+
+def test_apagar_duas_materias_de_mesmo_nome_no_mesmo_segundo_nao_colide(cliente):
+    destinos = []
+    for _ in range(2):
+        uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+        destinos.append(cliente.delete(f"/api/materias/{uid}").json()["movida_para"])
+    raiz = Path(cliente.app.state.settings.workspace)
+    assert destinos[0] != destinos[1] and all((raiz / d / "materia.db").is_file() for d in destinos)
+
+
+def test_apagar_materia_sendo_indexada_409(cliente, monkeypatch):
+    from estudos.api import materias as rota
+    monkeypatch.setattr(rota, "sincronizando", lambda raiz: True)
+    uid = cliente.post("/api/materias", json={"nome": "Sistemas Digitais"}).json()["uid"]
+    assert cliente.delete(f"/api/materias/{uid}").status_code == 409
+    assert any(m["uid"] == uid for m in cliente.get("/api/materias").json())

@@ -1,20 +1,21 @@
 <script lang="ts">
   import './temas/temas.css'
+  import { untrack } from 'svelte'
   import { requisitar } from './api/cliente'
   import type { ResumoMateria } from './api/tipos'
-  import { nomeUnidade } from './apresentacao'
   import Avisos from './componentes/Avisos.svelte'
   import BarraLateral from './componentes/BarraLateral.svelte'
   import GavetaIA from './componentes/GavetaIA.svelte'
   import FaixaMotor from './componentes/FaixaMotor.svelte'
-  import MolduraEditorial from './componentes/MolduraEditorial.svelte'
   import { ia } from './estado/ia.svelte'
   import Topo from './componentes/Topo.svelte'
+  import Ajuda from './componentes/Ajuda.svelte'
   import BuscaMateria from './componentes/BuscaMateria.svelte'
+  import { ajuda, digitando } from './estado/ajuda.svelte'
   import { busca } from './estado/busca.svelte'
   import { erro } from './estado/avisos.svelte'
   import { aoReconectar } from './estado/conexao.svelte'
-  import { atalhoDesfazer, desfazer } from './estado/desfazer'
+  import { alvoDoDesfazer, atalhoDesfazer, desfazer } from './estado/desfazer'
   import { carregarPainel, estadoMateria, painelACarregar } from './estado/materia.svelte'
   import { haAlteracoes, podeSair } from './estado/saida'
   import { acompanharSistema, aplicarTema } from './estado/tema.svelte'
@@ -23,24 +24,45 @@
   import Formulario from './rotas/Formulario.svelte'
   import Historico from './rotas/Historico.svelte'
   import Importacao from './rotas/Importacao.svelte'
-  import Assistente from './rotas/Assistente.svelte'
   import Listas from './rotas/Listas.svelte'
   import Materias from './rotas/Materias.svelte'
-  import Painel from './rotas/Painel.svelte'
+  import Hoje from './rotas/Hoje.svelte'
   import Topicos from './rotas/Topicos.svelte'
-  import { analisarRota, type Rota } from './rotas/rota'
+  import { analisarRota, montarHash, type Rota, precisaListaDeMaterias } from './rotas/rota'
 
   let rota = $state<Rota>(analisarRota(location.hash))
   let materias = $state<ResumoMateria[]>([])
 
   aplicarTema()
 
+  const AREAS_ATALHO: Record<string, 'painel' | 'topicos' | 'listas' | 'documentos'> = { '1': 'painel', '2': 'topicos', '3': 'listas', '4': 'documentos' }
+
   function teclado(e: KeyboardEvent) {
     // Ctrl K (ou ⌘K) abre a busca na matéria, em qualquer tela da matéria
-    if (rota.tela === 'materia' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    if (rota.tela !== 'materias' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       busca.aberta = true
       return
+    }
+    // ? abre a folha de atalhos e ajuda (fora de campos de texto)
+    if (e.key === '?' && !digitando(e.target) && !busca.aberta) {
+      e.preventDefault()
+      ajuda.aberta = !ajuda.aberta
+      return
+    }
+    // Alt 1–4: as quatro áreas; Alt I: a IA da matéria
+    if (rota.tela !== 'materias' && e.altKey && !e.ctrlKey && !e.metaKey) {
+      const area = AREAS_ATALHO[e.key] ?? AREAS_ATALHO[e.code.replace('Digit', '')]
+      if (area) {
+        e.preventDefault()
+        location.hash = montarHash({ tela: 'materia', uid: rota.uid, unidade: estadoMateria.unidade, area })
+        return
+      }
+      if (e.code === 'KeyI') {
+        e.preventDefault()
+        ia.aberta = !ia.aberta
+        return
+      }
     }
     if (rota.tela !== 'materias' && atalhoDesfazer(e)) {
       e.preventDefault()
@@ -83,18 +105,47 @@
     }
   }
 
-  // Lista de matérias: na tela inicial e para o seletor da barra lateral.
+  // Lista de matérias: na tela inicial e para o seletor da barra lateral; relida quando a matéria aberta não está nela
+  // (a recém-criada), uma vez por matéria. Só a rota dispara: a lista é lida sem rastrear, senão cada leitura (que troca
+  // o array) dispararia outra, sem fim.
+  let listaPedidaPara: string | null = null
   $effect(() => {
-    if (rota.tela === 'materias' || materias.length === 0) void carregarMaterias()
+    if (!precisaListaDeMaterias(rota, untrack(() => materias), listaPedidaPara)) return
+    if (rota.tela !== 'materias') listaPedidaPara = rota.uid
+    void carregarMaterias()
   })
 
   // Painel da matéria/unidade da rota (só recarrega quando muda a matéria ou a unidade pedida).
   $effect(() => {
-    const alvo = painelACarregar(rota, { uid: estadoMateria.uid, unidade: estadoMateria.unidade })
+    const alvo = painelACarregar(rota, {
+      uid: estadoMateria.uid, unidade: estadoMateria.unidade, unidades: estadoMateria.painel?.unidades.map((u) => u.numero) ?? null,
+    })
     if (alvo) void carregarPainel(alvo.uid, alvo.unidade)
   })
 
   const painel = $derived(rota.tela !== 'materias' && estadoMateria.uid === rota.uid ? estadoMateria.painel : null)
+
+  // o botão Desfazer diz o que vai desfazer (lido ao passar o mouse ou focar: muda a cada ação)
+  let tituloDesfazer = $state('Desfazer a última ação (Ctrl+Z)')
+  async function nomearDesfazer() {
+    try {
+      const alvo = await alvoDoDesfazer()
+      tituloDesfazer = alvo ? `Desfazer: ${alvo.descricao} (Ctrl+Z)` : 'Nada para desfazer'
+    } catch { /* fica o título genérico */ }
+  }
+
+  // título da aba diz onde se está (leitor de tela e histórico do navegador)
+  const NOME_TELA: Record<string, string> = {
+    painel: 'Hoje', topicos: 'Tópicos', listas: 'Praticar', cronograma: 'Plano', documentos: 'Biblioteca', formulario: 'Folha de fórmulas',
+    importar: 'Adicionar material', historico: 'Histórico',
+  }
+  $effect(() => {
+    if (rota.tela === 'materias') document.title = 'STUDIA'
+    else {
+      const tela = NOME_TELA[rota.tela === 'materia' ? rota.area : rota.tela]
+      document.title = painel ? `${tela} · ${painel.materia.nome} — STUDIA` : 'STUDIA'
+    }
+  })
 </script>
 
 <svelte:window onkeydown={teclado} />
@@ -102,49 +153,43 @@
 <FaixaMotor />
 
 {#if rota.tela === 'materias'}
-  <Materias {materias} />
+  <Materias {materias} onmudou={() => void carregarMaterias()} />
 {:else}
+  <a class="pular" href="#conteudo" onclick={(e) => { e.preventDefault(); document.getElementById('conteudo')?.focus() }}>Pular para o conteúdo</a>
   <div class="app">
     <BarraLateral {rota} {materias} unidade={painel?.unidade ?? null} pendencias={painel?.importacoes_pendentes ?? 0} />
-    <main class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
+    <main id="conteudo" tabindex="-1" class:ajustada={rota.tela === 'materia' && (rota.area === 'documentos' || rota.area === 'listas')}>
       {#if painel}
+        <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} {painel} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
+        <Topo {painel} area={rota.tela === 'materia' ? rota.area : 'painel'} comUnidades={rota.tela === 'materia'}>
+          {#snippet acoes()}
+            <button class="acao-texto" onclick={() => void desfazer()} onmouseenter={nomearDesfazer} onfocus={nomearDesfazer}
+              title={tituloDesfazer}>↶ Desfazer</button>
+            <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta} title="IA da matéria (Alt+I)">IA ›</button>
+          {/snippet}
+        </Topo>
         {#if rota.tela === 'materia'}
-          <BuscaMateria uid={painel.materia.uid} unidade={painel.unidade} aberta={busca.aberta} onfechar={() => (busca.aberta = false)} />
-          <Topo {painel} area={rota.area}>
-            {#snippet acoes()}
-              <button class="acao-texto" onclick={() => void desfazer()} title="Desfazer a última ação (Ctrl+Z)">↶ Desfazer</button>
-              <button class="acao-texto" onclick={() => (ia.aberta = !ia.aberta)} aria-expanded={ia.aberta}>IA ›</button>
-            {/snippet}
-          </Topo>
-          <MolduraEditorial
-            ajustada={rota.area === 'documentos' || rota.area === 'listas'}
-            topo={`${painel.materia.nome}${painel.materia.periodo ? ` · ${painel.materia.periodo}` : ''}`}
-            base={painel.unidade ? nomeUnidade(painel.unidade) : 'sem unidades'}
-          >
-            {#if rota.area === 'painel'}
-              <Painel {painel} />
-            {:else if !painel.unidade}
-              <Painel {painel} />
+          <div class="area" class:ajustada={rota.area === 'documentos' || rota.area === 'listas'}>
+            {#if rota.area === 'painel' || !painel.unidade}
+              <Hoje {painel} />
             {:else if rota.area === 'listas'}
-              <Listas {painel} />
+              <Listas {painel} questao={rota.questao ?? null} sessao={rota.sessao ?? null} />
             {:else if rota.area === 'topicos'}
-              <Topicos {painel} />
+              <Topicos {painel} topico={rota.topico ?? null} />
             {:else if rota.area === 'cronograma'}
               <Cronograma {painel} />
             {:else if rota.area === 'documentos'}
-              <Documentos {painel} />
+              <Documentos {painel} documento={rota.documento ?? null} pdf={rota.pdf ?? null} />
             {:else if rota.area === 'formulario'}
               <Formulario {painel} />
             {:else}
               <p class="suave">Esta área chega nas próximas etapas.</p>
             {/if}
-          </MolduraEditorial>
+          </div>
         {:else if rota.tela === 'importar'}
           <Importacao {painel} />
         {:else if rota.tela === 'historico'}
           <Historico uid={rota.uid} />
-        {:else if rota.tela === 'assistente'}
-          <Assistente uid={rota.uid} />
         {:else}
           <p class="suave">Esta área chega nas próximas etapas.</p>
         {/if}
@@ -152,9 +197,10 @@
         <p class="suave">Carregando…</p>
       {/if}
     </main>
-    {#if ia.aberta && rota.tela !== 'assistente'}
+    {#if ia.aberta}
       <GavetaIA uid={rota.uid} onfechar={() => (ia.aberta = false)} />
     {/if}
+    {#if ajuda.aberta}<Ajuda onfechar={() => (ajuda.aberta = false)} />{/if}
   </div>
 {/if}
 
@@ -162,8 +208,14 @@
 
 <style>
   .app { display: flex; min-height: 100vh; }
+  main:focus { outline: none; }
+  /* aparece só com o foco do teclado, no canto, por cima de tudo */
+  .pular { position: absolute; left: 0.75rem; top: -3rem; z-index: 70; padding: 0.4rem 0.9rem; border-radius: 999px; background: var(--texto); color: var(--fundo); text-decoration: none; }
+  .pular:focus { top: 0.75rem; }
   main { flex: 1; min-width: 0; padding: 0.5rem 2rem 3rem; }
   /* Documentos e Listas ocupam exatamente a altura da tela: a lista e o texto rolam cada um no seu espaço, a página fica parada */
   main.ajustada { height: 100vh; display: flex; flex-direction: column; padding-bottom: 1.25rem; }
-  @media print { main.ajustada { height: auto; display: block; } }
+  .area { display: flex; flex-direction: column; gap: 1.2rem; padding-top: 0.6rem; }
+  .area.ajustada { flex: 1; min-height: 0; }
+  @media print { main.ajustada, .area.ajustada { height: auto; display: block; } }
 </style>

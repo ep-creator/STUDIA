@@ -7,5 +7,5 @@
 {/if}
 
 <style>
-  .faixa { position: sticky; top: 0; z-index: 30; background: var(--err); color: #fff; padding: 0.5rem 1rem; text-align: center; }
+  .faixa { position: sticky; top: 0; z-index: 30; background: var(--err); color: var(--fundo); padding: 0.5rem 1rem; text-align: center; }
 </style>

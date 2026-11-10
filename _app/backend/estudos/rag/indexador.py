@@ -172,7 +172,7 @@ def agendar_sincronizacao(raiz: Path, arquivo_banco: Path, embeddings: Embedding
     """Sincroniza numa thread própria (com sua própria conexão), sem segurar quem pediu. Já havendo uma agendada para a
     mesma matéria, não agenda outra (devolve None)."""
     chave = str(raiz.resolve())
-    if any(t.name == f"indexacao-{chave}" and t.is_alive() for t in list(_pendentes)):
+    if sincronizando(raiz):
         return None
 
     def rodar() -> None:
@@ -189,6 +189,12 @@ def agendar_sincronizacao(raiz: Path, arquivo_banco: Path, embeddings: Embedding
     _pendentes.add(tarefa)
     tarefa.start()
     return tarefa
+
+
+def sincronizando(raiz: Path) -> bool:
+    """Há uma sincronização em segundo plano rodando para esta matéria?"""
+    chave = str(raiz.resolve())
+    return any(t.name == f"indexacao-{chave}" and t.is_alive() for t in list(_pendentes))
 
 
 def aguardar_sincronizacoes(timeout: float | None = None) -> bool:

@@ -31,7 +31,7 @@ test('ao abrir, o foco vai para o campo de mensagem', async () => {
   abrirDe()
   render(GavetaIA, { uid: 'u1', onfechar: vi.fn() })
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Mensagem para o assistente' })).toHaveFocus())
-  expect(screen.getByRole('dialog', { name: 'Assistente' })).toHaveAttribute('aria-modal', 'true')
+  expect(screen.getByRole('dialog', { name: 'IA da matéria' })).toHaveAttribute('aria-modal', 'true')
 })
 
 test('Esc fecha e o foco volta para quem abriu', async () => {
@@ -46,14 +46,14 @@ test('Esc fecha e o foco volta para quem abriu', async () => {
 test('clicar no véu fecha', async () => {
   const onfechar = vi.fn()
   render(GavetaIA, { uid: 'u1', onfechar })
-  await userEvent.click(screen.getByRole('button', { name: 'Fechar o assistente' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Fechar a IA' }))
   expect(onfechar).toHaveBeenCalled()
 })
 
 test('Tab fica preso dentro da gaveta', async () => {
   abrirDe()
   render(GavetaIA, { uid: 'u1', onfechar: vi.fn() })
-  const gaveta = screen.getByRole('dialog', { name: 'Assistente' })
+  const gaveta = screen.getByRole('dialog', { name: 'IA da matéria' })
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Mensagem para o assistente' })).toHaveFocus())
   for (let i = 0; i < 12; i++) {
     await userEvent.tab()
@@ -61,10 +61,11 @@ test('Tab fica preso dentro da gaveta', async () => {
   }
 })
 
-test('abrir em página leva para a página do Assistente com a mesma conversa', async () => {
+test('a gaveta diz do que se trata, pede sobre a matéria e guarda a chave do Gemini', async () => {
   render(GavetaIA, { uid: 'u1', onfechar: vi.fn() })
-  await userEvent.click(screen.getByRole('link', { name: /abrir em página/ }))
-  expect(location.hash).toBe('#/m/u1/assistente')
-  expect(ia.paraPagina).toEqual({ uid: 'u1', alvo: 'geral', papel: 'estrategista' })
-  expect(ia.aberta).toBe(false)
+  const gaveta = screen.getByRole('dialog', { name: 'IA da matéria' })
+  expect(gaveta).toHaveTextContent('plano e dúvidas da matéria')
+  expect(await screen.findByPlaceholderText('Pergunte sobre a matéria…')).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Chave do Gemini' })).toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /abrir em página/ })).toBeNull()
 })

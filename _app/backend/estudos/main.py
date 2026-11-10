@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from estudos.api import (
     agente, app_web,
-    cronograma, documentos, fontes, formulas, historico, importacoes, listas, marcacoes, materias, painel, rag, topicos,
+    cronograma, documentos, fontes, formulas, historico, hoje, importacoes, listas, marcacoes, materias, painel, rag, topicos,
     unidades,
 )
 from estudos.config import Settings
@@ -17,7 +17,7 @@ from estudos.importacao.pdf import PdfInvalido
 from estudos.seguranca import CaminhoInvalido, OrigemLocalMiddleware
 
 ROUTERS = (
-    materias.router, painel.router, marcacoes.router, historico.router, unidades.router, topicos.router,
+    materias.router, painel.router, hoje.router, marcacoes.router, historico.router, unidades.router, topicos.router,
     listas.router, cronograma.router, formulas.router, documentos.router, importacoes.router, rag.router, fontes.router,
     agente.router,
 )

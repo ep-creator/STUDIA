@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { analisarRota, montarHash, type Rota } from './rota'
+import { analisarRota, montarHash, precisaListaDeMaterias, type Rota } from './rota'
 
 test.each<[string, Rota]>([
   ['#/', { tela: 'materias' }],
@@ -24,7 +24,63 @@ test('hash malformado não derruba o app: volta para a tela inicial', () => {
   expect(analisarRota('#/m/%E0%A4%A')).toEqual({ tela: 'materias' })
 })
 
-test('rota do assistente', () => {
-  expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'assistente', uid: 'u1' })
-  expect(montarHash({ tela: 'assistente', uid: 'u1' })).toBe('#/m/u1/assistente')
+test('o endereço da antiga página do Assistente abre a matéria (a IA é a gaveta)', () => {
+  expect(analisarRota('#/m/u1/assistente')).toEqual({ tela: 'materia', uid: 'u1', unidade: null, area: 'painel' })
+})
+
+test('a lista de matérias recarrega na tela inicial, sem lista, ou quando a matéria aberta não está nela (uma vez por matéria)', () => {
+  const lista = [{ uid: 'a' }]
+  expect(precisaListaDeMaterias({ tela: 'materias' }, lista, null)).toBe(true)
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], null)).toBe(true)
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, lista, null)).toBe(false)
+  // matéria recém-criada: ainda não está na lista
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, null)).toBe(true)
+  // já pediu para essa matéria e ela continua fora (endereço errado): não pede de novo
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'nova' }, lista, 'nova')).toBe(false)
+  // workspace sem matérias: a lista vazia também é pedida uma vez só por matéria
+  expect(precisaListaDeMaterias({ tela: 'importar', uid: 'a' }, [], 'a')).toBe(false)
+})
+
+test('a questão aberta em Praticar fica no endereço', () => {
+  const rota = analisarRota('#/m/ab/u/1/listas/46')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 1, area: 'listas', questao: 46 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/1/listas/46')
+})
+
+test('o texto aberto na Biblioteca fica no endereço', () => {
+  const rota = analisarRota('#/m/ab/u/3/documentos/40')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', documento: 40 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/documentos/40')
+})
+
+test('página de um tópico tem endereço próprio', () => {
+  const rota = analisarRota('#/m/ab/u/3/topicos/14')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', topico: 14 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/topicos/14')
+  expect(analisarRota('#/m/ab/u/3/topicos/x')).toEqual({ tela: 'materias' })
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', topico: 14 })).toBe('#/m/ab/u/3/listas')
+})
+
+test('Praticar aberto por uma sessão leva a sessão no endereço', () => {
+  const rota = analisarRota('#/m/ab/u/3/listas/160?sessao=21')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', questao: 160, sessao: 21 })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/listas/160?sessao=21')
+  expect(analisarRota('#/m/ab/u/3/listas?sessao=21')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', sessao: 21 })
+  expect(analisarRota('#/m/ab/u/3/listas/160?sessao=x')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', questao: 160 })
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', sessao: 21 })).toBe('#/m/ab/u/3/topicos')
+})
+
+test('o PDF aberto na Biblioteca fica no endereço, com a página', () => {
+  const rota = analisarRota('#/m/ab/u/3/documentos?pdf=4&p=431')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', pdf: { id: 4, pagina: 431 } })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/documentos?pdf=4&p=431')
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', pdf: { id: 4, pagina: 1 } })).toBe('#/m/ab/u/3/documentos?pdf=4')
+  // um texto aberto vale mais que o PDF no endereço; e o PDF não vaza para outras áreas
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', documento: 12, pdf: { id: 4, pagina: 2 } })).toBe('#/m/ab/u/3/documentos/12')
+  expect(analisarRota('#/m/ab/u/3/listas?pdf=4')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas' })
+})
+
+test('área sem unidade abre a matéria na área pedida', () => {
+  expect(analisarRota('#/m/ab/painel')).toEqual({ tela: 'materia', uid: 'ab', unidade: null, area: 'painel' })
+  expect(analisarRota('#/m/ab/qualquer')).toEqual({ tela: 'materias' })
 })

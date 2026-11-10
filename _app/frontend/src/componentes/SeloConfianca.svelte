@@ -26,8 +26,8 @@
   .selo { font-size: 0.75rem; border-radius: 999px; padding: 0 0.5rem; white-space: nowrap; }
   .certo { background: color-mix(in srgb, var(--ok) 22%, transparent); }
   .revisar { background: var(--dub); color: #000; }
-  .sem-palpite { background: var(--err); color: #fff; }
-  .motivo { font-size: 0.72rem; margin-left: 0.3rem; color: var(--destaque); }
+  .sem-palpite { background: var(--err); color: var(--fundo); }
+  .motivo { font-size: 0.72rem; margin-left: 0.3rem; color: var(--destaque-texto); }
   .porque { background: none; border: 0; padding: 0 0.3rem; text-decoration: underline; cursor: pointer; font-size: 0.8rem; color: var(--suave); }
   .explicacao { display: block; font-size: 0.85rem; color: var(--suave); margin-top: 0.2rem; }
 </style>

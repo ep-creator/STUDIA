@@ -2,8 +2,12 @@
   import { renderizarMarkdown } from '../markdown'
 
   // contas: texto de matemática (blocos ``` sem linguagem viram fórmulas; `trechos` e tabelas ganham cara de conta)
-  let { texto, contas = false }: { texto: string; contas?: boolean } = $props()
-  const html = $derived(renderizarMarkdown(texto, { contasEmCodigo: contas }))
+  // rebaixar: quantos níveis descer os títulos do texto (dentro de uma tela que já tem o seu h1)
+  let { texto, contas = false, rebaixar = 0 }: { texto: string; contas?: boolean; rebaixar?: number } = $props()
+  const html = $derived.by(() => {
+    const bruto = renderizarMarkdown(texto, { contasEmCodigo: contas })
+    return rebaixar ? bruto.replace(/<(\/?)h([1-6])\b/g, (_, fecha: string, n: string) => `<${fecha}h${Math.min(6, Number(n) + rebaixar)}`) : bruto
+  })
 </script>
 
 <!-- html já sanitizado pelo DOMPurify em renderizarMarkdown -->

@@ -15,7 +15,7 @@
 </script>
 
 <header>
-  <h3>{NOME_TIPO[tipo] ?? tipo}</h3>
+  <h2>{NOME_TIPO[tipo] ?? tipo}</h2>
   {#if duvidoso}
     <span class="conferir" title={`confiança ${numeroPt(classificacao.confianca)} · pelo texto do arquivo (datas, unidades, sumário, questões…); se estiver errado, troque o tipo`}>conferir</span>
   {/if}
@@ -27,7 +27,9 @@
 
 <style>
   header { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-  h3 { margin: 0; font-size: 1.3rem; }
-  .conferir { color: var(--dub); font-size: 0.85rem; }
+  h2 { margin: 0; font-size: 1.3rem; }
+  .conferir { color: var(--dub-texto); font-size: 0.85rem; }
   .tipo { margin-left: auto; font-size: 0.85rem; color: var(--suave); }
+  /* a lista abre para a esquerda: aberta para a direita ela passava da borda e a coluna rolava de lado */
+  .tipo :global(.opcoes) { left: auto; right: 0; }
 </style>

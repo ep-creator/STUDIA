@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Documento, FonteResumo } from '../api/tipos'
-  import { compararNomes } from '../apresentacao'
+  import { compararNomes, nomeLegivel } from '../apresentacao'
   import { recolhidos } from '../estado/recolhidos.svelte'
 
   export type Selecao = { tipo: 'documento' | 'fonte'; id: number } | null
@@ -24,7 +24,7 @@
     ['programa', 'Programa'], ['calendario', 'Calendário'], ['prova', 'Provas'], ['lista', 'Listas'], ['slides', 'Slides'], ['livro', 'Livros'],
   ]
 
-  const nomeFonte = (f: FonteResumo) => f.titulo || (f.caminho.split('/').pop() ?? '')
+  const nomeFonte = (f: FonteResumo) => nomeLegivel(f)
   const doDoc = (d: Documento): Item => ({ tipo: 'documento', id: d.id, titulo: d.titulo, ia: d.origem === 'agente' })
   const daFonte = (f: FonteResumo): Item => ({ tipo: 'fonte', id: f.id, titulo: nomeFonte(f), ia: false })
 
@@ -46,7 +46,10 @@
     return [...grupos, { chave: 'pdf-outro', nome: 'Outros PDFs', itens: outros.map(daFonte) }].filter((g) => g.itens.length)
   })
 
-  const recolhiveis = recolhidos('studia.documentos.fechados')
+  // começam abertos só os de estudar (resumos, resoluções) e os livros; o resto da disciplina e as anotações fechados
+  const recolhiveis = recolhidos('studia.documentos.fechados', [
+    'plano', 'anotacao', 'contexto', 'outro-texto', ...GRUPOS_FONTE.filter(([t]) => t !== 'livro').map(([t]) => `pdf-${t}`), 'pdf-outro',
+  ])
 
   const ativo = (i: Item) => selecao?.tipo === i.tipo && selecao.id === i.id
 </script>
@@ -54,7 +57,7 @@
 {#snippet secao(titulo: string, grupos: Grupo[])}
   {#if grupos.length}
     <section class="secao" aria-label={titulo}>
-      <h3>{titulo}</h3>
+      <h2>{titulo}</h2>
       {#each grupos as g (g.chave)}
         {@const aberto = recolhiveis.aberto(g.chave)}
         <button class="grupo" aria-expanded={aberto} onclick={() => recolhiveis.alternar(g.chave)}>
@@ -86,7 +89,7 @@
 <style>
   .lista { display: grid; gap: 1.1rem; align-content: start; }
   .secao { display: grid; gap: 0.1rem; }
-  h3 {
+  h2 {
     font-size: 0.95rem; margin: 0 0 0.25rem; padding-bottom: 0.3rem;
     border-bottom: 1px solid color-mix(in srgb, var(--borda) 60%, transparent);
   }
@@ -95,18 +98,15 @@
 
   .grupo { display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.2rem; margin-top: 0.15rem; }
   .grupo .rotulo { margin: 0; }
-  .grupo:hover .rotulo, .grupo:hover .seta { color: var(--destaque); }
+  .grupo:hover .rotulo, .grupo:hover .seta { color: var(--destaque-texto); }
   .seta { width: 0.75rem; height: 0.75rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; color: var(--suave); transition: transform var(--transicao), color var(--transicao); }
   .seta.aberto { transform: rotate(90deg); }
   .conta { margin-left: auto; font-size: 0.72rem; color: var(--suave); }
 
   .item { padding: 0.2rem 0.4rem; }
   .item.ativo { font-weight: 600; }
-  .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque); }
+  .item:hover:not(.ativo) { background: var(--realce); color: var(--destaque-texto); }
   .item.ativo { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
-  .ia {
-    display: inline-block; margin-left: 0.4rem; padding: 0 0.3rem; border-radius: 4px; vertical-align: 0.1em;
-    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--destaque);
-    border: 1px solid color-mix(in srgb, var(--destaque) 55%, transparent);
-  }
+  /* feito pela IA: texto pequeno, sem moldura nem brasa */
+  .ia { margin-left: 0.4rem; font-size: 0.75rem; letter-spacing: 0.06em; color: var(--suave); }
 </style>

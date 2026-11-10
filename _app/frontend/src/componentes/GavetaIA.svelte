@@ -1,8 +1,11 @@
 <script lang="ts">
-  // O assistente numa gaveta por cima da página: a página não muda de largura, um véu escurece o resto.
+  // A IA da matéria numa gaveta por cima da página: a página não muda de largura, um véu escurece o resto.
+  // Diz no topo sobre o que está conversando (a matéria inteira, ou a seção pedida em Biblioteca); embaixo, a chave.
+  // A ajuda de uma questão fica na própria questão, em Praticar.
   // Esc, o ✕ ou clicar no véu fecham; o foco vai para o campo ao abrir, fica preso na gaveta e volta a quem abriu.
   import { tick } from 'svelte'
-  import { abrirNaPagina, atalhosDoPapel, ia } from '../estado/ia.svelte'
+  import { atalhosDoPapel, ia } from '../estado/ia.svelte'
+  import ChaveAgente from './ChaveAgente.svelte'
   import PainelIA from './PainelIA.svelte'
 
   let { uid, onfechar }: { uid: string; onfechar: () => void } = $props()
@@ -33,22 +36,21 @@
     }
   }
 
-  function emPagina(e: MouseEvent) {
-    e.preventDefault()
-    abrirNaPagina(uid, alvo, papel)
-  }
+  const sobre = $derived(
+    alvo.startsWith('secao:') ? 'resumos da seção pedida' : alvo.startsWith('questao:') ? 'a questão pedida' : 'plano e dúvidas da matéria',
+  )
 </script>
 
-<button class="veu" aria-label="Fechar o assistente" tabindex="-1" onclick={onfechar}></button>
-<div bind:this={gaveta} class="gaveta nao-imprimir" role="dialog" aria-label="Assistente" aria-modal="true" tabindex="-1" onkeydown={tecla}>
+<button class="veu" aria-label="Fechar a IA" tabindex="-1" onclick={onfechar}></button>
+<div bind:this={gaveta} class="gaveta nao-imprimir" role="dialog" aria-label="IA da matéria" aria-modal="true" tabindex="-1" onkeydown={tecla}>
   <header>
-    <b>Assistente</b>
-    <a class="acao-texto" href={`#/m/${encodeURIComponent(uid)}/assistente`} onclick={emPagina}>abrir em página ↗</a>
+    <div class="titulo"><b>IA da matéria</b><span class="suave sobre">{sobre}</span></div>
     <button class="acao-texto" aria-label="Fechar" onclick={onfechar}>✕</button>
   </header>
   {#key `${alvo}|${papel}`}
     <PainelIA {uid} {alvo} {papel} atalhos={atalhosDoPapel(papel)} />
   {/key}
+  <div class="chave"><ChaveAgente /></div>
 </div>
 
 <style>
@@ -60,6 +62,12 @@
   }
   .gaveta:focus { outline: none; }
   header { display: flex; align-items: baseline; gap: 1rem; }
-  header b { font-family: var(--fonte-titulo); font-weight: 500; font-size: 1.1rem; margin-right: auto; }
+  .titulo { display: grid; gap: 0.1rem; margin-right: auto; }
+  .titulo b { font-family: var(--fonte-titulo); font-weight: 500; font-size: 1.1rem; }
+  .sobre { font-size: 0.85rem; }
   header .acao-texto { font-size: 0.85rem; }
+  .chave { flex: none; }   /* a caixa da chave já traz o próprio fio */
+  /* a conversa ocupa o meio e o campo fica no pé, logo acima da chave */
+  .gaveta :global(.painel-ia) { flex: 1; }
+  .gaveta :global(.painel-ia form) { margin-top: auto; }
 </style>

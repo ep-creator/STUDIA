@@ -16,6 +16,10 @@ from estudos.agente.papeis import Papel
 
 _HISTORICO = 20
 _PAREI = "\n\n_(Parei aqui para não gastar demais com buscas. Peça para continuar, se precisar.)_"
+# Na última rodada o modelo fica sem ferramentas e recebe esta ordem: responde com o que já juntou, em vez de buscar de
+# novo e o app cortar sem resposta nenhuma.
+_RESPONDA_AGORA = ("\n\n## Última rodada\n\nVocê já buscou o bastante. Responda agora, com o que já está no contexto e nos "
+                   "resultados das ferramentas, sem pedir mais nada.")
 
 
 @dataclass(frozen=True)
@@ -66,7 +70,8 @@ def responder(
         for rodada in range(ajustes.max_rodadas + 1):
             texto_rodada: list[str] = []
             chamadas: list[Chamada] = []
-            for evento in modelo.responder(sistema, turnos, ferramentas):
+            ultima = rodada == ajustes.max_rodadas
+            for evento in modelo.responder(sistema + _RESPONDA_AGORA if ultima else sistema, turnos, [] if ultima else ferramentas):
                 if isinstance(evento, Texto):
                     texto_rodada.append(evento.texto)
                     resposta.append(evento.texto)
@@ -77,7 +82,7 @@ def responder(
                     entrada, saida = entrada + evento.entrada, saida + evento.saida
             if not chamadas:
                 break
-            if rodada == ajustes.max_rodadas:
+            if ultima:  # sem ferramentas o modelo não deveria chamar nenhuma; se chamar, avisa em vez de cortar mudo
                 resposta.append(_PAREI)
                 yield Saida("texto", {"texto": _PAREI})
                 break

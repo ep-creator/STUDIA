@@ -22,6 +22,13 @@ test('mesma matéria só recarrega ao pedir outra unidade', () => {
   expect(painelACarregar({ tela: 'materias' }, atual)).toBeNull()
 })
 
+test('unidade que não existe na matéria já carregada não é pedida de novo (matéria vazia não entra em laço)', () => {
+  expect(painelACarregar({ tela: 'materia', uid: 'A', unidade: 1, area: 'listas' }, { uid: 'A', unidade: null, unidades: [] })).toBeNull()
+  expect(painelACarregar({ tela: 'materia', uid: 'A', unidade: 4, area: 'listas' }, { uid: 'A', unidade: 3, unidades: [1, 2, 3] })).toBeNull()
+  expect(painelACarregar({ tela: 'materia', uid: 'A', unidade: 2, area: 'listas' }, { uid: 'A', unidade: 3, unidades: [1, 2, 3] }))
+    .toEqual({ uid: 'A', unidade: 2 })
+})
+
 test('unidade que não existe cai para a unidade atual da matéria', async () => {
   const urls: string[] = []
   vi.stubGlobal('fetch', vi.fn(async (url: string) => {

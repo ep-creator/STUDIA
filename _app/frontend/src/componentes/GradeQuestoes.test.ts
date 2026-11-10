@@ -29,8 +29,8 @@ test('clique só seleciona a questão, sem mexer na marca', async () => {
 
 test('lista por seção separa linha 1 e linha 2, com placar', () => {
   render(GradeQuestoes, { listas: [lista154], marcacoes: { '11': 'ok', '12': 'err' }, selecionada: null, onmarcar: vi.fn(), onselecionar: vi.fn() })
-  expect(screen.getByText('Linha 1')).toBeInTheDocument()
-  expect(screen.getByText('Linha 2')).toBeInTheDocument()
+  expect(screen.getByText('Principais')).toBeInTheDocument()
+  expect(screen.getByText('Reforço')).toBeInTheDocument()
   expect(screen.getByText('2/3')).toBeInTheDocument()
 })
 
@@ -42,6 +42,18 @@ test('cada assunto abre e fecha pela setinha, com as linhas 1 e 2 dentro dele', 
   await userEvent.click(assunto)
   expect(assunto).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByRole('button', { name: /Questão 15\.4 #7/ })).toBeNull()
-  expect(screen.queryByText('Linha 2')).toBeNull()
+  expect(screen.queryByText('Reforço')).toBeNull()
   expect(screen.getByText('0/3')).toBeInTheDocument() // o placar continua à vista
+})
+
+test('a questão aberta de fora (endereço, Hoje) é a que o Tab alcança: 2 marca ela, não a primeira', async () => {
+  const onmarcar = vi.fn()
+  const user = userEvent.setup()
+  render(GradeQuestoes, { listas: [lista154], marcacoes: {}, selecionada: 13, onmarcar, onselecionar: vi.fn() })
+  expect(screen.getByRole('button', { name: /Questão 15\.4 #9/ })).toHaveAttribute('tabindex', '0')
+  expect(screen.getByRole('button', { name: /Questão 15\.4 #7/ })).toHaveAttribute('tabindex', '-1')
+  await user.tab()
+  await user.tab()
+  await user.keyboard('2')
+  expect(onmarcar).toHaveBeenCalledWith(13, 'err')
 })

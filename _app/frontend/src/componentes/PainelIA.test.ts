@@ -27,6 +27,7 @@ function motor(opcoes: { chave?: boolean; respostas?: unknown[][]; historicoTopo
     if (url.includes('/agente/mensagem')) return ndjson(respostas.shift() ?? [])
     if (url.endsWith('/fontes')) return json([{ id: 1, tipo: 'livro', titulo: 'Stewart', caminho: 'fontes/livros/s.pdf', paginas: 600 }])
     if (url.includes('/historico/desfazer')) return json({ desfeito: { id: 77, descricao: 'Agente: resolução l1-3' } })
+    if (url.includes('/painel')) return json({ unidade: 3, materia: { uid: 'u1' }, documentos: [] })
     if (url.includes('/historico')) return json([{ id: opcoes.historicoTopo ?? 77, momento: 'x', descricao: 'y', desfaz_grupo: null, desfeito_em: null }])
     throw new Error(`rota não simulada: ${metodo} ${url}`)
   }))
@@ -37,6 +38,12 @@ const RESPOSTA = [
   { tipo: 'texto', dados: { texto: '[Stewart p. 312].' } },
   { tipo: 'fim', dados: { custo_brl: 0.04, total_mes: 1.54, tokens_entrada: 10, tokens_saida: 5 } },
 ]
+
+// N4 pede confirmação antes de gastar e entregar a questão pronta
+async function pedirResolucao() {
+  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await userEvent.click(screen.getByRole('button', { name: 'Pedir a resolução' }))
+}
 
 beforeEach(() => {
   estadoMateria.uid = 'u1'
@@ -73,7 +80,7 @@ test('o que foi gravado aparece com Abrir e Desfazer', async () => {
   motor({ respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
     { tipo: 'texto', dados: { texto: 'Gravei.' } }, { tipo: 'fim', dados: { custo_brl: 0.01, total_mes: 1.51 } }]] })
   abrir()
-  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await pedirResolucao()
   expect(await screen.findByText(/Resolução L1-3 salva/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Desfazer' }))
   await waitFor(() => expect(pedidos.some((p) => p.metodo === 'POST' && p.url.includes('/historico/desfazer'))).toBe(true))
@@ -83,7 +90,7 @@ test('com outra ação depois, Desfazer vira Abrir o Histórico', async () => {
   motor({ historicoTopo: 80, respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
     { tipo: 'fim', dados: { custo_brl: 0, total_mes: 1.5 } }]] })
   abrir()
-  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  await pedirResolucao()
   await userEvent.click(await screen.findByRole('button', { name: 'Desfazer' }))
   expect(await screen.findByRole('link', { name: /Abrir o Histórico/ })).toBeInTheDocument()
   expect(pedidos.some((p) => p.url.includes('/historico/desfazer'))).toBe(false)
@@ -102,16 +109,16 @@ test('teto do mês pede confirmação e reenvia confirmado', async () => {
 test('sem chave: só a caixa da API key, que salva com Enter', async () => {
   motor({ chave: false })
   abrir()
-  await userEvent.type(await screen.findByPlaceholderText('API key'), 'AIza-teste{Enter}')
+  await userEvent.type(await screen.findByPlaceholderText('Chave do Gemini (API key)'), 'AIza-teste{Enter}')
   await waitFor(() => expect(pedidos.find((p) => p.metodo === 'PUT')?.corpo).toEqual({ chave: 'AIza-teste' }))
   expect(screen.queryByText(/Google AI Studio/)).toBeNull()
 })
 
-test('atalhos aparecem curtos (N1…N4) e não há Copiar o contexto', async () => {
+test('níveis mostram o nome do que dão (Dica…Resolução) e não há Copiar o contexto', async () => {
   motor()
   abrir()
   const n2 = await screen.findByRole('button', { name: 'N2 Caminho' })
-  expect(n2).toHaveTextContent(/^N2$/)
+  expect(n2).toHaveTextContent(/^Caminho$/)
   expect(screen.queryByRole('button', { name: /Copiar o contexto/ })).toBeNull()
 })
 
@@ -208,5 +215,55 @@ test('chave recusada oferece o atalho para trocar a chave', async () => {
   motor({ respostas: [[{ tipo: 'erro', dados: { motivo: 'chave_invalida', detalhe: 'API key not valid' } }]] })
   abrir()
   await userEvent.click(await screen.findByRole('button', { name: 'N1 Dica' }))
-  expect(await screen.findByRole('link', { name: 'trocar a chave' })).toHaveAttribute('href', '#/m/u1/assistente')
+  const { ia } = await import('../estado/ia.svelte')
+  ia.aberta = false
+  await userEvent.click(await screen.findByRole('button', { name: 'trocar a chave' }))
+  expect(ia.aberta).toBe(true)
+})
+
+test('depois que o agente grava, o painel é recarregado (o Ver resolução aparece sem recarregar a página)', async () => {
+  motor({ respostas: [[{ tipo: 'gravado', dados: { tipo: 'documento', id: 9, titulo: 'Resolução L1-3', grupo_id: 77 } },
+    { tipo: 'texto', dados: { texto: 'Gravei: resposta π/4.' } }, { tipo: 'fim', dados: { custo_brl: 0.01, total_mes: 1.51 } }]] })
+  abrir()
+  await pedirResolucao()
+  await screen.findByText(/Resolução L1-3 salva/)
+  await waitFor(() => expect(pedidos.some((p) => p.metodo === 'GET' && p.url.includes('/api/materias/u1/painel'))).toBe(true))
+})
+
+test('N4 pergunta antes: Cancelar não envia nada, Pedir a resolução envia', async () => {
+  motor({ respostas: [RESPOSTA] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N4 Resolução/ }))
+  expect(screen.getByText(/entrega a questão pronta/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+  expect(screen.queryByText(/entrega a questão pronta/)).toBeNull()
+  expect(pedidos.some((p) => p.url.includes('/agente/mensagem'))).toBe(false)
+  await pedirResolucao()
+  await waitFor(() => expect(pedidos.find((p) => p.url.includes('/agente/mensagem'))?.corpo)
+    .toEqual({ alvo: 'questao:5', papel: 'tutor', atalho: 'N4', confirmado: false }))
+})
+
+test('N1–N3 continuam enviando direto, sem pergunta', async () => {
+  motor({ respostas: [RESPOSTA] })
+  abrir()
+  await userEvent.click(await screen.findByRole('button', { name: /N3 Esboço/ }))
+  await waitFor(() => expect(pedidos.some((p) => p.url.includes('/agente/mensagem'))).toBe(true))
+  expect(screen.queryByText(/entrega a questão pronta/)).toBeNull()
+})
+
+test('na questão, a conversa já gravada começa recolhida: reabrir não entrega a resposta', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    if (url.includes('/agente/conversa')) {
+      return json({ id: 1, alvo: 'questao:5', papel: 'tutor', mensagens: [
+        { autor: 'voce', texto: 'N4 Resolução' }, { autor: 'agente', texto: 'O resultado final é 16/15.' },
+      ] })
+    }
+    if (url.endsWith('/api/agente/estado')) return json({ chave_configurada: true, modelo: 'g', total_mes: 0, teto: 20 })
+    throw new Error(`rota não simulada: ${url}`)
+  }))
+  render(PainelIA, { uid: 'u1', alvo: 'questao:5', papel: 'tutor', atalhos: ['N1', 'N2', 'N3', 'N4'] })
+  expect(await screen.findByText(/Conversa anterior · último pedido: N4 Resolução/)).toBeInTheDocument()
+  expect(screen.queryByText(/16\/15/)).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'ver' }))
+  expect(screen.getByText(/16\/15/)).toBeInTheDocument()
 })

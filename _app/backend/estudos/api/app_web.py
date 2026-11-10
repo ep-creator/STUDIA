@@ -15,6 +15,10 @@ _SEM_BUILD = """<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>S
 <code>_app/frontend</code>). A API continua disponível em <a href="/docs">/docs</a>.</p></body></html>"""
 
 _RESERVADOS = ("api/", "arquivos/", "docs", "redoc", "openapi.json")
+# O index.html aponta para os arquivos do build (com o hash no nome): ele não pode ficar no cache do navegador, senão
+# depois de atualizar o app a página continua carregando a versão velha. Os arquivos com hash nunca mudam.
+_SEMPRE_CONFERIR = {"Cache-Control": "no-cache"}
+_IMUTAVEL = {"Cache-Control": "public, max-age=31536000, immutable"}
 
 
 def registrar(app: FastAPI, dist: Path) -> None:
@@ -33,5 +37,5 @@ def registrar(app: FastAPI, dist: Path) -> None:
             except CaminhoInvalido:
                 alvo = None
             if alvo is not None and alvo.is_file():
-                return FileResponse(alvo)
-        return FileResponse(indice)
+                return FileResponse(alvo, headers=_IMUTAVEL if caminho.startswith("assets/") else _SEMPRE_CONFERIR)
+        return FileResponse(indice, headers=_SEMPRE_CONFERIR)

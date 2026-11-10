@@ -30,9 +30,9 @@
 
 <section class="chave" aria-label="Chave do Gemini" bind:this={caixa}>
   <div class="linha">
-    <span class="rotulo">API key</span>
+    <span class="rotulo">Chave do Gemini</span>
     {#if configurada !== null}
-      <span class:ok={configurada}>{configurada ? 'configurada' : 'não configurada'}</span>
+      <span>{configurada ? 'configurada' : 'não configurada'}</span>
     {/if}
     {#if !trocando}
       <button class="acao-texto" aria-label="trocar a chave" onclick={() => void abrir()}>{configurada ? 'trocar' : 'colar'}</button>

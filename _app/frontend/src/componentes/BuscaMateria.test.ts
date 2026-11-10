@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/svelte'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { painel } from '../teste-dados'
 import { pedido } from '../estado/pedido.svelte'
 import BuscaMateria from './BuscaMateria.svelte'
 
@@ -34,7 +35,7 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-const abrir = (extra = {}) => render(BuscaMateria, { uid: 'ab', unidade: 3, aberta: true, onfechar: vi.fn(), ...extra })
+const abrir = (extra = {}) => render(BuscaMateria, { uid: 'ab', unidade: 3, painel: painel({ unidade: 3 }), aberta: true, onfechar: vi.fn(), ...extra })
 
 test('digita, mostra resultados agrupados e Enter abre o PDF na página', async () => {
   motor([livro(), resumo])
@@ -68,7 +69,7 @@ test('menos de 2 letras ou só palavras vazias não chamam o motor', async () =>
   await userEvent.clear(campo)
   await userEvent.type(campo, 'de a o')
   await new Promise((r) => setTimeout(r, 300))
-  expect(urls).toHaveLength(0)
+  expect(urls.filter((u) => u.includes('/busca'))).toHaveLength(0)   // o índice do "Ir para" não é busca
 })
 
 test('filtro Toda a matéria tira a unidade; filtro Textos manda os tipos de texto', async () => {
@@ -140,3 +141,33 @@ test('sem exercícios, o grupo não aparece', async () => {
   expect(await screen.findByText('Livros', { selector: '.grupo' })).toBeInTheDocument()
   expect(screen.queryByText('Exercícios do livro')).toBeNull()
 })
+
+test('"Ir para": questão pelo código abre direto em Praticar, sem buscar no conteúdo', async () => {
+  const { lista, questao } = await import('../teste-dados')
+  const onfechar = vi.fn()
+  render(BuscaMateria, {
+    uid: 'ab', unidade: 3, aberta: true, onfechar,
+    painel: painel({ unidade: 3, listas: [lista(1, '14.1', [questao(4, '46')])] }),
+  })
+  await userEvent.type(screen.getByRole('combobox', { name: 'Buscar na matéria' }), '14.1 46')
+  expect(screen.getByRole('option', { name: /14\.1 #46/ })).toBeInTheDocument()
+  await userEvent.keyboard('{Enter}')
+  expect(location.hash).toBe('#/m/ab/u/3/listas/4')
+  expect(onfechar).toHaveBeenCalled()
+})
+
+test('o mesmo título vira um resultado com as outras páginas; trecho ilegível do PDF não aparece', async () => {
+  motor([
+    livro(),
+    livro({ trecho_id: 3, pagina: 408, trecho: 'mais [polares] aqui' }),
+    livro({ trecho_id: 4, titulo: '15.10 Mudança de Variáveis', pagina: 1012, trecho: '∂∂((ux,, yv)) √₀ [polares] ∂∂' }),
+  ])
+  abrir()
+  await userEvent.type(screen.getByRole('combobox', { name: /Buscar na matéria/ }), 'polares')
+  expect(await screen.findByText(/p\. 406, também 408/)).toBeInTheDocument()
+  expect(screen.getAllByText(/15\.4 Integrais Duplas/)).toHaveLength(1)
+  expect(screen.getByText(/dA = r dr dθ/)).toBeInTheDocument()          // conta simples continua legível
+  expect(screen.getByText(/15\.10 Mudança de Variáveis/)).toBeInTheDocument()
+  expect(screen.queryByText(/ux,, yv/)).toBeNull()
+})
+

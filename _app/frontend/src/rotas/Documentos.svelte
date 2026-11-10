@@ -1,6 +1,6 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import { tick } from 'svelte'
+  import { tick, untrack } from 'svelte'
   import { consumirAncora, consumirDocumento, consumirFonte, pedido } from '../estado/pedido.svelte'
   import type { DocumentoComCorpo, FonteResumo, Painel, SecaoLivro } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
@@ -10,10 +10,15 @@
   import Seletor from '../componentes/Seletor.svelte'
   import { avisar, erro } from '../estado/avisos.svelte'
   import { recarregar } from '../estado/materia.svelte'
+  import { desfazer } from '../estado/desfazer'
   import { podeSair } from '../estado/saida'
   import { abrirNoPainel } from '../estado/ia.svelte'
+  import { nomeLegivel, semTituloRepetido } from '../apresentacao'
+  import { montarHash } from './rota'
 
-  let { painel }: { painel: Painel } = $props()
+  let { painel, documento: documentoDaRota = null, pdf: pdfDaRota = null }: {
+    painel: Painel; documento?: number | null; pdf?: { id: number; pagina: number } | null
+  } = $props()
 
   const uid = $derived(painel.materia.uid)
 
@@ -44,6 +49,33 @@
       selecionar({ tipo: 'fonte', id: f.id })
     }
   })
+  // o texto do endereço (#/…/documentos/<id>): voltar, recarregar e favoritos reabrem o mesmo
+  // (os dois efeitos abaixo reagem ao endereço, não à seleção: escolher outra coisa na lista não pode ser desfeito
+  // pelo endereço antigo antes de ele ser atualizado)
+  $effect(() => {
+    const id = documentoDaRota
+    const atual = untrack(() => selecao)
+    if (id !== null && !(atual?.tipo === 'documento' && atual.id === id)) untrack(() => selecionar({ tipo: 'documento', id }))
+  })
+  // o PDF do endereço (#/…/documentos?pdf=<id>&p=<página>): o mesmo vale para livros, listas e slides
+  $effect(() => {
+    const f = pdfDaRota
+    const atual = untrack(() => selecao)
+    if (f !== null && !(atual?.tipo === 'fonte' && atual.id === f.id)) {
+      paginaInicial = f.pagina
+      untrack(() => selecionar({ tipo: 'fonte', id: f.id }))
+    }
+  })
+  // e o que está aberto vai para o endereço (sem empilhar no histórico): o texto pelo id, o PDF pelo id e a página em
+  // que foi aberto
+  $effect(() => {
+    if (painel.unidade === null) return
+    const id = selecao?.tipo === 'documento' ? selecao.id : null
+    const pdf = selecao?.tipo === 'fonte' ? { id: selecao.id, pagina: paginaInicial } : null
+    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'documentos', documento: id, pdf })
+    if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
+  })
+
   // com o texto na tela, rola até o bloco pedido
   $effect(() => {
     if (!documento || !ancora) return
@@ -56,10 +88,16 @@
     requisitar<FonteResumo[]>('GET', `/api/materias/${uid}/fontes`).then((f) => (fontes = f), erro)
   })
 
-  // Ligação documento ↔ seção do livro: ao abrir a tela, o motor liga os documentos que faltam (só os confiantes)
+  // Ligação documento ↔ seção do livro: ao abrir a tela, o motor liga os documentos que faltam (só os confiantes).
+  // É uma escrita: quando liga algo, diz quantos e deixa desfazer ali mesmo (fica no Histórico como qualquer ação)
   $effect(() => {
     void requisitar<{ ligados: number }>('POST', `/api/materias/${uid}/documentos/ligar-secoes`)
-      .then((r) => { if (r.ligados > 0) void recarregar() }, () => {})
+      .then((r) => {
+        if (r.ligados === 0) return
+        avisar(r.ligados === 1 ? '1 texto ligado à seção do livro' : `${r.ligados} textos ligados às seções do livro`,
+          { rotulo: 'Desfazer', executar: () => void desfazer() })
+        void recarregar()
+      }, () => {})
   })
 
   // seções de todos os livros, para o seletor "Seção do livro" do cabeçalho
@@ -67,7 +105,7 @@
   $effect(() => {
     const livros = fontes.filter((f) => f.tipo === 'livro')
     void Promise.all(livros.map((l) => requisitar<SecaoLivro[]>('GET', `/api/materias/${uid}/fontes/${l.id}/secoes`)
-      .then((ss) => ss.map((secao) => ({ secao, livro: l.titulo || l.caminho.split('/').pop() || '' })), () => [])))
+      .then((ss) => ss.map((secao) => ({ secao, livro: nomeLegivel(l) })), () => [])))
       .then((porLivro) => (secoes = porLivro.flat()))
   })
   const opcoesSecao = $derived([
@@ -75,6 +113,11 @@
     ...secoes.map(({ secao, livro }) => ({ valor: String(secao.id), rotulo: `${secao.codigo} ${secao.titulo}`, detalhe: livro })),
   ])
   const TIPOS_COM_SECAO = ['resumo', 'resolucao', 'plano']
+  let trocandoSecao = $state(false)
+  $effect(() => {
+    void documento?.id
+    trocandoSecao = false
+  })
 
   // documento ainda sem seção (e sem decisão): mostra a sugestão do motor, que só é gravada com "Sim"
   type Sugestao = { secao_id: number; codigo: string; titulo: string; confianca: number; por: string }
@@ -126,6 +169,7 @@
   const fonte = $derived(selecao?.tipo === 'fonte' ? fontes.find((f) => f.id === selecao!.id) ?? null : null)
 </script>
 
+<h1 class="titulo-tela">Biblioteca</h1>
 <div class="documentos">
   <aside>
     <ListaDocumentos documentos={painel.documentos} {fontes} {selecao} onselecionar={(s) => { paginaInicial = 1; selecionar(s) }} />
@@ -145,9 +189,16 @@
       <!-- editando, não: trocar a seção regrava o .md e recriaria o editor, perdendo o rascunho -->
       {#if TIPOS_COM_SECAO.includes(documento.tipo) && !editando}
         <div class="secao" bind:this={seletorSecao}>
-          <Seletor rotulo="Seção do livro" variante="compacto" mostrarRotulo vazio="sem seção ligada"
-            valor={documento.secao_id !== null ? String(documento.secao_id) : documento.secao_decidida ? '' : null}
-            opcoes={opcoesSecao} onmudar={(v) => void escolherSecao(v ? Number(v) : null)} />
+          {#if documento.secao_id !== null && !trocandoSecao}
+            <!-- ler não muda nada: a seção aparece como texto, e trocar é pedido de propósito -->
+            <span class="rotulo">Seção do livro</span>
+            <span>{opcoesSecao.find((o) => o.valor === String(documento!.secao_id))?.rotulo ?? documento.secao_codigo}</span>
+            <button class="acao-texto" onclick={() => { trocandoSecao = true; void tick().then(() => seletorSecao?.querySelector<HTMLButtonElement>('.gatilho')?.click()) }}>trocar</button>
+          {:else}
+            <Seletor rotulo="Seção do livro" variante="compacto" mostrarRotulo vazio="sem seção ligada"
+              valor={documento.secao_id !== null ? String(documento.secao_id) : documento.secao_decidida ? '' : null}
+              opcoes={opcoesSecao} onmudar={(v) => { trocandoSecao = false; void escolherSecao(v ? Number(v) : null) }} />
+          {/if}
         </div>
         {#if sugestao}
           <div class="sugestao" role="status">
@@ -162,10 +213,10 @@
           <EditorMarkdown {uid} {documento} onsalvo={aoSalvar} oncancelar={() => { if (podeSair()) editando = false }} />
         {/key}
       {:else}
-        <Markdown texto={documento.corpo} contas={documento.tipo === 'resolucao'} />
+        <div class="leitura-medida"><Markdown texto={semTituloRepetido(documento.corpo, documento.titulo)} contas={documento.tipo === 'resolucao'} rebaixar={1} /></div>
       {/if}
     {:else if fonte}
-      <h2>{fonte.titulo || fonte.caminho.split('/').pop()}</h2>
+      <h2>{nomeLegivel(fonte)}</h2>
       {#key `${fonte.id}:${paginaInicial}`}<VisualizadorPdf {uid} {fonte} {paginaInicial} />{/key}
     {:else}
       <p class="suave">Escolha um resumo, anotação, livro ou PDF à esquerda.</p>
@@ -177,13 +228,14 @@
   /* As duas colunas rolam por dentro: a lista não é cortada e o texto não arrasta a página junto */
   .documentos { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; }
   aside { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; overflow-y: auto; padding-right: 0.4rem; }
+  .titulo-tela { font-size: 2.2rem; margin: 0 0 0.5rem; }
   .leitor { min-height: 0; overflow-y: auto; padding-right: 0.75rem; }
   @media print { .documentos { display: block; } aside { display: none; } .leitor { overflow: visible; } }
   header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .secao { max-width: 26rem; margin: 0.2rem 0 0.6rem; }
   .sugestao {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 0.9rem; padding: 0.55rem 0.8rem;
-    border-radius: 6px; background: var(--realce); border-left: 2px solid var(--destaque);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 0.9rem; padding: 0.5rem 0;
+    border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio);
   }
   .sugestao span { margin-right: auto; }
 </style>

@@ -29,7 +29,7 @@
 
 {#each proposta.listas as item, i (item.codigo)}
   <section class="item">
-    <h4>{item.titulo} <span class="suave">· {item.codigo} · {item.questoes.length} questões</span></h4>
+    <h3>{item.titulo} <span class="suave">· {item.codigo} · {item.questoes.length} questões</span></h3>
     {#if item.existente}
       <p class="suave">Já existe: {item.existente.novas.length} novas, {item.existente.mantidas.length} mantidas, {item.existente.ausentes.length} ausentes neste arquivo.</p>
     {/if}
@@ -65,7 +65,7 @@
   .modo { display: grid; gap: 0.25rem; max-width: 30rem; margin-bottom: 0.75rem; }
   .campo-unidade { display: flex; align-items: center; gap: 0.5rem; min-width: 12rem; }
   .item { border-top: 1px solid color-mix(in srgb, var(--borda) 30%, transparent); padding: 0.75rem 0; }
-  h4 { margin: 0 0 0.4rem; font-family: var(--fonte-titulo); font-weight: 500; }
+  h3 { margin: 0 0 0.4rem; font-family: var(--fonte-titulo); font-weight: 500; }
   .linha { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
   .topicos { display: grid; gap: 0.2rem; margin-top: 0.5rem; }
   .vinculo { display: flex; gap: 0.4rem; align-items: center; }

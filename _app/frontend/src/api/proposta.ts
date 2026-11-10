@@ -88,3 +88,35 @@ export const NOME_TIPO: Record<string, string> = {
   programa: 'Programa', calendario: 'Calendário', turma: 'Informações da turma', livro: 'Livro', lista: 'Lista',
   slides: 'Slides', prova: 'Prova', anotacao: 'Anotação', outro: 'Outro',
 }
+
+/**
+ * A leitura não achou nada do que o tipo promete (ex.: calendário sem nenhuma data)? Devolve a frase que diz isso, para
+ * a tela não oferecer "Confirmar" como se tivesse dado certo; null quando há o que gravar.
+ */
+export function propostaVazia(tipo: string, proposta: unknown): string | null {
+  const p = proposta as Record<string, unknown>
+  if (tipo === 'calendario') {
+    const c = p as unknown as PropostaCalendario
+    const temData = c.eventos?.length || c.unidades?.some((u) => u.aulas.length || u.prova)
+    return temData ? null : 'Não achei datas de aula nem de prova neste calendário.'
+  }
+  if (tipo === 'programa') {
+    const pr = p as unknown as PropostaPrograma
+    return pr.unidades?.some((u) => u.topicos.length) ? null : 'Não achei unidades nem tópicos neste programa.'
+  }
+  if (tipo === 'lista') {
+    const l = p as unknown as PropostaLista
+    return l.listas?.some((x) => x.questoes.length) ? null : 'Não achei questões nesta lista.'
+  }
+  if (tipo === 'livro') {
+    const lv = p as unknown as PropostaLivro
+    if (lv.secoes?.length) return null
+    return lv.sem_texto ? 'Este PDF não tem texto (parece ser imagem), então não deu para ler o sumário.' : 'Não achei o sumário deste livro.'
+  }
+  if (tipo === 'turma') {
+    const t = p as unknown as PropostaTurma
+    const algo = t.professor || t.email || t.horarios?.length || t.referencias?.length || t.criterios?.length
+    return algo ? null : 'Não achei informações da turma neste arquivo.'
+  }
+  return null
+}

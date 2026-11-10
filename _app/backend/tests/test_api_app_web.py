@@ -40,3 +40,11 @@ def test_api_sem_barra_nao_vira_a_pagina_do_app(tmp_path):
     c = _cliente(tmp_path, com_dist=True)
     r = c.get("/api")
     assert r.status_code == 404 and '<div id="app">' not in r.text
+
+
+def test_index_sempre_conferido_e_arquivos_do_build_no_cache(tmp_path):
+    # depois de atualizar o app, o navegador não pode continuar com o index.html velho (que aponta para o build velho)
+    c = _cliente(tmp_path, com_dist=True)
+    assert c.get("/").headers["cache-control"] == "no-cache"
+    assert c.get("/qualquer/rota").headers["cache-control"] == "no-cache"
+    assert "immutable" in c.get("/assets/app.js").headers["cache-control"]

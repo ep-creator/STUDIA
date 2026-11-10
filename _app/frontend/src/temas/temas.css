@@ -6,9 +6,11 @@
   --fonte-texto: 'Inter Variable', system-ui, sans-serif;
   --fonte-titulo: 'Fraunces Variable', Georgia, serif;
   --raio: 4px;
-  --ok: #2e7d32;
-  --err: #c62828;
-  --dub: #f9a825;
+  --ok: #276d2c;
+  --err: #b71c1c;   /* 5,2:1 também no fundo da lateral */
+  --dub: #a87400;   /* traço da dúvida: 3,2:1 no papel (o amarelo vivo ficava em 1,7:1) */
+  /* o amarelo da dúvida não se lê como texto no papel: nos traços fica --dub, nas letras --dub-texto */
+  --dub-texto: #855800;
   --texto-sobre-destaque: #fff;
 }
 
@@ -21,6 +23,8 @@
   --texto: #141413;
   --suave: #5f5a52;
   --destaque: #d9572b;
+  /* a brasa em letra precisa ser mais funda que a dos traços para ler no papel (≥ 4,5:1) */
+  --destaque-texto: #ad3e18;
 }
 
 :root[data-tema='editorial-escuro'] {
@@ -31,10 +35,12 @@
   --texto: #efe6d6;
   --suave: #b3a994;
   --destaque: #f07a45;
+  --destaque-texto: #f07a45;
   --texto-sobre-destaque: #191714;
   --ok: #8fcf8f;
   --err: #f28b82;
   --dub: #f2c25b;
+  --dub-texto: #f2c25b;
 }
 
 * { box-sizing: border-box; }
@@ -62,7 +68,8 @@
 }
 a, button { transition: color var(--transicao), background-color var(--transicao), border-color var(--transicao), transform var(--transicao), box-shadow var(--transicao); }
 a:hover { text-decoration-color: var(--destaque); }
-:focus-visible { outline: 2px solid color-mix(in srgb, var(--destaque) 70%, transparent); outline-offset: 2px; }
+/* anel de foco na brasa de texto: passa de 3:1 no papel e na noite (a 70% ficava em 2,3:1 no claro) */
+:focus-visible { outline: 2px solid var(--destaque-texto); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* Fórmulas: as em texto Unicode mantêm a diagramação; as do KaTeX rolam só se não couberem */
@@ -74,13 +81,17 @@ html, body {
   background: var(--fundo);
   color: var(--texto);
   font-family: var(--fonte-texto);
-  font-size: 15px;
+  font-size: 16px;   /* sessões longas de leitura: 16 px de base (rótulos a 0.7rem ficam acima de 11 px) */
   line-height: 1.5;
 }
 
 h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; margin: 0 0 0.5rem; }
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+p, li, dd { text-wrap: pretty; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* texto de exemplo dos campos na cor secundária do tema, não no cinza do navegador */
+::placeholder { color: var(--suave); opacity: 1; }
 
 
 .cartao { background: transparent; border: 0; padding: 0; }
@@ -89,7 +100,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .acao-texto, .acao-suave, .acao-forte { font: inherit; cursor: pointer; text-decoration: none; }
 .acao-texto { background: none; border: 0; padding: 0; color: var(--suave); text-underline-offset: 3px; }
 .acao-texto:hover:not(:disabled) { color: var(--texto); text-decoration: underline; text-decoration-color: var(--destaque); }
-.acao-suave { background: var(--leve); border: 0; border-radius: 999px; padding: 0.2rem 0.8rem; color: var(--texto); }
+.acao-suave { background: var(--leve); border: 0; border-radius: 999px; padding: 0.32rem 1rem; color: var(--texto); }
 .acao-suave:hover:not(:disabled) { background: color-mix(in srgb, var(--texto) 11%, transparent); }
 .acao-forte { background: var(--texto); color: var(--fundo); border: 0; border-radius: 999px; padding: 0.25rem 1rem; font-weight: 500; }
 .acao-forte:hover:not(:disabled) { background: var(--destaque); color: var(--texto-sobre-destaque); }
@@ -100,7 +111,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .linha-acoes:hover .acoes-linha, .linha-acoes:focus-within .acoes-linha,
 .linha-acoes:has([aria-expanded='true']) .acoes-linha { opacity: 1; }
 
-.rotulo { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--suave); }
+.rotulo { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
+/* texto corrido longo (resumos, documentos, resoluções): no máximo ~70 caracteres por linha */
+/* Texto corrido em ~70 caracteres por linha (35rem em Inter 16px; medido: 42rem dava ~88). A medida vale para o texto,
+   não para o bloco: fórmulas em destaque, tabelas e código usam os 44rem inteiros (uma equação que rola de lado numa
+   matéria de cálculo custa mais que uma linha comprida). */
+.leitura-medida { max-width: 44rem; }
+.leitura-medida :is(p, li, blockquote, dd, h1, h2, h3, h4) { max-width: 35rem; }
+/* a fórmula em destaque escrita dentro de um parágrafo (ou de um item) herdaria o limite dele: esse parágrafo usa a coluna */
+.leitura-medida :is(p, li, blockquote, dd):has(.katex-display) { max-width: none; }
+/* título só para leitor de tela (telas de altura fixa que já mostram o nome na barra lateral) */
+.so-leitor { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .suave { color: var(--suave); }
 .numero-grande { font-family: var(--fonte-titulo); font-size: 3rem; line-height: 1; }
 

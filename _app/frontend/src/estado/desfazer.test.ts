@@ -36,7 +36,25 @@ test('desfazer avisa o que foi desfeito e recarrega', async () => {
   }))
   await desfazer()
   expect(avisos.lista.map((a) => a.texto)).toContain('Desfeito: Importar Stewart vol. 2')
-  expect(chamadas).toEqual(['POST /api/materias/ab/historico/desfazer', 'GET /api/materias/ab/painel?unidade=1'])
+  expect(chamadas).toEqual([
+    'GET /api/materias/ab/historico?limite=30', 'POST /api/materias/ab/historico/desfazer', 'GET /api/materias/ab/painel?unidade=1',
+  ])
+})
+
+test('a última ação é antiga: diz qual é e só desfaz se confirmar', async () => {
+  const chamadas: string[] = []
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit = {}) => {
+    chamadas.push(`${init.method ?? 'GET'} ${url}`)
+    if (url.includes('/historico?')) {
+      return json([{ id: 9, momento: '2020-01-02T10:00:00', descricao: 'IA: resolução 15.7-33', desfaz_grupo: null, desfeito_em: null }])
+    }
+    return json({ desfeito: null })
+  }))
+  await desfazer()
+  const aviso = avisos.lista.at(-1)!
+  expect(aviso.texto).toMatch(/^A última ação é de .*: IA: resolução 15\.7-33$/)
+  expect(chamadas).toEqual(['GET /api/materias/ab/historico?limite=30'])   // nada desfeito ainda
+  expect(aviso.acao?.rotulo).toBe('Desfazer mesmo')
 })
 
 test('nada para desfazer', async () => {

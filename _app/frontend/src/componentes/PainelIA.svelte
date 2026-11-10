@@ -8,7 +8,7 @@
   import { avisar, erro } from '../estado/avisos.svelte'
   import { desfazer } from '../estado/desfazer'
   import { ia } from '../estado/ia.svelte'
-  import { estadoMateria } from '../estado/materia.svelte'
+  import { estadoMateria, recarregar } from '../estado/materia.svelte'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash } from '../rotas/rota'
   import ConfigurarChave from './ConfigurarChave.svelte'
@@ -20,7 +20,8 @@
   const NOMES: Record<string, string> = {
     N1: 'N1 Dica', N2: 'N2 Caminho', N3: 'N3 Esboço', N4: 'N4 Resolução', resumir: 'Resumir a seção', plano: 'Plano de revisão',
   }
-  const CURTOS: Record<string, string> = { N1: 'N1', N2: 'N2', N3: 'N3', N4: 'N4' }   // o nome inteiro fica na dica
+  // no seletor aparece o que cada nível dá; o número (N1…N4) fica no nome acessível, na dica e na bolha do pedido
+  const CURTOS: Record<string, string> = { N1: 'Dica', N2: 'Caminho', N3: 'Esboço', N4: 'Resolução' }
   type Gravado = { tipo: string; id: number; titulo: string; grupo_id: number; historico?: boolean }
   type Item = { autor: string; texto: string; gravado?: Gravado }
 
@@ -30,8 +31,14 @@
   let aviso = $state<string | null>(null)       // o que a ferramenta está fazendo
   let ultimoCusto = $state<number | null>(null)
   let confirmar = $state<{ pedido: PedidoAgente; total: number; teto: number } | null>(null)
+  let confirmarResolucao = $state(false)   // N4 entrega a questão pronta: pergunta antes de pedir
   let falha = $state<{ texto: string; pedido: PedidoAgente; inicio: number; motivo?: string } | null>(null)
   let escrita = $state('')
+  // na questão, a conversa já gravada começa recolhida: reabrir para tentar de novo não pode mostrar a resposta
+  let anteriores = $state(0)
+  let verAnteriores = $state(false)
+  const recolher = $derived(papel === 'tutor' && anteriores > 0 && !verAnteriores)
+  const ultimoPedido = $derived([...itens.slice(0, anteriores)].reverse().find((i) => i.autor === 'voce')?.texto ?? null)
   let fontes: FonteResumo[] | null = null
   let corrente: AbortController | null = null   // a resposta em andamento; trocar de alvo a corta
 
@@ -41,6 +48,8 @@
     try {
       const c = await requisitar<ConversaSaida>('GET', `/api/materias/${uid}/agente/conversa?alvo=${encodeURIComponent(alvo)}&papel=${papel}`)
       itens = c.mensagens.map((m) => ({ autor: m.autor, texto: m.texto }))
+      anteriores = itens.length
+      verAnteriores = false
       estado = await requisitar<EstadoAgente>('GET', '/api/agente/estado')
     } catch {
       itens = []   // motor desligado ou matéria sem as tabelas ainda: o painel fica vazio, sem quebrar a tela
@@ -55,6 +64,7 @@
     respondendo = false
     aviso = null
     confirmar = null
+    confirmarResolucao = false
     falha = null
     void carregar().then(() => {
       if (ia.pendente && ia.alvo === alvo) {
@@ -76,6 +86,7 @@
     } else if (e.tipo === 'gravado') {
       itens.push({ autor: 'ferramenta', texto: `${e.dados.titulo} salva`, gravado: e.dados })
       itens.push({ autor: 'agente', texto: '' })
+      void recarregar()   // a tela fica sabendo do que foi gravado (ex.: o Ver resolução aparece na hora)
     } else if (e.tipo === 'confirmar') {
       confirmar = null
     } else if (e.tipo === 'fim') {
@@ -93,6 +104,7 @@
     if (falha) itens = itens.slice(0, falha.inicio)
     falha = null
     confirmar = null
+    confirmarResolucao = false
     const inicio = itens.length
     itens.push({ autor: 'voce', texto: p.texto ?? NOMES[p.atalho ?? ''] ?? '' })
     itens.push({ autor: 'agente', texto: '' })
@@ -132,7 +144,11 @@
   // N1–N4 formam um seletor só (o último pedido fica em destaque); os outros papéis têm um atalho solto
   const niveis = $derived(atalhos.length > 1 && atalhos.every((a) => /^N\d$/.test(a)))
   let ultimoAtalho = $state<string | null>(null)
-  const atalho = (a: string) => { ultimoAtalho = a; void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false }) }
+  const pedirAtalho = (a: string) => { ultimoAtalho = a; void enviar({ alvo, papel: papel as PedidoAgente['papel'], atalho: a as PedidoAgente['atalho'], confirmado: false }) }
+  const atalho = (a: string) => {
+    if (a === 'N4') confirmarResolucao = true
+    else pedirAtalho(a)
+  }
 
   function mandar(e: SubmitEvent) {
     e.preventDefault()
@@ -146,6 +162,7 @@
     try {
       const c = await requisitar<ConversaSaida>('POST', `/api/materias/${uid}/agente/conversa/recomecar`, { alvo, papel })
       itens = c.mensagens.map((m) => ({ autor: m.autor, texto: m.texto }))
+      anteriores = 0
       ultimoCusto = null
     } catch (e) {
       erro(e)
@@ -227,9 +244,25 @@
     <ConfigurarChave onsalvo={() => ia.versaoChave++} />
   {/if}
 
-  <div class="conversa" class:vazia={!itens.length && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
+  {#if confirmarResolucao}
+    <div class="alerta" role="alert">
+      <p>A resolução completa entrega a questão pronta e fica gravada.</p>
+      <button class="acao-suave" onclick={() => pedirAtalho('N4')}>Pedir a resolução</button>
+      <button class="acao-texto" onclick={() => (confirmarResolucao = false)}>Cancelar</button>
+    </div>
+  {/if}
+
+  {#if recolher}
+    <p class="anterior suave">
+      Conversa anterior{ultimoPedido ? ` · último pedido: ${ultimoPedido}` : ''}
+      <button class="acao-texto" aria-expanded="false" onclick={() => (verAnteriores = true)}>ver</button>
+    </p>
+  {/if}
+  <div class="conversa" class:vazia={itens.length <= (recolher ? anteriores : 0) && !aviso && !respondendo && !confirmar && !falha} aria-live="polite">
     {#each itens as item, i (i)}
-      {#if item.gravado}
+      {#if recolher && i < anteriores}
+        <!-- recolhida -->
+      {:else if item.gravado}
         {@const g = item.gravado}
         <div class="gravado" role="status">
           <span>✓ {item.texto}</span>
@@ -260,13 +293,13 @@
       <div class="alerta" role="alert">
         <p>{f.texto}</p>
         <button class="acao-suave" onclick={() => void enviar(f.pedido)}>Tentar de novo</button>
-        {#if f.motivo === 'chave_invalida'}<a class="acao-texto" href={montarHash({ tela: 'assistente', uid })}>trocar a chave</a>{/if}
+        {#if f.motivo === 'chave_invalida'}<button class="acao-texto" onclick={() => (ia.aberta = true)}>trocar a chave</button>{/if}
       </div>
     {/if}
   </div>
 
   <form onsubmit={mandar}>
-    <textarea aria-label="Mensagem para o assistente" placeholder="Pergunte sobre o que está aberto…" bind:value={escrita} rows="2"
+    <textarea aria-label="Mensagem para o assistente" placeholder={papel === 'tutor' ? 'Pergunte sobre esta questão…' : papel === 'resumidor' ? 'Pergunte sobre esta seção…' : 'Pergunte sobre a matéria…'} bind:value={escrita} rows="2"
       onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement).requestSubmit() } }}></textarea>
     <div class="envio">
       <span class="suave custo">
@@ -291,14 +324,18 @@
   .conversa.vazia { display: none; }
   .voce { margin: 0; align-self: flex-end; max-width: 85%; background: var(--leve); padding: 0.4rem 0.65rem; border-radius: 10px; white-space: pre-wrap; }
   .agente { line-height: 1.55; overflow-wrap: anywhere; }
-  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; font-size: 0.88rem; border-left: 2px solid var(--ok); padding-left: 0.5rem; }
+  .gravado { display: flex; flex-wrap: wrap; align-items: center; gap: 0.9rem; font-size: 0.88rem; color: var(--ok); }
+  .gravado .acao-texto { color: var(--suave); }
   .gravado span { margin-right: auto; }
   .aviso { margin: 0; font-size: 0.85rem; font-style: italic; }
-  .alerta { border-left: 2px solid var(--destaque); padding: 0.2rem 0 0.2rem 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .anterior { margin: 0; font-size: 0.88rem; display: flex; gap: 0.8rem; align-items: baseline; }
+  .alerta { padding: 0.5rem 0; border-top: 1px solid var(--fio); border-bottom: 1px solid var(--fio); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; }
   .alerta p { margin: 0; flex-basis: 100%; }
-  form { display: grid; gap: 0.35rem; }
+  /* o campo e o gasto do mês ficam presos ao pé da coluna: uma resolução longa não os empurra para fora da vista */
+  form { display: grid; gap: 0.35rem; position: sticky; bottom: 0; z-index: 1; background: var(--fundo); padding: 0.5rem 0 0.4rem; }
+  :global(.gaveta) form { background: var(--lateral); }
   .envio { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .custo { font-size: 0.78rem; }
-  .enviar { color: var(--destaque); font-weight: 500; }
+  .enviar { color: var(--destaque-texto); font-weight: 500; }
   textarea { width: 100%; box-sizing: border-box; resize: vertical; border: 0; border-radius: 8px; padding: 0.5rem 0.7rem; background: var(--leve); color: var(--texto); font: inherit; }
 </style>

@@ -36,7 +36,7 @@
 {/if}
 
 {#if proposta.topicos.length}
-  <h4>Tópicos do programa ligados a este livro</h4>
+  <h3>Tópicos do programa ligados a este livro</h3>
   <div class="vinculos">
     {#each proposta.topicos as t, i (`${t.topico_id}-${t.codigo}`)}
       <label>
@@ -59,5 +59,5 @@
   .duvida { background: color-mix(in srgb, var(--dub) 30%, transparent); }
   .vinculos { display: grid; gap: 0.2rem; }
   label { display: flex; gap: 0.4rem; align-items: center; }
-  h4 { margin: 1rem 0 0.4rem; font-family: var(--fonte-titulo); font-weight: 500; }
+  h3 { margin: 1rem 0 0.4rem; font-family: var(--fonte-titulo); font-weight: 500; }
 </style>

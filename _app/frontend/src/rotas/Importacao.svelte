@@ -1,7 +1,7 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
   import { type PropostaCalendario, type PropostaLista, type PropostaLivro, type PropostaOutro,
-    type PropostaPrograma, type PropostaTurma } from '../api/proposta'
+    type PropostaPrograma, type PropostaTurma, NOME_TIPO, propostaVazia } from '../api/proposta'
   import type { ImportacaoSaida, Painel, ResumoImportacao } from '../api/tipos'
   import FilaImportacao from '../componentes/FilaImportacao.svelte'
   import PropostaCalendarioView from '../componentes/PropostaCalendario.svelte'
@@ -100,6 +100,18 @@
     }
   }
 
+  // A leitura não achou nada: em vez de "Confirmar", guardar o PDF como referência (vai para a Biblioteca)
+  const vazia = $derived(imp ? propostaVazia(imp.tipo, imp.proposta) : null)
+  async function guardarComoReferencia() {
+    if (!imp) return
+    try {
+      abrir(await requisitar<ImportacaoSaida>('POST', `${base}/${imp.id}/tipo`, { tipo: 'outro' }))
+      await confirmar()
+    } catch (e) {
+      erro(e)
+    }
+  }
+
   async function descartar() {
     if (!imp) return
     try {
@@ -112,7 +124,7 @@
   }
 </script>
 
-<h2>Importar</h2>
+<h1>Adicionar material</h1>
 {#if indexando}<p class="suave" role="status">Indexando o livro para a busca…</p>{/if}
 
 <div class="importacao">
@@ -121,9 +133,13 @@
   <section class="proposta">
     {#if imp}
       {@const p = imp.proposta as { classificacao: { tipo: string; confianca: number; revisar: boolean } }}
-      <CabecalhoProposta tipo={imp.tipo} classificacao={p.classificacao} ontrocar={trocarTipo} />
+      <div class="cabeca"><CabecalhoProposta tipo={imp.tipo} classificacao={p.classificacao} ontrocar={trocarTipo} /></div>
 
-      {#if imp.tipo === 'lista'}
+      <!-- só o corpo rola: o cabeçalho (com o seletor de tipo) e o rodapé (Confirmar) ficam sempre à vista -->
+      <div class="corpo">
+      {#if vazia}
+        <!-- leitura vazia: as linhas "não encontrado" não ajudam; o rodapé diz o que faltou e o que fazer -->
+      {:else if imp.tipo === 'lista'}
         <PropostaListaView proposta={imp.proposta as PropostaLista} {unidades} alterar={alterar<PropostaLista>} />
       {:else if imp.tipo === 'programa'}
         <PropostaProgramaView proposta={imp.proposta as PropostaPrograma} alterar={alterar<PropostaPrograma>} />
@@ -136,13 +152,25 @@
       {:else}
         <p class="suave">{(imp.proposta as PropostaOutro).observacao}</p>
       {/if}
+      </div>
 
-      <footer>
-        <button class="acao-forte" onclick={confirmar}>Confirmar</button>
-        <button class="acao-texto" onclick={descartar}>descartar</button>
-        {#if imp.pendencias > 0}<span class="pendencias">{imp.pendencias} para conferir</span>{/if}
-      </footer>
-    {:else}
+      {#if vazia}
+        <footer class="vazia" role="status">
+          <p class="motivo">{vazia}</p>
+          <p class="suave">Se o tipo estiver errado ({NOME_TIPO[imp.tipo] ?? imp.tipo}), troque acima. Ou guarde o PDF só como referência, na Biblioteca.</p>
+          <div class="botoes">
+            <button class="acao-suave" onclick={() => void guardarComoReferencia()}>Guardar como referência</button>
+            <button class="acao-texto" onclick={descartar}>descartar</button>
+          </div>
+        </footer>
+      {:else}
+        <footer>
+          <button class="acao-forte" onclick={confirmar}>Confirmar</button>
+          <button class="acao-texto" onclick={descartar}>descartar</button>
+          {#if imp.pendencias > 0}<span class="pendencias">{imp.pendencias} {imp.pendencias === 1 ? 'item para conferir (marcado com “conferir”)' : 'itens para conferir (marcados com “conferir”)'}</span>{/if}
+        </footer>
+      {/if}
+    {:else if painel.importacoes_pendentes > 0}
       <p class="suave">Escolha um arquivo da fila.</p>
     {/if}
   </section>
@@ -151,7 +179,14 @@
 <style>
   .importacao { display: grid; grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr); gap: 2.4rem; align-items: start; }
   .importacao > :global(*) { min-width: 0; }
-  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; border-left: 1px solid var(--fio); padding-left: 2rem; }
+  .proposta { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); display: flex; flex-direction: column; border-left: 1px solid var(--fio); padding-left: 2rem; }
+  .cabeca { position: relative; z-index: 2; }
+  .corpo { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; }
   footer { display: flex; gap: 1.1rem; align-items: center; margin-top: 1.25rem; }
-  .pendencias { color: var(--dub); font-size: 0.85rem; }
+  .pendencias { color: var(--dub-texto); font-size: 0.85rem; }
+  h1 { font-size: 2.2rem; margin: 0.6rem 0 1.2rem; }
+  .vazia { display: grid; gap: 0.4rem; justify-items: start; }
+  .vazia p { margin: 0; }
+  .motivo { font-family: var(--fonte-titulo); font-size: 1.15rem; }
+  .botoes { display: flex; gap: 1.1rem; align-items: center; margin-top: 0.4rem; }
 </style>

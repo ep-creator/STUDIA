@@ -4,6 +4,7 @@
   import Marca from './Marca.svelte'
   import Seletor from './Seletor.svelte'
   import SeletorTema from './SeletorTema.svelte'
+  import { ajuda } from '../estado/ajuda.svelte'
 
   let { rota, materias, unidade, pendencias }: {
     rota: Exclude<Rota, { tela: 'materias' }>
@@ -12,11 +13,12 @@
     pendencias: number
   } = $props()
 
-  const AREAS: [Area, string][] = [
-    ['painel', 'Painel'], ['topicos', 'Tópicos'], ['listas', 'Listas'], ['cronograma', 'Cronograma'],
-    ['documentos', 'Documentos'], ['formulario', 'Formulário'],
-  ]
+  // As quatro áreas do estudo; abaixo, o que se usa de vez em quando (plano inteiro, folha, material, histórico)
+  const AREAS: [Area, string][] = [['painel', 'Hoje'], ['topicos', 'Tópicos'], ['listas', 'Praticar'], ['documentos', 'Biblioteca']]
+  const APOIO: [Area, string][] = [['cronograma', 'Plano'], ['formulario', 'Folha de fórmulas']]
   const ativa = $derived(rota.tela === 'materia' ? rota.area : null)
+  const hrefArea = (area: Area) =>
+    montarHash({ tela: 'materia', uid: rota.uid, unidade: area === 'painel' && unidade === null ? null : unidade, area })
 </script>
 
 <nav class="lateral nao-imprimir" aria-label="Áreas da matéria">
@@ -29,35 +31,41 @@
     onmudar={(uid) => (location.hash = montarHash({ tela: 'materia', uid, unidade: null, area: 'painel' }))}
   />
 
-  <ul>
-    {#each AREAS as [area, nome] (area)}
+  <ul class="principais">
+    {#each AREAS as [area, nome], i (area)}
       <li>
-        <a
-          class:ativa={ativa === area}
-          aria-current={ativa === area ? 'page' : undefined}
-          href={montarHash({ tela: 'materia', uid: rota.uid, unidade: area === 'painel' && unidade === null ? null : unidade, area })}
-        >{nome}</a>
+        {#if unidade === null && area !== 'painel'}
+          <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
+        {:else}
+          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}
+            aria-keyshortcuts={`Alt+${i + 1}`} title={`${nome} (Alt+${i + 1})`}>{nome}</a>
+        {/if}
       </li>
     {/each}
   </ul>
   <hr />
-  <ul>
+  <ul class="apoio">
+    {#each APOIO as [area, nome] (area)}
+      <li>
+        {#if unidade === null}
+          <span class="vazia" aria-disabled="true" title="Adicione material primeiro">{nome}</span>
+        {:else}
+          <a class:ativa={ativa === area} aria-current={ativa === area ? 'page' : undefined} href={hrefArea(area)}>{nome}</a>
+        {/if}
+      </li>
+    {/each}
     <li>
-      <a class:ativa={rota.tela === 'assistente'} aria-current={rota.tela === 'assistente' ? 'page' : undefined}
-        href={montarHash({ tela: 'assistente', uid: rota.uid })}>Assistente</a>
-    </li>
-  </ul>
-  <hr />
-  <ul>
-    <li>
-      <a class:ativa={rota.tela === 'importar'} href={montarHash({ tela: 'importar', uid: rota.uid })}>
-        Importar {#if pendencias > 0}<span class="selo" aria-label={`${pendencias} pendentes`}>{pendencias}</span>{/if}
+      <a class:ativa={rota.tela === 'importar'} aria-current={rota.tela === 'importar' ? 'page' : undefined} href={montarHash({ tela: 'importar', uid: rota.uid })}>
+        ＋ Adicionar material{#if pendencias > 0}<span class="selo" aria-label={`, ${pendencias} para conferir`}>{pendencias}</span>{/if}
       </a>
     </li>
-    <li><a class:ativa={rota.tela === 'historico'} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>
+    <li><a class:ativa={rota.tela === 'historico'} aria-current={rota.tela === 'historico' ? 'page' : undefined} href={montarHash({ tela: 'historico', uid: rota.uid })}>Histórico</a></li>
   </ul>
 
-  <div class="rodape"><SeletorTema /></div>
+  <div class="rodape">
+    <button class="acao-texto ajuda" onclick={() => (ajuda.aberta = true)} title="Atalhos e ajuda (?)">Atalhos e ajuda <kbd>?</kbd></button>
+    <SeletorTema />
+  </div>
 </nav>
 
 <style>
@@ -66,11 +74,18 @@
   ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.15rem; }
   a { display: block; text-decoration: none; padding: 0.25rem 0.5rem; border-radius: 6px; }
   a.ativa { background: var(--cartao); font-weight: 600; }
-  ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque); }
+  ul a:hover:not(.ativa) { background: var(--realce); color: var(--destaque-texto); }
   ul a { border-left: 2px solid transparent; border-radius: 0; }
   ul a:hover:not(.ativa) { background: transparent; border-left-color: color-mix(in srgb, var(--destaque) 45%, transparent); }
   a.ativa { background: transparent; border-left: 2px solid var(--destaque); border-radius: 0; }
   hr { border: 0; border-top: 1px solid var(--borda); opacity: 0.4; width: 100%; }
-  .selo { background: var(--dub); color: #000; border-radius: 999px; padding: 0 0.45rem; font-size: 0.75rem; margin-left: 0.25rem; }
-  .rodape { margin-top: auto; }
+  .principais a { font-size: 1.02rem; padding-top: 0.32rem; padding-bottom: 0.32rem; }
+  .apoio a { color: var(--suave); font-size: 0.92rem; }
+  .apoio a:hover, .apoio a.ativa { color: var(--texto); }
+  /* número de pendências: texto na brasa, sem pílula (o amarelo é da dúvida) */
+  .selo { color: var(--destaque-texto); font-weight: 600; font-size: 0.85rem; margin-left: 0.45rem; font-variant-numeric: tabular-nums; }
+  .vazia { display: block; padding: 0.25rem 0.5rem; border-left: 2px solid transparent; color: var(--suave); opacity: 0.6; cursor: default; }
+  .rodape { margin-top: auto; display: grid; gap: 0.8rem; }
+  .ajuda { justify-self: start; font-size: 0.9rem; padding: 0 0.5rem; }
+  .ajuda kbd { font-family: var(--fonte-texto); font-size: 0.8rem; margin-left: 0.3rem; padding: 0 0.35rem; border-radius: 4px; background: var(--leve); }
 </style>

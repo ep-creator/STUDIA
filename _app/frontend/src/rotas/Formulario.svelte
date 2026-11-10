@@ -39,7 +39,7 @@
 </script>
 
 <header class="cabecalho">
-  <h2>Formulário · {nomeUnidade(unidade.numero)}</h2>
+  <h1>Folha de fórmulas · {nomeUnidade(unidade.numero)}</h1>
   <div class="nao-imprimir">
     <button class="acao-texto" onclick={() => (editando = {})}>+ fórmula</button>
     <button class="acao-texto" onclick={() => window.print()} disabled={painel.formulas.length === 0}>folha para imprimir</button>
@@ -57,7 +57,7 @@
 {/if}
 {#each grupos as [topico, formulas] (topico)}
   <section class="grupo">
-    <h3>{topico}</h3>
+    {#if grupos.length > 1 || topico !== 'Sem tópico'}<h2>{topico}</h2>{/if}
     {#each formulas as f (f.id)}
       <CartaoFormula formula={f} oneditar={() => (editando = f)} onapagar={() => apagar(f)} />
     {/each}
@@ -67,6 +67,8 @@
 <style>
   .cabecalho { display: flex; align-items: baseline; gap: 1.2rem; }
   .cabecalho div { display: flex; gap: 1.1rem; }
+  h1 { font-size: 2.2rem; margin: 0 0 0.6rem; }
+  h2 { font-size: 1.15rem; margin: 1.2rem 0 0.4rem; }
   .grupo { margin-top: 1.25rem; }
   @media print {
     .grupo { columns: 2; column-gap: 2rem; }

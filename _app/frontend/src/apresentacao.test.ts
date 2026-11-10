@@ -37,6 +37,39 @@ test('texto da prova no topo', async () => {
   expect(textoTopoProva(null, hoje)).toBe('Sem data de prova')
 })
 
+test('prova perto: de hoje até 7 dias, nunca depois de passar', async () => {
+  const { provaPerto } = await import('./apresentacao')
+  const hoje = new Date(2026, 9, 22, 21, 0)
+  const em = (data: string) => provaPerto({ data, hora_inicio: null }, hoje)
+  expect(em('2026-10-22')).toBe(true)    // hoje
+  expect(em('2026-10-29')).toBe(true)    // 7 dias
+  expect(em('2026-10-30')).toBe(false)   // 8 dias
+  expect(em('2026-10-21')).toBe(false)   // já passou
+  expect(provaPerto(null, hoje)).toBe(false)
+})
+
+test('nome legível de um PDF', async () => {
+  const { nomeLegivel } = await import('./apresentacao')
+  expect(nomeLegivel({ titulo: '', caminho: 'fontes/listas/Lista1_2026-1.pdf' })).toBe('Lista1 2026-1')
+  expect(nomeLegivel({ titulo: 'Stewart_1_ptbr', caminho: 'x.pdf' })).toBe('Stewart 1 ptbr')
+  expect(nomeLegivel({ titulo: 'Programa da disciplina', caminho: 'x.pdf' })).toBe('Programa da disciplina')
+})
+
+test('título que cita a seção pelo código', async () => {
+  const { citaSecao } = await import('./apresentacao')
+  expect(citaSecao('Massa de uma lâmina (15.5)', '15.5')).toBe(true)
+  expect(citaSecao('Coordenadas (15.50)', '15.5')).toBe(false)
+  expect(citaSecao('Seção 115.5', '15.5')).toBe(false)
+  expect(citaSecao('Polares 1525', '15.5')).toBe(false)
+})
+
+test('foco da sessão: título em negrito e o detalhe sem o travessão', async () => {
+  const { focoDaSessao } = await import('./apresentacao')
+  expect(focoDaSessao('**15.5 Aplicações** — massa, centro de massa\n\nExercícios: 15.5: 11')).toEqual({ titulo: '15.5 Aplicações', detalhe: 'massa, centro de massa' })
+  expect(focoDaSessao('**Integrais em polares**\n\nExercícios')).toEqual({ titulo: 'Integrais em polares', detalhe: '' })
+  expect(focoDaSessao('Revisão geral')).toEqual({ titulo: 'Revisão geral', detalhe: '' })
+})
+
 test('ordem natural de nomes', async () => {
   const { compararNomes } = await import('./apresentacao')
   expect(['Aula 10', 'Aula 2', 'Aula 1'].sort(compararNomes)).toEqual(['Aula 1', 'Aula 2', 'Aula 10'])
@@ -83,4 +116,13 @@ test('desempenho de uma lista conta acertos, erros, dúvidas e o que falta', asy
   const { desempenho } = await import('./apresentacao')
   expect(desempenho({ questoes: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] }, { '1': 'ok', '2': 'ok', '3': 'err' }))
     .toEqual({ ok: 2, err: 1, dub: 0, falta: 1, total: 4 })
+})
+
+test('do trecho do livro, só o exercício pedido (e o enunciado do bloco, se houver)', async () => {
+  const { trechoDoExercicio } = await import('./apresentacao')
+  const trecho = '45–50 Faça o mapa de contorno.\n46. f (x, y) = ln(x²+ 4y²)\n47. f (x, y) = yex\n51–52 Faça o esboço.\n51. f (x, y) = x²+ 9y²'
+  expect(trechoDoExercicio(trecho, '46')).toBe('45–50 Faça o mapa de contorno.\n46. f (x, y) = ln(x²+ 4y²)')
+  expect(trechoDoExercicio(trecho, '51')).toBe('51–52 Faça o esboço.\n51. f (x, y) = x²+ 9y²')
+  expect(trechoDoExercicio('46. f (x, y)\ncontinua aqui\n47. outra', '46')).toBe('46. f (x, y)\ncontinua aqui')
+  expect(trechoDoExercicio('texto sem numeração', '46')).toBe('texto sem numeração')
 })

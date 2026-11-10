@@ -1,14 +1,18 @@
 <script lang="ts">
-  // Busca na matéria (Ctrl K): procura em livros, listas e textos e abre o resultado no lugar certo
-  // (PDF na página; texto no bloco ## que casou). Teclado: setas andam, Enter abre, Esc fecha.
+  // Busca na matéria (Ctrl K): em cima, "Ir para" (áreas, unidades, tópicos e questões pelo código, como "14.1 46");
+  // embaixo, o conteúdo (livros, listas e textos), que abre no lugar certo (PDF na página; texto no bloco ## que casou).
+  // Teclado: setas andam, Enter abre, Esc fecha e devolve o foco a quem abriu.
   import { onDestroy, tick, untrack } from 'svelte'
   import { requisitar } from '../api/cliente'
-  import type { ExercicioLivro, ResultadoBusca } from '../api/tipos'
+  import type { ExercicioLivro, Indice, Painel, ResultadoBusca } from '../api/tipos'
+  import { destinos } from '../irPara'
   import { slugTitulo } from '../markdown'
   import { pedido } from '../estado/pedido.svelte'
   import { montarHash } from '../rotas/rota'
 
-  let { uid, unidade, aberta, onfechar }: { uid: string; unidade: number | null; aberta: boolean; onfechar: () => void } = $props()
+  let { uid, unidade, painel, aberta, onfechar }: {
+    uid: string; unidade: number | null; painel: Painel; aberta: boolean; onfechar: () => void
+  } = $props()
 
   type Resultado = ResultadoBusca['resultados'][number]
   type Filtro = 'tudo' | 'livros' | 'listas' | 'textos'
@@ -38,14 +42,52 @@
     q.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().split(/[^a-z0-9]+/).some((p) => p.length >= 2 && !VAZIAS.has(p))
 
   const grupoDe = (r: Resultado) => (Object.keys(TIPOS) as (keyof typeof TIPOS)[]).find((g) => TIPOS[g].includes(r.tipo)) ?? 'outros'
-  const agrupados = $derived(
-    [
-      ...GRUPOS.map(([g, nome]) => ({ nome, itens: resultados.filter((r) => grupoDe(r) === g) })),
+  // o mesmo título várias vezes (páginas vizinhas da mesma seção) vira um resultado só, com as outras páginas ao lado
+  // preenchido junto com os resultados (dentro do $derived abaixo), por isso não é estado próprio
+  const outrasPaginas = new Map<number, number[]>()
+  function semRepetir(itens: Resultado[]): Resultado[] {
+    const primeiro = new Map<string, Resultado>()
+    const lista: Resultado[] = []
+    for (const r of itens) {
+      const p = primeiro.get(r.titulo)
+      if (p) {
+        if (r.pagina && r.pagina !== p.pagina) {
+          const ja = outrasPaginas.get(p.trecho_id) ?? []
+          if (!ja.includes(r.pagina)) outrasPaginas.set(p.trecho_id, [...ja, r.pagina].sort((a, b) => a - b))
+        }
+        continue
+      }
+      primeiro.set(r.titulo, r)
+      lista.push(r)
+    }
+    return lista
+  }
+  // trecho de PDF de livro de cálculo costuma sair quebrado (símbolos viram letras soltas): aí só o título e a página
+  const legivel = (t: string) => {
+    const palavras = t.replace(/[[\]]/g, '').split(/\s+/).filter(Boolean)
+    const soltas = palavras.filter((w) => /^[^\p{L}\p{N}]*\p{L}[^\p{L}\p{N}]*$/u.test(w)).length
+    // conta o que não é letra, número, pontuação comum ou sinal de conta simples (os [ ] são as marcas da busca)
+    const limpo = t.replace(/[[\]]/g, '')
+    const simbolos = (limpo.match(/[^\p{L}\p{N}\s.,;:()!?"'%/–—=+<>≤≥²³·-]/gu) ?? []).length
+    return palavras.length > 0 && soltas / palavras.length < 0.3 && simbolos / limpo.length < 0.06
+  }
+  const agrupados = $derived.by(() => {
+    outrasPaginas.clear()
+    return [
+      ...GRUPOS.map(([g, nome]) => ({ nome, itens: semRepetir(resultados.filter((r) => grupoDe(r) === g)) })),
       { nome: 'Exercícios do livro', itens: exercicios.map((e) => e.exercicio) },
-    ].filter((g) => g.itens.length),
-  )
+    ].filter((g) => g.itens.length)
+  })
   const respostaDe = $derived(new Map(exercicios.map((e) => [e.exercicio.trecho_id, e.resposta])))
   const ordem = $derived(agrupados.flatMap((g) => g.itens))
+  // o índice da matéria inteira (questões e tópicos de todas as unidades), lido ao abrir a busca
+  let indice = $state<Indice | null>(null)
+  $effect(() => {
+    if (!aberta) return
+    requisitar<Indice>('GET', `/api/materias/${encodeURIComponent(uid)}/indice`).then((i) => (indice = i), () => (indice = null))
+  })
+  const irPara = $derived(destinos(consulta, painel, indice))
+  const total = $derived(irPara.length + ordem.length)
 
   async function buscar() {
     const q = consulta.trim()
@@ -88,9 +130,22 @@
   })
   onDestroy(() => clearTimeout(espera))
 
+  // abre com o foco no campo; fecha devolvendo o foco a quem abriu (o botão da busca ou o que estava focado)
+  let antes: HTMLElement | null = null
   $effect(() => {
-    if (aberta) void tick().then(() => campo?.focus())
+    if (aberta) {
+      antes = document.activeElement as HTMLElement | null
+      void tick().then(() => campo?.focus())
+    } else if (antes) {
+      antes.focus?.()
+      antes = null
+    }
   })
+
+  function ir(href: string) {
+    location.hash = href
+    onfechar()
+  }
 
   /** "15.4 Integrais — Mudança para polares" → âncora do bloco ## (o texto antes do " — " é o título do documento). */
   function ancoraDe(titulo: string): string | null {
@@ -111,14 +166,17 @@
 
   function teclar(e: KeyboardEvent) {
     if (e.key === 'Escape') { e.preventDefault(); onfechar() }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); ativo = Math.min(ativo + 1, ordem.length - 1) }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); ativo = Math.min(ativo + 1, total - 1) }
     else if (e.key === 'ArrowUp') { e.preventDefault(); ativo = Math.max(ativo - 1, 0) }
-    else if (e.key === 'Enter' && ordem[ativo]) { e.preventDefault(); abrir(ordem[ativo]) }
+    else if (e.key === 'Enter' && ativo < irPara.length) { e.preventDefault(); ir(irPara[ativo].href) }
+    else if (e.key === 'Enter' && ordem[ativo - irPara.length]) { e.preventDefault(); abrir(ordem[ativo - irPara.length]) }
   }
 
   // o trecho do FTS marca as palavras com [ ]; o resto é escapado antes de virar <mark>
   function destacar(texto: string): string {
-    const seguro = texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // sem a marcação do Markdown nem os $ do LaTeX: o trecho é uma prévia em texto
+    const limpo = texto.replace(/\*\*|__|`|\$|^#+\s*|\s\|\s?/gm, ' ').replace(/\s+/g, ' ')
+    const seguro = limpo.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     return seguro.replace(/\[([^\]]*)\]/g, '<mark>$1</mark>')
   }
 </script>
@@ -134,10 +192,10 @@
       bind:value={consulta}
       oninput={agendar}
       role="combobox"
-      aria-expanded={ordem.length > 0}
+      aria-expanded={total > 0}
       aria-controls="busca-resultados"
       aria-label="Buscar na matéria"
-      placeholder="Buscar na matéria…"
+      placeholder="Buscar ou ir para… (ex.: 14.1 46, polares, Praticar)"
       autocomplete="off"
     />
     <div class="filtros">
@@ -156,10 +214,19 @@
     {#if montando}<p class="aviso">Montando o índice… os resultados podem ainda não incluir tudo.</p>{/if}
 
     <div class="resultados" id="busca-resultados" role="listbox" aria-label="Resultados">
+      {#if irPara.length}
+        <div class="grupo rotulo">Ir para</div>
+        {#each irPara as d, i (d.href + d.rotulo)}
+          <div class="item ir" class:ativo={i === ativo} role="option" tabindex="-1" aria-selected={i === ativo}
+            onmouseenter={() => (ativo = i)} onclick={() => ir(d.href)} onkeydown={teclar}>
+            <span class="titulo">{d.rotulo}</span> <span class="suave detalhe-ir">{d.detalhe}</span>
+          </div>
+        {/each}
+      {/if}
       {#each agrupados as g (g.nome)}
         <div class="grupo rotulo">{g.nome}</div>
         {#each g.itens as r (r.trecho_id)}
-          {@const i = ordem.indexOf(r)}
+          {@const i = irPara.length + ordem.indexOf(r)}
           <div
             class="item"
             class:ativo={i === ativo}
@@ -171,10 +238,10 @@
             onkeydown={teclar}
           >
             <div class="titulo">
-              {r.titulo}{#if r.pagina}<span class="suave"> · p. {r.pagina}</span>{/if}
+              {r.titulo.replace(/\.pdf$/i, '').replace(/_+/g, ' ')}{#if r.pagina}<span class="suave"> · p. {r.pagina}{#if outrasPaginas.get(r.trecho_id)?.length}, também {outrasPaginas.get(r.trecho_id)?.join(', ')}{/if}</span>{/if}
               {#if r.por === 'sentido'}<span class="sentido" title="Achado pelo sentido, sem palavras em comum com a busca">pelo sentido</span>{/if}
             </div>
-            <div class="trecho">{@html destacar(r.trecho)}</div>
+            {#if legivel(r.trecho)}<div class="trecho">{@html destacar(r.trecho)}</div>{/if}
             {#if respostaDe.get(r.trecho_id)}<div class="resposta"><strong>Resposta:</strong> {respostaDe.get(r.trecho_id)?.trecho}</div>{/if}
           </div>
         {/each}
@@ -200,20 +267,20 @@
   input { border: 0; border-bottom: 1px solid color-mix(in srgb, var(--borda) 50%, transparent); background: transparent; padding: 0.9rem 1.1rem; font-size: 1.1rem; outline: none; }
   .filtros { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding: 0.55rem 1rem; border-bottom: 1px solid color-mix(in srgb, var(--borda) 30%, transparent); }
   .filtros div { display: flex; gap: 0.25rem; }
-  .filtros button { background: none; border: 1px solid transparent; border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.82rem; color: var(--suave); cursor: pointer; }
-  .filtros button:hover { color: var(--destaque); }
-  .filtros button.ativo { border-color: var(--destaque); color: var(--destaque); }
-  .aviso { margin: 0; padding: 0.5rem 1.1rem; font-size: 0.85rem; color: var(--destaque); }
+  .filtros div { gap: 0.9rem; }
+  .filtros button { background: none; border: 0; border-bottom: 1.5px solid transparent; border-radius: 0; padding: 0.1rem 0 0.15rem; font-size: 0.85rem; color: var(--suave); cursor: pointer; }
+  .filtros button:hover { color: var(--texto); }
+  .filtros button.ativo { border-bottom-color: var(--destaque); color: var(--texto); }
+  .aviso { margin: 0; padding: 0.5rem 1.1rem; font-size: 0.85rem; color: var(--destaque-texto); }
   .resultados { overflow-y: auto; padding: 0.3rem 0.5rem 0.7rem; }
   .grupo { margin: 0.6rem 0.6rem 0.2rem; }
   .item { padding: 0.45rem 0.6rem; border-radius: 6px; cursor: pointer; border-left: 2px solid transparent; }
-  .item.ativo { background: var(--realce); border-left-color: var(--destaque); }
+  .item.ativo { background: var(--leve); border-left-color: var(--destaque); }
   .titulo { font-weight: 600; font-size: 0.95rem; }
-  .sentido {
-    margin-left: 0.4rem; padding: 0 0.35rem; border-radius: 4px; vertical-align: 0.1em; font-size: 0.66rem; font-weight: 600;
-    letter-spacing: 0.04em; color: var(--destaque); border: 1px solid color-mix(in srgb, var(--destaque) 50%, transparent);
-  }
-  .item.ativo .titulo { color: var(--destaque); }
+  /* "pelo sentido": texto pequeno em tinta suave, sem moldura (achado pela busca semântica) */
+  .sentido { margin-left: 0.5rem; font-size: 0.75rem; font-weight: 400; color: var(--suave); }
+  .item.ir { display: flex; align-items: baseline; gap: 0.6rem; padding-top: 0.35rem; padding-bottom: 0.35rem; }
+  .detalhe-ir { font-size: 0.85rem; }
   .resposta { font-size: 0.82rem; margin-top: 0.2rem; color: var(--texto); }
   .trecho { font-size: 0.85rem; color: var(--suave); margin-top: 0.15rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .trecho :global(mark) { background: none; color: var(--texto); font-weight: 600; }
