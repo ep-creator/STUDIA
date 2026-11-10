@@ -318,3 +318,9 @@ def test_sessoes_que_ficaram_para_tras(con, plano):
 def test_proximos_dias_sao_da_unidade_mostrada(con, plano):
     assert all(i["unidade"] in (None, 2) for i in progresso.hoje(con, date(2099, 4, 15), 2)["proximos"])
 
+
+def test_pagina_do_topico_de_hoje_aponta_a_sessao(con, plano):
+    hoje_ = progresso.pagina_topico(con, plano.aplicacoes, HOJE)          # a S2 (15.5) é a sessão de hoje
+    assert hoje_["sessao_hoje"]["codigo"] == "S2"
+    assert progresso.pagina_topico(con, plano.polares, HOJE)["sessao_hoje"] is None   # tópico de sessão já passada
+

@@ -62,6 +62,18 @@
     }
     return null
   })
+  // a ação da página: o tópico de hoje se pratica pela sessão de hoje (as questões dela, na ordem dela, como em Hoje);
+  // os outros, pela primeira questão ainda não feita
+  const praticar = $derived.by(() => {
+    if (!dados) return null
+    if (dados.sessao_hoje) {
+      return { rotulo: `Praticar a sessão de hoje (${dados.sessao_hoje.codigo})`,
+        href: montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'listas', sessao: dados.sessao_hoje.id }) }
+    }
+    if (!comecar) return null
+    return { rotulo: `Praticar: começar pela ${comecar.lista.codigo} #${comecar.questao.rotulo}`,
+      href: montarHash({ tela: 'materia', uid, unidade: comecar.lista.unidade, area: 'listas', questao: comecar.questao.id }) }
+  })
 </script>
 
 {#if dados && t}
@@ -79,10 +91,8 @@
           </button>
         {/each}
       </p>
-      {#if comecar}
-        <button class="acao-forte comecar" onclick={() => abrirQuestao(comecar.questao.id, comecar.lista.unidade)}>
-          Praticar: começar pela {comecar.lista.codigo} #{comecar.questao.rotulo}
-        </button>
+      {#if praticar}
+        <a class="acao-forte comecar" href={praticar.href}>{praticar.rotulo}</a>
       {/if}
     </header>
 
@@ -173,7 +183,9 @@
   .erros { color: var(--err); }
 
   .colunas { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: 2rem 4rem; align-items: start; padding-top: 1.2rem; border-top: 1px solid var(--fio); }
-  .leitura { max-width: 35rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
+  /* o texto em ~70 caracteres; as fórmulas em destaque e as tabelas usam a coluna inteira (como em .leitura-medida) */
+  .leitura { max-width: 44rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
+  .leitura :global(:is(p, li, blockquote, dd, h1, h2, h3, h4)) { max-width: 35rem; }
   .abas { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-bottom: 1rem; }
   .abas button { background: none; border: 0; padding: 0 0 2px; font: inherit; font-family: var(--fonte-titulo); color: var(--suave); border-bottom: 1.5px solid transparent; cursor: pointer; }
   .abas button.ativa { color: var(--texto); border-bottom-color: var(--destaque); }

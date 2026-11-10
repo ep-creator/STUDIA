@@ -113,8 +113,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .rotulo { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--suave); }
 /* texto corrido longo (resumos, documentos, resoluções): no máximo ~70 caracteres por linha */
-/* ~70 caracteres por linha em Inter 16px (medido: 42rem e 68ch davam ~88; o "ch" é a largura do "0", mais larga que a média) */
-.leitura-medida { max-width: 35rem; }
+/* Texto corrido em ~70 caracteres por linha (35rem em Inter 16px; medido: 42rem dava ~88). A medida vale para o texto,
+   não para o bloco: fórmulas em destaque, tabelas e código usam os 44rem inteiros (uma equação que rola de lado numa
+   matéria de cálculo custa mais que uma linha comprida). */
+.leitura-medida { max-width: 44rem; }
+.leitura-medida :is(p, li, blockquote, dd, h1, h2, h3, h4) { max-width: 35rem; }
 /* título só para leitor de tela (telas de altura fixa que já mostram o nome na barra lateral) */
 .so-leitor { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .suave { color: var(--suave); }

@@ -19,6 +19,7 @@ function dados(extra: Partial<Dados> = {}): Dados {
       { id: 3, rotulo: '9', estado: null, resolucao_id: null, trabalhada: false },
     ] }],
     resolucoes: [{ id: 52, questao_id: 2, rotulo: '15.4 #8' }],
+    sessao_hoje: null,
     ...extra,
   }
 }
@@ -75,6 +76,12 @@ test('mais de um resumo vira abas', async () => {
 
 test('praticar o tópico começa pela primeira questão ainda não trabalhada', async () => {
   render(TopicoPagina, { uid: 'ab', topico: 13, versao: 1 })
-  await userEvent.click(await screen.findByRole('button', { name: 'Praticar: começar pela 15.4 #9' }))
-  expect(location.hash).toBe('#/m/ab/u/3/listas/3')
+  expect(await screen.findByRole('link', { name: 'Praticar: começar pela 15.4 #9' })).toHaveAttribute('href', '#/m/ab/u/3/listas/3')
+})
+
+test('o tópico de hoje se pratica pela sessão de hoje', async () => {
+  resposta = dados({ sessao_hoje: { id: 29, codigo: 'S6' } })
+  render(TopicoPagina, { uid: 'ab', topico: 13, versao: 1 })
+  expect(await screen.findByRole('link', { name: 'Praticar a sessão de hoje (S6)' })).toHaveAttribute('href', '#/m/ab/u/3/listas?sessao=29')
+  expect(screen.queryByRole('link', { name: /começar pela/ })).toBeNull()
 })

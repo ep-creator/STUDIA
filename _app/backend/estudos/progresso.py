@@ -269,7 +269,11 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
     ).fetchone()
     if t is None:
         raise NaoEncontrado(f"Tópico {topico_id} não existe")
-    progresso_topico = next(x for x in topicos(con, t["unidade_id"], hoje) if x["id"] == topico_id)
+    todas = sessoes(con, hoje)
+    progresso_topico = next(x for x in topicos(con, t["unidade_id"], hoje, todas) if x["id"] == topico_id)
+    # o tópico é o da sessão de hoje: praticar o tópico é praticar a sessão (as questões dela, na ordem dela)
+    foco = _foco(todas, hoje) if progresso_topico["estado"] == "hoje" else None
+    sessao_hoje = {"id": foco["id"], "codigo": foco["codigo"]} if foco and foco["questao_ids"] else None
     secoes_lista = _secoes_das_listas(con)
     secoes, listas_ids = _ligacoes(con, topico_id, secoes_lista)
     secao_ids = sorted(secoes, key=lambda s: _secao(con, s)["pagina_pdf_ini"])
@@ -312,6 +316,7 @@ def pagina_topico(con: sqlite3.Connection, topico_id: int, hoje: date) -> dict:
     return {
         "topico": progresso_topico, "unidade": t["numero"], "secoes": [_secao(con, s) for s in secao_ids],
         "resumos": resumos, "formulas": formulas, "listas": listas, "resolucoes": resolvidas,
+        "sessao_hoje": sessao_hoje,
     }
 
 

@@ -1933,6 +1933,13 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** SessaoRef */
+        SessaoRef: {
+            /** Id */
+            id: number;
+            /** Codigo */
+            codigo: string;
+        };
         /** SugestaoSecao */
         SugestaoSecao: {
             /** Secao Id */
@@ -2027,6 +2034,7 @@ export interface components {
             listas: components["schemas"]["ListaTopico"][];
             /** Resolucoes */
             resolucoes: components["schemas"]["ResolucaoTopico"][];
+            sessao_hoje: components["schemas"]["SessaoRef"] | null;
         };
         /** TopicoProgresso */
         TopicoProgresso: {

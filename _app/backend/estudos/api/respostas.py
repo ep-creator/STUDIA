@@ -230,6 +230,11 @@ class ResolucaoTopico(TypedDict):
     rotulo: str
 
 
+class SessaoRef(TypedDict):
+    id: int
+    codigo: str
+
+
 class TopicoPagina(TypedDict):
     topico: TopicoProgresso
     unidade: int
@@ -238,6 +243,7 @@ class TopicoPagina(TypedDict):
     formulas: list[Formula]
     listas: list[ListaTopico]
     resolucoes: list[ResolucaoTopico]
+    sessao_hoje: SessaoRef | None   # quando o tópico é o da sessão de hoje (e ela tem questões): praticar é por ela
 
 
 class QuestaoIndice(TypedDict):

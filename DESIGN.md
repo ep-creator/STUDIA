@@ -172,7 +172,7 @@ Três tons derivados do texto, sempre por mistura e nunca como hex fixo: **fio**
 - **Label** (Inter 400, 0.7rem = 11,2px, tracking 0.1em, CAIXA ALTA, tinta suave): rótulos de seção ("SESSÃO DE HOJE", "PARA REVISAR", "LINHA 1"). Nunca abaixo de 11px.
 - **Marca** (Fraunces 500, tracking 0.28em, caixa alta): só o nome STUDIA.
 
-Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títulos quebram com `text-wrap: balance`; parágrafos e itens com `text-wrap: pretty`. Texto corrido longo (resumo, documento, resolução) fica em no máximo 35rem (≈70 caracteres por linha, classe `.leitura-medida`).
+Números em contagens e grades usam `font-variant-numeric: tabular-nums`. Títulos quebram com `text-wrap: balance`; parágrafos e itens com `text-wrap: pretty`. Texto corrido longo (resumo, documento, resolução) fica em no máximo 35rem (≈70 caracteres por linha, classe `.leitura-medida`); fórmulas em destaque, tabelas e código usam a coluna de 44rem.
 
 ### Named Rules
 **The Serifa Nomeia Rule.** Fraunces é para o que tem nome ou é um número que decide algo. Texto de interface, controles e parágrafos ficam em Inter.
