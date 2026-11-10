@@ -76,5 +76,5 @@
   .numero.err { color: var(--err); border-bottom: 3px double var(--err); }
   .numero.dub { color: var(--dub-texto); border-bottom: 2px dashed var(--dub); }
   .numero.resolvida:not(.ok):not(.err):not(.dub) { border-bottom: 2px dotted var(--suave); }
-  .numero.aberta { font-weight: 700; color: var(--destaque-texto); }
+  .numero.aberta { font-weight: 700; }
 </style>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import type { Painel } from '../api/tipos'
   import DetalheQuestao from '../componentes/DetalheQuestao.svelte'
   import EstadoVazio from '../componentes/EstadoVazio.svelte'
@@ -67,9 +68,16 @@
       .sort((a, b) => (a.data ?? '').localeCompare(b.data ?? ''))[0]
     return depois ? { codigo: depois.codigo, data: depois.data, titulo: focoDaSessao(depois.foco_md).titulo } : null
   })
-  // chegou pela sessão sem questão escolhida: abre a primeira ainda não trabalhada dela
+  // Entrar numa sessão (ou trocar de sessão) com uma questão de fora aberta: abre a primeira ainda por fazer dela.
+  // Só na entrada: depois, clicar numa questão de fora (com a unidade inteira à vista) é escolha de quem estuda.
+  let sessaoAberta: number | null = null
   $effect(() => {
-    if (daSessao && selecionada === null && idsSessao.length) selecionada = idsSessao.find((id) => !trabalhada(id)) ?? idsSessao[0]
+    const s = sessao, ids = idsSessao
+    if (s === null) { sessaoAberta = null; return }
+    if (s === sessaoAberta || !ids.length) return
+    sessaoAberta = s
+    const atual = untrack(() => selecionada)
+    if (atual === null || !ids.includes(atual)) selecionada = untrack(() => ids.find((id) => !trabalhada(id))) ?? ids[0]
   })
 
   // na sessão, a grade mostra só as listas dela (a unidade inteira fica a um clique)
@@ -101,7 +109,7 @@
     codigo === undefined ? [] : painel.formulas.filter((f) => f.secao_id === secaoId || citaSecao(f.titulo, codigo))
 
   // Teclas na tela toda (fora da grade, que tem as suas, e fora de campos de texto): 1/2/3/0 marcam a questão aberta;
-  // N vai para a próxima ainda não trabalhada (sem marca), na ordem da grade, voltando ao começo se preciso
+  // ← → andam para a anterior e a próxima (as do cabeçalho da questão); N vai para a próxima ainda não feita
   const MARCA_TECLA: Record<string, Marca> = { '1': 'ok', '2': 'err', '3': 'dub', '0': null }
   function teclaPraticar(e: KeyboardEvent) {
     if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || digitando(e.target)) return
@@ -109,6 +117,13 @@
     if (achada && e.key in MARCA_TECLA) {
       e.preventDefault()
       aoMarcar(achada.questao.id, MARCA_TECLA[e.key])
+    } else if (achada && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      // na última da sessão, → faz o mesmo que o "Voltar às que faltam ›" do cabeçalho
+      const alvo = e.key === 'ArrowRight' && ultimaDaSessao ? faltaNaSessao : ordem[ordem.indexOf(achada.questao.id) + (e.key === 'ArrowRight' ? 1 : -1)]
+      if (alvo !== undefined) {
+        e.preventDefault()
+        selecionada = alvo
+      }
     } else if (e.key.toLowerCase() === 'n') {
       // primeiro o que falta da sessão; feita a sessão, a próxima da grade
       const seguinte = proximaNaoTrabalhada(idsSessao) ?? proximaNaoTrabalhada(ordemGrade)

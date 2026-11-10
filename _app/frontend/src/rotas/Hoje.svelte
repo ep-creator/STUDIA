@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   // Casa da matéria: a sessão do plano em foco, com o material a um clique; depois o que revisar (todas as unidades),
   // os próximos 7 dias e os tópicos com o progresso derivado no motor (spec 2026-11-05-redesenho-hoje-design).
   import { requisitar } from '../api/cliente'
   import type { Hoje, Painel, SecaoVinculada } from '../api/tipos'
-  import { CLASSE_ESTADO_TOPICO, DEFINICAO_ESTADO, dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
+  import { DEFINICAO_ESTADO, dataCurta, dataPorExtenso, nomeUnidade, ordinal } from '../apresentacao'
   import PrimeirosPassos from '../componentes/PrimeirosPassos.svelte'
   import { erro } from '../estado/avisos.svelte'
   import { abrirNoPainel } from '../estado/ia.svelte'
@@ -18,8 +19,12 @@
   // o painel é relido depois de toda escrita (marcar, gravar…): a tela Hoje acompanha
   $effect(() => {
     void painel
-    const unidade = painel.unidade === null ? '' : `?unidade=${painel.unidade}`
-    requisitar<Hoje>('GET', `/api/materias/${encodeURIComponent(uid)}/hoje${unidade}`).then((d) => (dados = d), erro)
+    const pedida = painel.unidade
+    // outra unidade (ou outra matéria): o que está na tela é da anterior, então some até a nova chegar
+    // (lido sem rastrear: este efeito grava `dados`, e rastreá-lo faria cada resposta pedir outra)
+    if (untrack(() => dados !== null && dados.unidade !== pedida)) dados = null
+    const unidade = pedida === null ? '' : `?unidade=${pedida}`
+    requisitar<Hoje>('GET', `/api/materias/${encodeURIComponent(uid)}/hoje${unidade}`).then((d) => { if (painel.unidade === pedida) dados = d }, erro)
   })
 
   const NOME_MARCA: Record<string, string> = { ok: 'acertei', err: 'errei', dub: 'dúvida' }
@@ -110,6 +115,7 @@
     return `Prova da ${unidade} em ${prova.dias} dias · ${dataCurta(prova.data, prova.hora_inicio)}`
   })
   const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`
+  const questoesAtrasadas = $derived((dados?.atrasadas ?? []).reduce((t, s) => t + s.faltam, 0))
 </script>
 
 <div class="hoje">
@@ -200,14 +206,12 @@
               <button class="acao-forte comecar" onclick={() => abrirQuestao(acao.id, acao.unidade, acao.sessao)}>{acao.rotulo}</button>
             {/if}
             {#if dados.atrasadas.length}
-              <!-- sem culpa: só o que dá para recuperar, cada sessão a um clique (abre Praticar dentro dela) -->
+              <!-- sem culpa e sem fila de códigos: um número e um caminho; o plano mostra sessão por sessão -->
               <p class="atrasadas">
-                <span class="suave">Ficaram para trás:</span>
-                {#each dados.atrasadas as s, i (s.id)}
-                  {#if i > 0}<span class="suave" aria-hidden="true">·</span>{/if}
-                  <a class="acao-texto" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'listas', sessao: s.id })}
-                    aria-label={`Recuperar a sessão ${s.codigo}: ${plural(s.faltam, 'questão por fazer', 'questões por fazer')}`}>{s.codigo} <span class="suave">({s.faltam})</span></a>
-                {/each}
+                <a class="acao-texto" href={href('cronograma')}
+                  title={dados.atrasadas.map((s) => `${s.codigo} ${s.titulo} (${s.faltam})`).join(' · ')}>
+                  {plural(questoesAtrasadas, 'questão ficou', 'questões ficaram')} de {plural(dados.atrasadas.length, 'sessão passada', 'sessões passadas')} →
+                </a>
               </p>
             {/if}
           </section>
@@ -269,7 +273,7 @@
       </div>
 
       <div class="lateral-hoje">
-        {#if dados.tem_datas || dados.proximos.length}
+        {#if (dados.tem_datas || dados.proximos.length) && !dados.prova_passada}
         <section aria-label="Próximos 7 dias">
           <h2 class="rotulo">Próximos 7 dias</h2>
           {#if dados.proximos.length}
@@ -281,7 +285,7 @@
                     <span class="codigo">{item.codigo}</span>
                     <span class="texto">{item.titulo}</span>
                     {#if item.estado !== 'feita' && item.trabalhadas > 0}<span class="estado" title="questões feitas / questões da sessão">{item.trabalhadas}/{item.total}</span>
-                    {:else if ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
+                    {:else if item.data !== dados.data && ESTADO_SESSAO[item.estado ?? '']}<span class="estado {item.estado}">{ESTADO_SESSAO[item.estado ?? '']}</span>{/if}
                   {:else}
                     <span class="codigo">{TIPO_EVENTO[item.tipo] ?? item.tipo}</span>
                     <span class="texto suave">{item.hora_inicio ?? ''} {item.titulo}</span>
@@ -299,21 +303,14 @@
         {#if dados.unidade && dados.tem_datas && !dados.prova_passada}
           <section aria-label="Tópicos para cuidar">
             <h2 class="rotulo">Tópicos para cuidar</h2>
-            {#if dados.prova_passada}
-              <p class="suave">A unidade terminou; o mapa dela continua em Tópicos.</p>
-            {:else if paraCuidar.length === 0 && !dados.tem_datas && painel.importacoes_pendentes > 0}
-              <p class="suave">Sem datas ainda: o estado dos tópicos vem com o calendário.</p>
-            {:else if paraCuidar.length === 0 && !dados.tem_datas}
-              <p class="suave">Sem datas ainda: sem o calendário e o plano, o app não sabe o que está atrasado.</p>
-              <a class="acao-texto" href={montarHash({ tela: 'importar', uid })}>Adicionar o calendário →</a>
-            {:else if paraCuidar.length === 0}
+            {#if paraCuidar.length === 0}
               <p class="suave">Tudo em dia nesta unidade.</p>
             {/if}
             <ul class="topicos">
               {#each paraCuidar as t (t.id)}
                 <li>
                   <a class="nome-topico" href={montarHash({ tela: 'materia', uid, unidade: dados.unidade, area: 'topicos', topico: t.id })}>{t.titulo}</a>
-                  <span class="estado-topico {CLASSE_ESTADO_TOPICO[t.estado] ?? ''}" title={DEFINICAO_ESTADO[t.estado]}>{t.estado}</span>
+                  {#if t.estado === 'hoje'}<span class="estado-topico hoje" title={DEFINICAO_ESTADO.hoje}>hoje</span>{:else}<span></span>{/if}
                   {#if t.total}
                     <span class="placar suave" title="questões trabalhadas (marcadas ou resolvidas por você) / questões ligadas">{t.trabalhadas}/{t.total}</span>
                     <!-- o fio: trabalhadas sem problema, depois as com ✗ ou ? (que já estão entre as trabalhadas) -->

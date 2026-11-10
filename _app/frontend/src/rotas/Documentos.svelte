@@ -1,6 +1,6 @@
 <script lang="ts">
   import { requisitar } from '../api/cliente'
-  import { tick } from 'svelte'
+  import { tick, untrack } from 'svelte'
   import { consumirAncora, consumirDocumento, consumirFonte, pedido } from '../estado/pedido.svelte'
   import type { DocumentoComCorpo, FonteResumo, Painel, SecaoLivro } from '../api/tipos'
   import EditorMarkdown from '../componentes/EditorMarkdown.svelte'
@@ -16,7 +16,9 @@
   import { nomeLegivel, semTituloRepetido } from '../apresentacao'
   import { montarHash } from './rota'
 
-  let { painel, documento: documentoDaRota = null }: { painel: Painel; documento?: number | null } = $props()
+  let { painel, documento: documentoDaRota = null, pdf: pdfDaRota = null }: {
+    painel: Painel; documento?: number | null; pdf?: { id: number; pagina: number } | null
+  } = $props()
 
   const uid = $derived(painel.materia.uid)
 
@@ -48,15 +50,29 @@
     }
   })
   // o texto do endereço (#/…/documentos/<id>): voltar, recarregar e favoritos reabrem o mesmo
+  // (os dois efeitos abaixo reagem ao endereço, não à seleção: escolher outra coisa na lista não pode ser desfeito
+  // pelo endereço antigo antes de ele ser atualizado)
   $effect(() => {
     const id = documentoDaRota
-    if (id !== null && !(selecao?.tipo === 'documento' && selecao.id === id)) selecionar({ tipo: 'documento', id })
+    const atual = untrack(() => selecao)
+    if (id !== null && !(atual?.tipo === 'documento' && atual.id === id)) untrack(() => selecionar({ tipo: 'documento', id }))
   })
-  // e o texto aberto vai para o endereço (sem empilhar no histórico); PDF e nada aberto ficam no endereço da área
+  // o PDF do endereço (#/…/documentos?pdf=<id>&p=<página>): o mesmo vale para livros, listas e slides
+  $effect(() => {
+    const f = pdfDaRota
+    const atual = untrack(() => selecao)
+    if (f !== null && !(atual?.tipo === 'fonte' && atual.id === f.id)) {
+      paginaInicial = f.pagina
+      untrack(() => selecionar({ tipo: 'fonte', id: f.id }))
+    }
+  })
+  // e o que está aberto vai para o endereço (sem empilhar no histórico): o texto pelo id, o PDF pelo id e a página em
+  // que foi aberto
   $effect(() => {
     if (painel.unidade === null) return
     const id = selecao?.tipo === 'documento' ? selecao.id : null
-    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'documentos', documento: id })
+    const pdf = selecao?.tipo === 'fonte' ? { id: selecao.id, pagina: paginaInicial } : null
+    const alvo = montarHash({ tela: 'materia', uid, unidade: painel.unidade, area: 'documentos', documento: id, pdf })
     if (location.hash !== alvo) history.replaceState(history.state, '', alvo)
   })
 

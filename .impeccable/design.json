@@ -157,7 +157,7 @@
       },
       "body": {
         "displayName": "Texto",
-        "purpose": "Texto corrido em 16px; enunciado da questão em 1.12rem; leitura limitada a 68ch."
+        "purpose": "Texto corrido em 16px; enunciado da questão em 1.12rem; leitura limitada a 35rem."
       },
       "small": {
         "displayName": "Secundário",
@@ -341,7 +341,7 @@
       "Do organizar cada tela pelo que o aluno faz na sessão (a sessão de hoje, o tópico, a questão), não pelo tipo de dado guardado.",
       "Do mostrar progresso que se deriva sozinho (datas do plano, marcações, resoluções); nunca pedir registro manual para a tela fazer sentido.",
       "Do mostrar estado com cor e traço: 2px à esquerda para o item ativo de lista vertical, 2px embaixo para número marcado, 1.5px embaixo para aba e marcação.",
-      "Do limitar texto corrido a 68ch e quebrar títulos com `text-wrap: balance`.",
+      "Do limitar texto corrido a 35rem e quebrar títulos com `text-wrap: balance`.",
       "Do escolher o tipo de ação pela importância: texto para o secundário, suave para o principal da área, forte só uma vez por tela.",
       "Do deixar ações raras a um gesto (hover, foco, `···`) e garantir que apareçam também com Tab.",
       "Do derivar fio, leve e realce por mistura com o texto ou a brasa, para que funcionem nos dois temas.",

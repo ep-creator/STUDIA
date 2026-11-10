@@ -4,6 +4,7 @@
   // página do PDF: o texto extraído de um livro de cálculo sai quebrado (∭ vira "xxx", √ vira "s", colunas se misturam)
   // e não dá para confiar nele. A resolução continua escondida até a aba ser aberta.
   import { API_BASE, requisitar, urlArquivo } from '../api/cliente'
+  import { caminhoDaFonte } from '../estado/fontes'
   import type { Documento, DocumentoComCorpo, ExercicioLivro, Formula, ListaComQuestoes, Questao, SecaoVinculada } from '../api/tipos'
   import { erro } from '../estado/avisos.svelte'
   import { SIMBOLO, type Marca } from '../estado/marcacoes.svelte'
@@ -75,12 +76,30 @@
     semRecorte = false
     semRecorteResposta = false
   })
+  // Questão de lista da turma (não é exercício do livro): o enunciado é o recorte do PDF da lista. O texto guardado é um
+  // resumo digitado (às vezes sem os dados da questão); ele fica no lugar só enquanto não há recorte.
+  const daLista = $derived(lista.fonte_id !== null && !(secao && secao.codigo === lista.codigo && /^\d+$/.test(questao.rotulo)))
+  let recorteLista = $state<'tentando' | 'ok' | 'falhou'>('tentando')
+  let pdfDaLista = $state<string | null>(null)
+  $effect(() => {
+    void questao.id
+    recorteLista = 'tentando'
+  })
+  $effect(() => {
+    const fonteId = lista.fonte_id
+    pdfDaLista = null
+    if (fonteId === null) return
+    void caminhoDaFonte(uid, fonteId).then((c) => { if (lista.fonte_id === fonteId) pdfDaLista = c })
+  })
+
   const recorte = (parte: 'exercicio' | 'resposta') =>
     `${API_BASE}/api/materias/${encodeURIComponent(uid)}/secoes/${secao!.secao_id}/exercicios/${questao.rotulo}/recorte${parte === 'resposta' ? '?parte=resposta' : ''}`
-  // a imagem vem em 2,5× para ficar nítida; na tela, em 2× o tamanho do livro (o texto corrido fica perto do da página)
+  // A imagem vem em 3× para ficar nítida. Na tela, em 2× o tamanho do papel (o texto corrido fica perto do da página);
+  // um exercício de uma linha só (uma integral com os limites miúdos) vai a 2,5×, para os limites darem para ler.
   const noTamanho = (e: Event) => {
     const img = e.currentTarget as HTMLImageElement
-    img.style.width = `${Math.round(img.naturalWidth / 1.25)}px`   // 2,5 ÷ 1,25 = o dobro do tamanho no livro: limites legíveis
+    const fator = img.naturalHeight / 1.5 < 56 ? 1.2 : 1.5
+    img.style.width = `${Math.round(img.naturalWidth / fator)}px`
   }
 
   // só a página, na largura da coluna: sem a barra e a coluna de miniaturas do leitor de PDF do navegador
@@ -108,8 +127,22 @@
   </header>
 
   <div class="enunciado">
-    {#if enunciado}
+    {#if daLista && recorteLista !== 'falhou'}
+      <figure class="recorte" class:carregando={recorteLista === 'tentando'}>
+        {#key questao.id}
+          <span class="papel"><img src={`${API_BASE}/api/materias/${encodeURIComponent(uid)}/questoes/${questao.id}/recorte`}
+            alt={`Questão ${questao.rotulo} da ${lista.titulo}, recortada do PDF da lista${enunciado ? `: ${enunciado}` : ''}`}
+            onload={(e) => { noTamanho(e); recorteLista = 'ok' }} onerror={() => (recorteLista = 'falhou')} /></span>
+        {/key}
+        {#if pdfDaLista}
+          <figcaption class="suave"><a class="acao-texto" href={urlArquivo(uid, pdfDaLista)} target="_blank" rel="noopener">a lista inteira ↗</a></figcaption>
+        {/if}
+      </figure>
+    {:else if enunciado}
       <Markdown texto={enunciado} />
+      {#if daLista && pdfDaLista}
+        <p class="suave origem"><a class="acao-texto" href={urlArquivo(uid, pdfDaLista)} target="_blank" rel="noopener">Ver na lista (PDF) ↗</a></p>
+      {/if}
     {:else if !doLivro && !procurandoLivro}
       <p class="suave">Exercício do livro{secao ? `: seção ${secao.codigo}` : ''}.</p>
     {/if}
@@ -154,7 +187,7 @@
 
   <!-- a IA fica montada (escondida) para uma resposta em andamento não ser cortada ao trocar de aba -->
   <div role="tabpanel" id="painel-ajuda" aria-labelledby="aba-ajuda" hidden={aba !== 'ajuda'}>
-    <PainelIA {uid} alvo={`questao:${questao.id}`} papel="tutor" atalhos={['N1', 'N2', 'N3', 'N4']} />
+    <PainelIA {uid} alvo={`questao:${questao.id}`} papel="tutor" atalhos={resolucao ? ['N1', 'N2', 'N3'] : ['N1', 'N2', 'N3', 'N4']} />
   </div>
   {#if aba === 'resposta' && doLivro?.resposta}
     <div role="tabpanel" id="painel-resposta" aria-labelledby="aba-resposta" class="texto livro">
@@ -224,7 +257,9 @@
   .recorte { margin: 0.8rem 0 0; display: grid; gap: 0.35rem; justify-items: start; }
   .papel { display: block; max-width: 100%; padding: 0.7rem 0.9rem; border-radius: var(--raio); background: #f7f1e6; isolation: isolate; box-sizing: border-box; }
   .papel img { display: block; max-width: 100%; height: auto; mix-blend-mode: multiply; }
-  :global([data-tema='editorial-escuro']) .papel { filter: brightness(0.86); }
+  :global([data-tema='editorial-escuro']) .papel { filter: brightness(0.94); }
+  .recorte.carregando { min-height: 3rem; }
+  .origem { margin: 0.4rem 0 0; font-size: 0.85rem; }
   .recorte figcaption { font-size: 0.85rem; }
   .do-livro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem 1rem; align-items: baseline; margin-top: 0.8rem; font-size: 1rem; }
   .do-livro .acao-texto { font-size: 0.88rem; }

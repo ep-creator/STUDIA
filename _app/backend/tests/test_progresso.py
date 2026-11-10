@@ -311,7 +311,7 @@ def test_topico_conta_so_listas_da_propria_unidade(con, materia, plano):
 
 def test_sessoes_que_ficaram_para_tras(con, plano):
     h = progresso.hoje(con, date(2099, 3, 12))
-    assert h["atrasadas"] == [{"id": h["atrasadas"][0]["id"], "codigo": "S2", "faltam": 3}]   # a S1 foi feita; a S2 não
+    assert h["atrasadas"] == [{"id": h["atrasadas"][0]["id"], "codigo": "S2", "titulo": "15.5 Aplicações", "faltam": 3}]   # a S1 foi feita; a S2 não
     assert progresso.hoje(con, date(2099, 3, 20), 1)["atrasadas"] == []                      # prova feita: não cobra
 
 

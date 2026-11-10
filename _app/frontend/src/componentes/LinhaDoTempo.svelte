@@ -37,8 +37,11 @@
         </span>
         {#if p?.estado === 'feita' || (!p && s.feito)}<span class="selo-feita">feita</span>
         {:else if p && p.total > 0}<span class="selo-parcial" title="questões feitas / questões da sessão">{p.trabalhadas}/{p.total}</span>{/if}
+        {#if hrefPraticar && p?.estado === 'passou' && p.total > p.trabalhadas}
+          <a class="acao-texto recuperar" aria-label={`Praticar a sessão ${s.codigo}`} href={hrefPraticar(s)}>praticar</a>
+        {/if}
         <span class="acoes-linha">
-          {#if hrefPraticar && s.questao_ids.length && p?.estado !== 'feita'}
+          {#if hrefPraticar && s.questao_ids.length && p?.estado !== 'feita' && p?.estado !== 'passou'}
             <a class="acao-texto" aria-label={`Praticar a sessão ${s.codigo}`} href={hrefPraticar(s)}>praticar</a>
           {/if}
           <!-- feita pelas questões não se desmarca à mão: o botão só aparece quando a mão decide -->
@@ -74,6 +77,9 @@
   .selo-parcial, .selo-feita { margin-left: auto; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
   .selo-parcial { font-size: 0.85rem; color: var(--suave); }
   .selo-feita { font-size: 0.8rem; color: var(--ok); }
+  /* a linha passada é toda suave; o "praticar" dela é o que dá para fazer, então fica na tinta normal */
+  .passado .recuperar { color: var(--texto); font-size: 0.85rem; }
+  .recuperar + .acoes-linha { margin-left: 0; }
   .acoes-linha { margin-left: auto; display: flex; gap: 0.9rem; font-size: 0.85rem; }
   .selo-parcial + .acoes-linha, .selo-feita + .acoes-linha { margin-left: 0; }
 </style>

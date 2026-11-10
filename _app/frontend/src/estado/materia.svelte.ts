@@ -4,6 +4,7 @@ import { ErroApi, requisitar } from '../api/cliente'
 import type { Painel } from '../api/tipos'
 import type { Rota } from '../rotas/rota'
 import { erro } from './avisos.svelte'
+import { esquecerFontes } from './fontes'
 
 export const estadoMateria = $state<{
   uid: string | null
@@ -53,5 +54,6 @@ export function esquecerMateria(uid: string): void {
 
 export function recarregar(): Promise<void> {
   if (!estadoMateria.uid) return Promise.resolve()
+  esquecerFontes(estadoMateria.uid)   // uma escrita pode ter trazido ou tirado arquivos
   return carregarPainel(estadoMateria.uid, estadoMateria.unidade)
 }

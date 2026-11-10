@@ -69,3 +69,18 @@ test('Praticar aberto por uma sessão leva a sessão no endereço', () => {
   expect(analisarRota('#/m/ab/u/3/listas/160?sessao=x')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas', questao: 160 })
   expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'topicos', sessao: 21 })).toBe('#/m/ab/u/3/topicos')
 })
+
+test('o PDF aberto na Biblioteca fica no endereço, com a página', () => {
+  const rota = analisarRota('#/m/ab/u/3/documentos?pdf=4&p=431')
+  expect(rota).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', pdf: { id: 4, pagina: 431 } })
+  expect(montarHash(rota)).toBe('#/m/ab/u/3/documentos?pdf=4&p=431')
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', pdf: { id: 4, pagina: 1 } })).toBe('#/m/ab/u/3/documentos?pdf=4')
+  // um texto aberto vale mais que o PDF no endereço; e o PDF não vaza para outras áreas
+  expect(montarHash({ tela: 'materia', uid: 'ab', unidade: 3, area: 'documentos', documento: 12, pdf: { id: 4, pagina: 2 } })).toBe('#/m/ab/u/3/documentos/12')
+  expect(analisarRota('#/m/ab/u/3/listas?pdf=4')).toEqual({ tela: 'materia', uid: 'ab', unidade: 3, area: 'listas' })
+})
+
+test('área sem unidade abre a matéria na área pedida', () => {
+  expect(analisarRota('#/m/ab/painel')).toEqual({ tela: 'materia', uid: 'ab', unidade: null, area: 'painel' })
+  expect(analisarRota('#/m/ab/qualquer')).toEqual({ tela: 'materias' })
+})

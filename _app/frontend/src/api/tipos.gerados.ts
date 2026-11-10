@@ -776,6 +776,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/materias/{materia_uid}/questoes/{questao_id}/recorte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Recorte Da Questao
+         * @description A questão recortada do PDF da lista dela (a lista da turma), em PNG: procura o rótulo na página guardada ou, sem
+         *     ela, nas páginas do PDF. 404 quando a lista não tem PDF ou o rótulo não é achado com segurança.
+         */
+        get: operations["recorte_da_questao_api_materias__materia_uid__questoes__questao_id__recorte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/materias/{materia_uid}/fontes": {
         parameters: {
             query?: never;
@@ -1838,6 +1859,8 @@ export interface components {
             id: number;
             /** Codigo */
             codigo: string;
+            /** Titulo */
+            titulo: string;
             /** Faltam */
             faltam: number;
         };
@@ -3849,6 +3872,36 @@ export interface operations {
             path: {
                 secao_id: number;
                 numero: number;
+                materia_uid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recorte_da_questao_api_materias__materia_uid__questoes__questao_id__recorte_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                questao_id: number;
                 materia_uid: string;
             };
             cookie?: never;

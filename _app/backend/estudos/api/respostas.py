@@ -118,6 +118,7 @@ class QuestaoSessao(TypedDict):
 class SessaoAtrasada(TypedDict):
     id: int
     codigo: str
+    titulo: str
     faltam: int                 # questões da sessão ainda por fazer
 
 

@@ -398,7 +398,7 @@ def hoje(con: sqlite3.Connection, dia: date, numero: int | None = None) -> dict:
     # sessões da unidade cuja data passou com questões por fazer: Hoje mostra numa linha neutra, para dar para recuperar
     # (unidade encerrada não cobra mais nada)
     atrasadas = [
-        {"id": s["id"], "codigo": s["codigo"], "faltam": s["total"] - s["trabalhadas"]}
+        {"id": s["id"], "codigo": s["codigo"], "titulo": s["titulo"], "faltam": s["total"] - s["trabalhadas"]}
         for s in todas
         if atual and not prova_passada and s["unidade"] == atual.numero and s["estado"] == "passou" and s["total"] > s["trabalhadas"]
     ]

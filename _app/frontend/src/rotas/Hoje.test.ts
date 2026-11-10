@@ -120,10 +120,10 @@ test('próximos 7 dias e tópicos com estado derivado', async () => {
   expect(proximos).toHaveTextContent('S4')
   expect(proximos).toHaveTextContent('Prova')
   expect(within(proximos).getByRole('link', { name: /Plano completo/ })).toHaveAttribute('href', '#/m/ab/u/3/cronograma')
-  // só os tópicos que pedem algo agora (falta praticar, hoje, começado); o mapa inteiro fica em Tópicos
+  // só os tópicos que pedem algo agora (o de hoje e os de pouca prática); o mapa inteiro fica em Tópicos
   const topicos = screen.getByRole('region', { name: 'Tópicos para cuidar' })
   expect(topicos).toHaveTextContent('Integrais em polares')
-  expect(topicos).toHaveTextContent('falta praticar')
+  expect(topicos).not.toHaveTextContent('falta praticar')   // o título da seção já diz; a linha mostra só o placar
   expect(topicos).toHaveTextContent('4/13')
   expect(within(topicos).getByText('hoje')).toBeInTheDocument()
   expect(topicos).not.toHaveTextContent('Aula extra')
@@ -162,11 +162,21 @@ test('matéria vazia leva a adicionar material', async () => {
   expect(screen.getByRole('link', { name: /Adicionar material/ })).toHaveAttribute('href', '#/m/ab/importar')
 })
 
-test('o que ficou para trás aparece numa linha, cada sessão abrindo Praticar dentro dela', async () => {
-  resposta = dados({ atrasadas: [{ id: 7, codigo: 'S1', faltam: 4 }, { id: 8, codigo: 'S2', faltam: 1 }] })
+test('o que ficou para trás é um número e um caminho para o plano, não uma fila de códigos', async () => {
+  resposta = dados({ atrasadas: [{ id: 7, codigo: 'S1', titulo: 'Polares', faltam: 4 }, { id: 8, codigo: 'S2', titulo: 'Áreas', faltam: 1 }] })
   render(Hoje, { painel: p3 })
-  const s1 = await screen.findByRole('link', { name: 'Recuperar a sessão S1: 4 questões por fazer' })
-  expect(s1).toHaveAttribute('href', '#/m/ab/u/3/listas?sessao=7')
-  expect(screen.getByRole('link', { name: 'Recuperar a sessão S2: 1 questão por fazer' })).toBeInTheDocument()
+  const link = await screen.findByRole('link', { name: '5 questões ficaram de 2 sessões passadas →' })
+  expect(link).toHaveAttribute('href', '#/m/ab/u/3/cronograma')
+  expect(link).toHaveAttribute('title', 'S1 Polares (4) · S2 Áreas (1)')
+})
+
+test('trocar de unidade não deixa a tela da anterior à vista, e a resposta não dispara outro pedido', async () => {
+  const pedidos = vi.fn(async () => new Response(JSON.stringify(resposta), { headers: { 'content-type': 'application/json' } }))
+  vi.stubGlobal('fetch', pedidos)
+  const { rerender } = render(Hoje, { painel: p3 })
+  await screen.findByRole('region', { name: /Sessão de hoje/ })
+  expect(pedidos).toHaveBeenCalledTimes(1)                       // a resposta chegou e não pediu de novo
+  await rerender({ painel: painel({ unidade: 1, unidade_atual: 3 }) })
+  expect(screen.queryByRole('region', { name: /Sessão de hoje/ })).toBeNull()   // some até a da 1ª chegar
 })
 

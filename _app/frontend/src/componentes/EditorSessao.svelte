@@ -33,7 +33,8 @@
       {#each listas as l (l.id)}
         <div class="lista">
           <span class="suave codigo">{l.codigo}</span>
-          {#each l.questoes as q (q.id)}
+          {#each l.questoes as q, i (q.id)}
+            {#if i > 0 && q.linha === 2 && l.questoes[i - 1].linha !== 2}<span class="suave reforco">reforço</span>{/if}
             <button type="button" class="num" aria-pressed={escolhidas.includes(q.id)} aria-label={`${l.codigo} #${q.rotulo}`}
               onclick={() => alternar(q.id)}>{q.rotulo}</button>
           {/each}
@@ -59,5 +60,6 @@
   .codigo { min-width: 3rem; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
   .num { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 2px; min-width: 1.4rem; font: inherit; font-variant-numeric: tabular-nums; color: var(--suave); cursor: pointer; }
   .num:hover { color: var(--texto); }
+  .reforco { font-size: 0.78rem; margin: 0 0.2rem 0 0.5rem; }
   .num[aria-pressed='true'] { color: var(--texto); font-weight: 600; border-bottom-color: var(--destaque); }
 </style>

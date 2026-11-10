@@ -1,6 +1,7 @@
 // "Ir para" da busca (Ctrl K): destinos que não são texto — áreas, unidades, tópicos da unidade e questões pelo código
 // ("14.1 46", "L5 #8"). Tudo local, a partir do painel já carregado; a busca no conteúdo continua no motor.
 import type { Indice, Painel } from './api/tipos'
+import { focoDaSessao } from './apresentacao'
 import { montarHash, type Area } from './rotas/rota'
 
 export type Destino = { rotulo: string; detalhe: string; href: string }
@@ -37,6 +38,14 @@ export function destinos(consulta: string, painel: Painel, indice: Indice | null
       if (normal(x.lista_codigo) !== q2[1] || normal(x.rotulo) !== q2[2]) continue
       const outra = x.unidade !== unidade ? ` · ${x.unidade}ª unidade` : ''
       saida.push({ rotulo: `${x.lista_codigo} #${x.rotulo}`, detalhe: `Praticar · ${x.lista_titulo}${outra}`, href: montarHash({ tela: 'materia', uid, unidade: x.unidade, area: 'listas', questao: x.id }) })
+    }
+  }
+  // sessão do plano pelo código ("s6") ou por um pedaço do título: abre Praticar dentro dela (só as que têm questões)
+  if (q.length >= 2) {
+    for (const s of painel.sessoes) {
+      const titulo = focoDaSessao(s.foco_md).titulo
+      if (!s.questao_ids.length || !(normal(s.codigo) === q || (q.length >= 4 && normal(titulo).includes(q)))) continue
+      saida.push({ rotulo: `${s.codigo} · ${titulo}`, detalhe: 'Praticar a sessão', href: montarHash({ tela: 'materia', uid, unidade, area: 'listas', sessao: s.id }) })
     }
   }
   // unidade: "2", "2ª unidade", "unidade 2"

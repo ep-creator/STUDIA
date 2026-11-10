@@ -36,3 +36,12 @@ test('com o índice da matéria, questão e tópico de outra unidade abrem na un
   expect(destinos('14.1 46', p, indice)[0]).toEqual({ rotulo: '14.1 #46', detalhe: 'Praticar · Funções · 1ª unidade', href: '#/m/ab/u/1/listas/4' })
   expect(destinos('derivadas', p, indice)).toContainEqual({ rotulo: 'Derivadas parciais', detalhe: 'Tópico · 1ª unidade', href: '#/m/ab/u/1/topicos/3' })
 })
+
+test('sessão do plano pelo código leva a Praticar dentro dela', () => {
+  const comSessao = painel({ unidade: 3, sessoes: [
+    { id: 29, unidade_id: 3, codigo: 'S6', data: '2026-11-10', foco_md: '**Aplicações + desenhar sólidos**', feito: false, ordem: 6, origem: 'manual', questao_ids: [1, 2] },
+    { id: 30, unidade_id: 3, codigo: 'S7', data: '2026-11-14', foco_md: '**15.8 Cilíndricas**', feito: false, ordem: 7, origem: 'manual', questao_ids: [] },
+  ] })
+  expect(destinos('s6', comSessao)[0]).toEqual({ rotulo: 'S6 · Aplicações + desenhar sólidos', detalhe: 'Praticar a sessão', href: '#/m/ab/u/3/listas?sessao=29' })
+  expect(destinos('s7', comSessao).some((d) => d.detalhe === 'Praticar a sessão')).toBe(false)   // sem questões: nada a praticar
+})

@@ -9,6 +9,7 @@ export type Rota =
       tela: 'materia'; uid: string; unidade: number | null; area: Area
       topico?: number | null; questao?: number | null; documento?: number | null
       sessao?: number | null   // Praticar aberto por uma sessão do plano: anterior, próxima e N andam por ela
+      pdf?: { id: number; pagina: number } | null   // Biblioteca com um PDF aberto (livro, lista…), na página
     }
   | { tela: 'importar' | 'historico'; uid: string }
 
@@ -24,6 +25,10 @@ export function analisarRota(hash: string): Rota {
   }
   const numSessao = Number(new URLSearchParams(consulta).get('sessao'))
   const comSessao = Number.isInteger(numSessao) && numSessao >= 1 ? { sessao: numSessao } : {}
+  const numPdf = Number(new URLSearchParams(consulta).get('pdf'))
+  const numPagina = Number(new URLSearchParams(consulta).get('p'))
+  const comPdf = Number.isInteger(numPdf) && numPdf >= 1
+    ? { pdf: { id: numPdf, pagina: Number.isInteger(numPagina) && numPagina >= 1 ? numPagina : 1 } } : {}
   if (partes[0] !== 'm' || !partes[1]) return INICIO
   const uid = partes[1]
   if (partes.length === 2) return { tela: 'materia', uid, unidade: null, area: 'painel' }
@@ -38,7 +43,7 @@ export function analisarRota(hash: string): Rota {
     const unidade = Number(partes[3])
     const area = partes[4] as Area
     if (Number.isInteger(unidade) && unidade >= 1 && AREAS.includes(area)) {
-      return { tela: 'materia', uid, unidade, area, ...(area === 'listas' ? comSessao : {}) }
+      return { tela: 'materia', uid, unidade, area, ...(area === 'listas' ? comSessao : area === 'documentos' ? comPdf : {}) }
     }
   }
   // um item aberto tem endereço próprio: tópico (…/topicos/<id>), questão em Praticar (…/listas/<id>) e texto na
@@ -63,7 +68,8 @@ export function montarHash(rota: Rota): string {
   const id = rota.area === 'topicos' ? rota.topico : rota.area === 'listas' ? rota.questao : rota.area === 'documentos' ? rota.documento : null
   const item = id ? `/${id}` : ''
   const sessao = rota.area === 'listas' && rota.sessao ? `?sessao=${rota.sessao}` : ''
-  return `${base}/u/${rota.unidade}/${rota.area}${item}${sessao}`
+  const pdf = rota.area === 'documentos' && !id && rota.pdf ? `?pdf=${rota.pdf.id}${rota.pdf.pagina > 1 ? `&p=${rota.pdf.pagina}` : ''}` : ''
+  return `${base}/u/${rota.unidade}/${rota.area}${item}${sessao}${pdf}`
 }
 
 /**

@@ -8,8 +8,21 @@
   let { onfechar }: { onfechar: () => void } = $props()
   let caixa: HTMLElement
   // o guia completo abre aqui mesmo (o app é local: sem depender de internet); as imagens ficam de fora
-  const GUIA = guiaBruto.slice(Math.max(0, guiaBruto.indexOf('## As telas da matéria')))
-    .split('\n').filter((l) => !l.trim().startsWith('<img')).join('\n')
+  const GUIA = (() => {
+    const inicio = Math.max(0, guiaBruto.indexOf('## As telas da matéria'))
+    const fim = guiaBruto.indexOf('## Problemas comuns')
+    const linhas = guiaBruto.slice(inicio, fim > inicio ? fim : undefined).split(/\r?\n/).filter((l) => !l.trim().startsWith('<img'))
+    // o arquivo quebra as linhas à mão (~120 colunas) e o Markdown do app respeita quebras: rejunta cada parágrafo e
+    // cada item de lista (a continuação de um item vem recuada)
+    const saida: string[] = []
+    for (const l of linhas) {
+      const anterior = saida.at(-1) ?? ''
+      const continua = l.trim() !== '' && anterior.trim() !== '' && !/^\s*([-*#>|]|\d+\.)/.test(l) && !/^#/.test(anterior)
+      if (continua) saida[saida.length - 1] = `${anterior.trimEnd()} ${l.trim()}`
+      else saida.push(l)
+    }
+    return saida.join('\n')
+  })()
   let guia = $state(false)
 
   $effect(() => {

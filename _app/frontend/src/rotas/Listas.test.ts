@@ -82,3 +82,19 @@ test('Praticar sem questão aberta sugere a próxima sessão com questões por f
   render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [futura] }) })
   expect(screen.getByRole('link', { name: /Seguir a sessão S9 · Escolher o sistema/ })).toHaveAttribute('href', '#/m/ab/u/1/listas?sessao=5')
 })
+
+test('trocar de sessão com uma questão de fora aberta abre uma questão da sessão nova', async () => {
+  const { rerender } = render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [S3, S4] }), questao: 4 })
+  expect(await screen.findByRole('heading', { level: 2, name: 'L5 #8' })).toBeInTheDocument()
+  await rerender({ painel: painel({ listas: [l155, l5], sessoes: [S3, S4] }), sessao: 2 })   // "Seguir a sessão S4"
+  expect(await screen.findByRole('heading', { level: 2, name: '15.5 #12' })).toBeInTheDocument()
+})
+
+test('setas ← → andam entre as questões da sessão', async () => {
+  render(Listas, { painel: painel({ listas: [l155, l5], sessoes: [S3] }), sessao: 1, questao: 3 })
+  await screen.findByRole('heading', { level: 2, name: '15.5 #18' })
+  await userEvent.keyboard('{ArrowRight}')
+  expect(screen.getByRole('heading', { level: 2, name: 'L5 #9' })).toBeInTheDocument()
+  await userEvent.keyboard('{ArrowLeft}')
+  expect(screen.getByRole('heading', { level: 2, name: '15.5 #18' })).toBeInTheDocument()
+})

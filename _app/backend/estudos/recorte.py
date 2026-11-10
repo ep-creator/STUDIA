@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pymupdf
 
-ZOOM = 2.5            # 72 dpi × 2,5 ≈ 180 dpi: legível na largura da coluna, sem pesar
+ZOOM = 3.0            # 72 dpi × 3 = 216 dpi: nítido mesmo quando a tela amplia um exercício de uma linha só
 MARGEM = 4.0          # pontos em volta do recorte
 RODAPE = 45.0         # o fim da página (número, notas) não entra no recorte
-_ROTULO = re.compile(r"^(\d{1,3})\.(?:\s|$)")
+_ROTULO = re.compile(r"^(\d{1,3})\.(?!\d)")   # "13." ou "5.Calcule" (sem espaço), mas não "2.5"
 
 
 @dataclass(frozen=True)
@@ -52,43 +52,56 @@ def rotulos(pagina: pymupdf.Page) -> list[Rotulo]:
     return achados
 
 
-def _ultima_folga(pagina: pymupdf.Page, esquerda: float, direita: float, de: float, ate: float, corpo: float) -> float:
-    """Onde cortar entre o fim de um exercício e o rótulo do seguinte. Rente ao rótulo, salvo quando o que vem logo
-    acima dele é só letra miúda (os limites de uma integral do próximo exercício, que sobem acima da linha dele): aí o
-    corte vai para a faixa vazia antes dessa letra miúda."""
-    faixas = sorted(
-        (s["bbox"][1], s["bbox"][3], s["size"])
+SUBIDA_MAXIMA = 40.0   # até onde o começo do próximo exercício pode subir acima do rótulo dele (integral com limites)
+
+
+def _ultima_folga(pagina: pymupdf.Page, esquerda: float, direita: float, de: float, ate: float) -> float:
+    """Onde cortar entre o fim de um exercício e o rótulo do seguinte.
+
+    O que cruza a linha do rótulo seguinte é dele: o sinal de integral (mais alto que a linha) e, acima, os limites, que
+    cruzam o topo do sinal. O topo do próximo exercício sobe por esses trechos encadeados; o corte fica no meio do vão
+    entre esse topo e o fim do que veio antes. Sem nada cruzando, o corte é rente ao rótulo."""
+    trechos = [
+        (s["bbox"][1], s["bbox"][3])
         for b in pagina.get_text("dict")["blocks"] for l in b.get("lines", []) for s in l["spans"]
         if s["text"].strip() and s["bbox"][2] > esquerda and s["bbox"][0] < direita and s["bbox"][3] > de
-        and s["bbox"][1] < ate - 1.5   # o que começa quase na altura do rótulo seguinte já é a linha dele
-    )
-    corte, fim_ocupado = ate - 2, de
-    for i, (y0, y1, _) in enumerate(faixas):
-        if y0 - fim_ocupado >= 1.0 and all(t < 0.85 * corpo for _, _, t in faixas[i:]):
-            corte = (fim_ocupado + y0) / 2
+    ]
+    topo = ate
+    while True:
+        cruzam = [y0 for y0, y1 in trechos if y0 < topo - 0.3 and y1 > topo + 0.3]
+        if not cruzam or ate - min(cruzam) > SUBIDA_MAXIMA:
             break
-        fim_ocupado = max(fim_ocupado, y1)
-    return corte
+        topo = min(cruzam)
+    antes = [y1 for y0, y1 in trechos if y1 <= topo + 0.3]
+    return (max(antes) + topo) / 2 if antes else topo - 2
 
 
 def _area(pagina: pymupdf.Page, todos: list[Rotulo], alvo: Rotulo) -> pymupdf.Rect | None:
     largura, altura = pagina.rect.width, pagina.rect.height
     meio = largura / 2
     esquerda = alvo.x0 - MARGEM
-    direita = meio + 2 if alvo.x0 < meio else largura - 30
+    # duas colunas (como o livro) só quando há rótulo na metade direita; lista da turma em LaTeX tem uma coluna só
+    duas_colunas = any(r.x0 >= meio - 10 for r in todos)
+    direita = (meio + 2 if alvo.x0 < meio else largura - 30) if duas_colunas else largura - 20
     # dois exercícios curtos na mesma linha: o recorte para antes do vizinho
     lado = [r.x0 for r in todos if abs(r.y0 - alvo.y0) < 4 and alvo.x0 < r.x0 < direita]
     if lado:
         direita = min(lado) - 3
     abaixo = [r.y0 for r in todos if r.y0 > alvo.y0 + 4 and esquerda - 6 <= r.x0 < direita]
     if abaixo:
-        fim = _ultima_folga(pagina, esquerda, direita, alvo.y0 + 6, min(abaixo), alvo.tamanho)
+        fim = _ultima_folga(pagina, esquerda, direita, alvo.y0 + 6, min(abaixo))
     else:
         # o último da coluna: vai até o último texto dela, antes do rodapé
         blocos = [b["bbox"][3] for b in pagina.get_text("dict")["blocks"]
                   if b["bbox"][1] >= alvo.y0 - 1 and b["bbox"][3] < altura - RODAPE
                   and b["bbox"][0] >= esquerda - 6 and b["bbox"][0] < direita]
         fim = (max(blocos) if blocos else altura - RODAPE) + 2
+    # a direita vai até onde o texto chega (uma coluna só deixaria um vazio que encolhe tudo na tela)
+    fins = [sp["bbox"][2] for b in pagina.get_text("dict")["blocks"] for l in b.get("lines", []) for sp in l["spans"]
+            if sp["text"].strip() and sp["bbox"][1] >= alvo.y0 - 4 and sp["bbox"][3] <= fim + 2
+            and sp["bbox"][0] >= esquerda - 2 and sp["bbox"][2] <= direita + 2]
+    if fins:
+        direita = min(direita, max(fins) + MARGEM)
     area = pymupdf.Rect(esquerda, alvo.y0 - 3, direita, fim)
     if area.height < 8 or area.height > 0.8 * altura or area.width < 20:
         return None
@@ -121,3 +134,30 @@ def recortar(pdf: Path, pagina: int, numero: int, dica: str | None = None) -> by
         if area is None:
             return None
         return p.get_pixmap(matrix=pymupdf.Matrix(ZOOM, ZOOM), clip=area).tobytes("png")
+
+
+def recortar_em(pdf: Path, paginas: list[int] | None, numero: int, dica: str | None = None) -> bytes | None:
+    """Como `recortar`, procurando nas páginas dadas (ou em todas, para PDFs curtos como as listas da turma)."""
+    if paginas is None:
+        with pymupdf.open(pdf) as doc:
+            if doc.page_count > 40:
+                return None
+            paginas = list(range(1, doc.page_count + 1))
+    for pagina in paginas:
+        png = recortar(pdf, pagina, numero, dica)
+        if png is not None:
+            return png
+    return None
+
+
+def pagina_do_rotulo(pdf: Path, paginas: list[int], numero: int) -> int | None:
+    """A primeira das páginas dadas em que o rótulo do exercício aparece (fora do rodapé), ou None."""
+    with pymupdf.open(pdf) as doc:
+        for pagina in paginas:
+            if not 1 <= pagina <= doc.page_count:
+                continue
+            p = doc[pagina - 1]
+            if any(r.numero == numero and r.y0 < p.rect.height - RODAPE for r in rotulos(p)):
+                return pagina
+    return None
+
