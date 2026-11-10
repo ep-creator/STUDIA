@@ -118,6 +118,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
    matéria de cálculo custa mais que uma linha comprida). */
 .leitura-medida { max-width: 44rem; }
 .leitura-medida :is(p, li, blockquote, dd, h1, h2, h3, h4) { max-width: 35rem; }
+/* a fórmula em destaque escrita dentro de um parágrafo (ou de um item) herdaria o limite dele: esse parágrafo usa a coluna */
+.leitura-medida :is(p, li, blockquote, dd):has(.katex-display) { max-width: none; }
 /* título só para leitor de tela (telas de altura fixa que já mostram o nome na barra lateral) */
 .so-leitor { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .suave { color: var(--suave); }

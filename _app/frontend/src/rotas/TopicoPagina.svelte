@@ -186,6 +186,7 @@
   /* o texto em ~70 caracteres; as fórmulas em destaque e as tabelas usam a coluna inteira (como em .leitura-medida) */
   .leitura { max-width: 44rem; line-height: 1.65; font-size: 1.02rem; min-width: 0; }
   .leitura :global(:is(p, li, blockquote, dd, h1, h2, h3, h4)) { max-width: 35rem; }
+  .leitura :global(:is(p, li, blockquote, dd):has(.katex-display)) { max-width: none; }
   .abas { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-bottom: 1rem; }
   .abas button { background: none; border: 0; padding: 0 0 2px; font: inherit; font-family: var(--fonte-titulo); color: var(--suave); border-bottom: 1.5px solid transparent; cursor: pointer; }
   .abas button.ativa { color: var(--texto); border-bottom-color: var(--destaque); }
